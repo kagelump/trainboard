@@ -29,7 +29,12 @@ import {
   renderDirection as uiRenderDirection,
   updateClock as uiUpdateClock,
   chooseInitialStation,
-  setupModal as uiSetupModal,
+  setupStationModal as uiSetupStationModal,
+  setupApiKeyModal as uiSetupApiKeyModal,
+  openStationModal as uiOpenStationModal,
+  openApiModal as uiOpenApiModal,
+  showStatus as uiShowStatus,
+  clearStatus as uiClearStatus,
 } from './ui';
 
 // --- 1. CONFIGURATION AND CONSTANTS ---
@@ -65,6 +70,32 @@ let statusIntervalId: number | undefined;
 
 // Cache for station display names keyed by station URI
 const stationNameCache = new SimpleCache<string>(500);
+// Ensure settings button always opens the modal (fallback if setupModal
+// hasn't yet been called because station list is still loading).
+function attachSettingsButtonFallback(): void {
+  const btn = document.getElementById('settings-button');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    try {
+      // pre-fill API key input if available
+      const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement | null;
+      const stored = (() => {
+        try {
+          return localStorage.getItem('t2board_api_key');
+        } catch (e) {
+          return null;
+        }
+      })();
+      if (apiKeyInput) apiKeyInput.value = ODPT_API_KEY || stored || '';
+    } catch (e) {
+      // ignore DOM/localStorage errors
+    }
+    uiOpenStationModal();
+  });
+}
+
+// attach fallback immediately so UI responds even while fetching station list
+attachSettingsButtonFallback();
 
 // --- Utilities ---
 // Lightweight helpers are in `src/utils.ts` (imported above)
@@ -152,11 +183,19 @@ async function renderBoard(): Promise<void> {
   setLoadingState();
   setDirectionHeaders(INBOUND_FRIENDLY_NAME_JA, OUTBOUND_FRIENDLY_NAME_JA);
 
-  const allDepartures = await fetchStationTimetable(
-    stationConfig.uri,
-    String(ODPT_API_KEY),
-    API_BASE_URL,
-  );
+  let allDepartures: OdptStationTimetable[] = [];
+  try {
+    allDepartures = await fetchStationTimetable(
+      stationConfig.uri,
+      String(ODPT_API_KEY),
+      API_BASE_URL,
+    );
+  } catch (err) {
+    console.error('Failed to fetch timetable:', err);
+    uiShowStatus('API エラーが発生しました。API キーを確認してください。', 'error');
+    uiOpenApiModal();
+    return;
+  }
   const now = new Date();
   const nowMinutes = timeToMinutes(
     `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
@@ -173,10 +212,24 @@ async function renderBoard(): Promise<void> {
 
   uiRenderDirection('inbound', inboundTrains, stationNameCache, TRAIN_TYPE_MAP);
   uiRenderDirection('outbound', outboundTrains, stationNameCache, TRAIN_TYPE_MAP);
-  await fetchStatus(String(ODPT_API_KEY), API_BASE_URL);
+  try {
+    await fetchStatus(String(ODPT_API_KEY), API_BASE_URL);
+    uiClearStatus();
+  } catch (err) {
+    console.warn('Failed to fetch status:', err);
+    uiShowStatus('運行情報取得でエラーが発生しました。API キーを確認してください。', 'warn');
+  }
 
   timetableIntervalId = window.setInterval(async () => {
-    const deps = await fetchStationTimetable(stationConfig.uri, String(ODPT_API_KEY), API_BASE_URL);
+    let deps: OdptStationTimetable[] = [];
+    try {
+      deps = await fetchStationTimetable(stationConfig.uri, String(ODPT_API_KEY), API_BASE_URL);
+    } catch (err) {
+      console.error('Periodic timetable fetch failed:', err);
+      uiShowStatus('定期更新の取得中にエラーが発生しました。API キーを確認してください。', 'warn');
+      uiOpenApiModal();
+      return;
+    }
     const now2 = new Date();
     const nowMins = timeToMinutes(
       `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}`,
@@ -221,19 +274,26 @@ async function loadLocalConfig(): Promise<void> {
   } catch (err) {
     console.warn('Failed to load ./config.json:', err);
   }
+  // Allow user-supplied API key in localStorage to override config.json
+  try {
+    const userKey = localStorage.getItem('t2board_api_key');
+    if (userKey) {
+      ODPT_API_KEY = userKey;
+    }
+  } catch (e) {
+    // ignore localStorage access errors
+  }
 }
 
 async function initializeBoard(): Promise<void> {
   await loadLocalConfig();
   if (!ODPT_API_KEY) {
-    const hdr = safeGetElement('station-header');
-    if (hdr) hdr.textContent = '設定エラー: config.json に ODPT_API_KEY を設定してください';
-    const inC = safeGetElement('departures-inbound');
-    const outC = safeGetElement('departures-outbound');
-    if (inC)
-      inC.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
-    if (outC)
-      outC.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
+    // No API key: open the API-key modal so the user can paste one.
+    uiSetupApiKeyModal(ODPT_API_KEY, (newKey) => {
+      if (newKey) ODPT_API_KEY = newKey;
+      initializeBoard();
+    });
+    uiOpenApiModal();
     return;
   }
 
@@ -257,8 +317,16 @@ async function initializeBoard(): Promise<void> {
   const selected = chooseInitialStation(STATION_CONFIGS, DEFAULT_STATION_NAME);
   if (selected) currentConfig = { stationUri: selected.uri, stationName: selected.name };
 
-  // wire modal UI; onSave will update currentConfig and re-render
-  uiSetupModal(STATION_CONFIGS, currentConfig.stationUri, (newUri) => {
+  // wire modal UI; onSave will update currentConfig and optionally replace the API key
+  // setup the API key modal so users can change the key at any time
+  uiSetupApiKeyModal(ODPT_API_KEY, (newKey) => {
+    if (newKey) ODPT_API_KEY = newKey;
+    // restart initialization now that we have an API key
+    initializeBoard();
+  });
+
+  // setup the station-selection modal
+  uiSetupStationModal(STATION_CONFIGS, currentConfig.stationUri, (newUri) => {
     const found = STATION_CONFIGS.find((c) => c.uri === newUri);
     currentConfig = { stationUri: newUri, stationName: found ? found.name : null };
     renderBoard();

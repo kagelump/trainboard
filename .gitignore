@@ -8,3 +8,31 @@ node_modules/
 npm-debug.log*
 
 apidoc.txt
+
+# Build output
+dist/
+
+# Vite / cache
+.vite/
+.cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage / test artifacts
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+*.log
+*.bak

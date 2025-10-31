@@ -93,8 +93,7 @@ export function chooseInitialStation(
   }
   return selectedStation;
 }
-
-export function setupModal(
+export function setupStationModal(
   stationConfigs: StationCfg[],
   currentUri: string | null,
   onSave: (newUri: string) => void,
@@ -102,24 +101,27 @@ export function setupModal(
   const modal = document.getElementById('config-modal');
   const stationSelect = document.getElementById('station-select') as HTMLSelectElement | null;
   if (!modal || !stationSelect) return;
-  stationSelect.innerHTML = stationConfigs
-    .map(
-      (config) =>
-        `<option value="${config.uri}" ${config.uri === currentUri ? 'selected' : ''}>${config.name}</option>`,
-    )
-    .join('');
+
+  function populateOptions(uri: string | null) {
+    stationSelect!.innerHTML = stationConfigs
+      .map(
+        (config) =>
+          `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`,
+      )
+      .join('');
+  }
+
+  populateOptions(currentUri);
 
   const settingsBtn = document.getElementById('settings-button');
   settingsBtn?.addEventListener('click', () => {
-    stationSelect.value = currentUri || '';
-    modal.classList.remove('hidden');
-    modal.classList.add('flex', 'opacity-100');
+    populateOptions(currentUri);
+    openStationModal();
   });
 
   const closeBtn = document.getElementById('close-modal');
   closeBtn?.addEventListener('click', () => {
-    modal.classList.remove('flex', 'opacity-100');
-    modal.classList.add('hidden');
+    closeStationModal();
   });
 
   const saveBtn = document.getElementById('save-settings');
@@ -127,14 +129,85 @@ export function setupModal(
     const newUri = stationSelect.value;
     localStorage.setItem('t2board_station_uri', newUri);
     onSave(newUri);
-    modal.classList.remove('flex', 'opacity-100');
-    modal.classList.add('hidden');
+    closeStationModal();
   });
 
   modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.remove('flex', 'opacity-100');
-      modal.classList.add('hidden');
-    }
+    if (e.target === modal) closeStationModal();
   });
+}
+
+export function setupApiKeyModal(
+  currentApiKey: string | null,
+  onSave: (apiKey: string | null) => void,
+): void {
+  const modal = document.getElementById('api-key-modal');
+  const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement | null;
+  if (!modal || !apiKeyInput) return;
+
+  apiKeyInput.value = currentApiKey || '';
+
+  const saveBtn = document.getElementById('save-api-key');
+  const closeBtn = document.getElementById('close-api-key');
+
+  saveBtn?.addEventListener('click', () => {
+    const newKey = apiKeyInput.value ? apiKeyInput.value.trim() : null;
+    if (newKey) localStorage.setItem('t2board_api_key', newKey);
+    else localStorage.removeItem('t2board_api_key');
+    onSave(newKey);
+    closeApiModal();
+  });
+
+  closeBtn?.addEventListener('click', () => closeApiModal());
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeApiModal();
+  });
+}
+
+export function openStationModal(): void {
+  const modal = document.getElementById('config-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex', 'opacity-100');
+}
+
+export function closeStationModal(): void {
+  const modal = document.getElementById('config-modal');
+  if (!modal) return;
+  modal.classList.remove('flex', 'opacity-100');
+  modal.classList.add('hidden');
+}
+
+export function openApiModal(): void {
+  const modal = document.getElementById('api-key-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex', 'opacity-100');
+}
+
+export function closeApiModal(): void {
+  const modal = document.getElementById('api-key-modal');
+  if (!modal) return;
+  modal.classList.remove('flex', 'opacity-100');
+  modal.classList.add('hidden');
+}
+
+export function showStatus(message: string, kind: 'info' | 'error' | 'warn' = 'info'): void {
+  const el = document.getElementById('status-banner');
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.classList.remove('bg-red-100', 'bg-yellow-100', 'bg-blue-100', 'text-red-800');
+  // simple style mapping
+  if (kind === 'error') el.classList.add('bg-red-100', 'text-red-800');
+  else if (kind === 'warn') el.classList.add('bg-yellow-100');
+  else el.classList.add('bg-blue-100');
+  el.textContent = message;
+}
+
+export function clearStatus(): void {
+  const el = document.getElementById('status-banner');
+  if (!el) return;
+  el.classList.add('hidden');
+  el.textContent = '';
 }
