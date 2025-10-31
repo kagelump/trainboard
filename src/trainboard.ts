@@ -21,9 +21,12 @@ type TimetableObject = {
   [key: string]: unknown;
 };
 
+import { fetchStationTimetable, fetchStatus, fetchStationsByUris, fetchStationsList } from './api';
+
 // --- 1. CONFIGURATION AND CONSTANTS ---
 let ODPT_API_KEY: string | null = null; // loaded from ./config.json at runtime
-const API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
+// These have sensible defaults but can be overridden via ./config.json
+let API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
 const TOKYU_TOYOKO_LINE_URI = 'odpt.Railway:Tokyu.Toyoko';
 const INBOUND_DIRECTION_URI = 'odpt.RailDirection:Inbound';
 const OUTBOUND_DIRECTION_URI = 'odpt.RailDirection:Outbound';
@@ -42,7 +45,7 @@ const TRAIN_TYPE_MAP: Record<string, TrainTypeMapEntry> = {
 };
 
 let STATION_CONFIGS: StationConfig[] = [];
-const DEFAULT_STATION_NAME = '武蔵小杉 (TY11)';
+let DEFAULT_STATION_NAME = '武蔵小杉 (TY11)';
 let currentConfig: { stationUri: string | null; stationName: string | null } = {
   stationUri: null,
   stationName: null,
@@ -50,6 +53,9 @@ let currentConfig: { stationUri: string | null; stationName: string | null } = {
 
 let timetableIntervalId: number | undefined;
 let statusIntervalId: number | undefined;
+
+// Cache for station display names keyed by station URI
+const stationNameCache: Map<string, string> = new Map();
 
 // --- Utilities ---
 function getJapaneseText(langMap: unknown): string {
@@ -70,105 +76,89 @@ function timeToMinutes(timeStr: string): number {
   return h * 60 + m;
 }
 
-async function apiFetch(url: string, retries = 3, delay = 1000): Promise<Response> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response;
-    } catch (err) {
-      if (i === retries - 1) throw err;
-      await new Promise((r) => setTimeout(r, delay * 2 ** i));
-    }
-  }
-  // Should never reach here
-  throw new Error('Unreachable');
-}
-
 // --- Data fetching ---
 async function fetchRailwayStations(): Promise<void> {
-  const params = new URLSearchParams({
-    'acl:consumerKey': String(ODPT_API_KEY),
-    'odpt:railway': TOKYU_TOYOKO_LINE_URI,
-    'odpt:operator': 'odpt.Operator:Tokyu',
-  });
-  const url = `${API_BASE_URL}odpt:Station?${params.toString()}`;
-  try {
-    const resp = await apiFetch(url);
-    const data = (await resp.json()) as any[];
-    STATION_CONFIGS = data
-      .map((station) => {
-        const stationNameJa = station['dc:title'] as string;
-        const stationCode = station['odpt:stationCode'] || '';
-        return {
-          name: `${stationNameJa} (${stationCode})`,
-          uri: station['owl:sameAs'],
-        } as StationConfig;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-  } catch (err) {
-    console.error('Error fetching station list:', err);
-    const el = document.getElementById('station-header');
-    if (el) el.textContent = 'エラー: 駅リスト取得失敗';
-  }
+  // deprecated: implementation moved to src/api.ts; call fetchStationsList in initializeBoard
 }
 
-async function fetchStationTimetable(stationUri: string): Promise<TimetableObject[]> {
-  const calendarURI = getTodayCalendarURI();
-  const params = new URLSearchParams({
-    'acl:consumerKey': String(ODPT_API_KEY),
-    'odpt:railway': TOKYU_TOYOKO_LINE_URI,
-    'odpt:station': stationUri,
-    'odpt:calendar': calendarURI,
-  });
-  const url = `${API_BASE_URL}odpt:StationTimetable?${params.toString()}`;
-  try {
-    const resp = await apiFetch(url);
-    const data = (await resp.json()) as any[];
-    if (data.length === 0) return [];
-    const timetable = data.find((t) => t['odpt:calendar'] === calendarURI);
-    return (timetable?.['odpt:stationTimetableObject'] as TimetableObject[]) || [];
-  } catch (err) {
-    console.error('時刻表取得エラー:', err);
-    return [];
-  }
-}
+// fetchStationTimetable implementation moved to src/api.ts
 
-async function fetchStatus(): Promise<void> {
-  const statusBanner = document.getElementById('status-banner');
-  if (!statusBanner) return;
-  statusBanner.classList.add('hidden');
-  statusBanner.innerHTML = '';
-
-  const params = new URLSearchParams({
-    'acl:consumerKey': String(ODPT_API_KEY),
-    'odpt:railway': TOKYU_TOYOKO_LINE_URI,
-  });
-  const url = `${API_BASE_URL}odpt:TrainInformation?${params.toString()}`;
-  try {
-    const resp = await apiFetch(url);
-    const data = (await resp.json()) as any[];
-    if (data.length === 0) return;
-    const info = data[0];
-    const statusText = getJapaneseText(info['odpt:trainInformationText']);
-    if (
-      statusText &&
-      !statusText.includes('通常運行') &&
-      !statusText.includes('平常通り運転しています') &&
-      !statusText.toLowerCase().includes('normal')
-    ) {
-      statusBanner.innerHTML = `⚠️ <strong>運行情報:</strong> ${statusText}`;
-      statusBanner.classList.remove('hidden');
-      statusBanner.classList.add('bg-red-600', 'text-white');
-    }
-  } catch (err) {
-    console.error('運行状況取得エラー:', err);
-  }
-}
+// fetchStatus implementation moved to src/api.ts
 
 // --- UI rendering ---
 function safeGetElement(id: string): HTMLElement | null {
   return document.getElementById(id);
+}
+
+function getUpcomingDepartures(
+  departuresData: any[],
+  directionUri: string,
+  nowMins: number,
+  limit = 10,
+): TimetableObject[] {
+  const timetable = departuresData.find((d) => d['odpt:railDirection'] === directionUri);
+  const items = (timetable?.['odpt:stationTimetableObject'] ?? []) as TimetableObject[];
+  return items
+    .filter((it) => typeof it['odpt:departureTime'] === 'string')
+    .filter((it) => timeToMinutes(it['odpt:departureTime'] as string) >= nowMins)
+    .slice(0, limit);
+}
+
+/**
+ * Collect destination station URIs from one or more TimetableObject arrays.
+ * Returns a Set of URIs (strings). Handles destination entries that are
+ * either plain URIs (string) or objects containing `owl:sameAs`.
+ */
+function collectDestinationUris(...departureLists: TimetableObject[][]): Set<string> {
+  const s = new Set<string>();
+  for (const list of departureLists) {
+    for (const t of list ?? []) {
+      const dests = (t as any)['odpt:destinationStation'];
+      if (!dests) continue;
+      if (Array.isArray(dests)) {
+        for (const d of dests) {
+          if (!d) continue;
+          if (typeof d === 'string') s.add(d as string);
+          else if (typeof d === 'object') {
+            const maybeUri = (d as any)['owl:sameAs'] || (d as any)['@id'] || (d as any)['id'];
+            if (maybeUri && typeof maybeUri === 'string') s.add(maybeUri);
+          }
+        }
+      } else if (typeof dests === 'string') {
+        s.add(dests as string);
+      }
+    }
+  }
+  return s;
+}
+
+/**
+ * Given arrays of departures, ensure we have display names for all destination
+ * station URIs. Uses the global `stationNameCache` and fetches missing stations
+ * from the ODPT `odpt:Station` endpoint in one batch call where possible.
+ */
+async function ensureStationNamesForDepartures(
+  ...departureLists: TimetableObject[][]
+): Promise<void> {
+  if (!ODPT_API_KEY) return;
+  const uris = collectDestinationUris(...departureLists);
+  const missing = Array.from(uris).filter((u) => !stationNameCache.has(u));
+  if (missing.length === 0) return;
+  try {
+    const data = await fetchStationsByUris(missing, String(ODPT_API_KEY), API_BASE_URL);
+    for (const station of data) {
+      const uri = station['owl:sameAs'] || station['@id'] || station['id'];
+      const name = getJapaneseText(
+        station['dc:title'] || station['odpt:stationTitle'] || station['title'],
+      );
+      if (uri && typeof uri === 'string') stationNameCache.set(uri, name);
+    }
+    for (const u of missing) {
+      if (!stationNameCache.has(u)) stationNameCache.set(u, u);
+    }
+  } catch (err) {
+    console.warn('Failed to fetch station names for destinations:', err);
+  }
 }
 
 async function renderBoard(): Promise<void> {
@@ -205,33 +195,31 @@ async function renderBoard(): Promise<void> {
   if (inHeader) inHeader.textContent = INBOUND_FRIENDLY_NAME_JA;
   if (outHeader) outHeader.textContent = OUTBOUND_FRIENDLY_NAME_JA;
 
-  const allDepartures = await fetchStationTimetable(stationConfig.uri);
+  const allDepartures = await fetchStationTimetable(
+    stationConfig.uri,
+    String(ODPT_API_KEY),
+    API_BASE_URL,
+  );
   const now = new Date();
   const nowMinutes = timeToMinutes(
     `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
   );
+  // Helper: get upcoming departures for a given direction from the
+  // StationTimetable response. Use find + optional chaining so we don't
+  // assume the array shape is always present, and guard the departureTime
+  // to be a string before converting.
+  const inboundTrains = getUpcomingDepartures(allDepartures, INBOUND_DIRECTION_URI, nowMinutes);
+  const outboundTrains = getUpcomingDepartures(allDepartures, OUTBOUND_DIRECTION_URI, nowMinutes);
 
-  const inboundTrains = allDepartures
-    .filter(
-      (t) =>
-        t['odpt:railDirection'] === INBOUND_DIRECTION_URI &&
-        timeToMinutes(t['odpt:departureTime']) >= nowMinutes,
-    )
-    .slice(0, 10);
-  const outboundTrains = allDepartures
-    .filter(
-      (t) =>
-        t['odpt:railDirection'] === OUTBOUND_DIRECTION_URI &&
-        timeToMinutes(t['odpt:departureTime']) >= nowMinutes,
-    )
-    .slice(0, 10);
+  // Ensure we have readable station names for destinations before rendering
+  await ensureStationNamesForDepartures(inboundTrains, outboundTrains);
 
   renderDirection('inbound', inboundTrains);
   renderDirection('outbound', outboundTrains);
-  await fetchStatus();
+  await fetchStatus(String(ODPT_API_KEY), API_BASE_URL);
 
   timetableIntervalId = window.setInterval(async () => {
-    const deps = await fetchStationTimetable(stationConfig.uri);
+    const deps = await fetchStationTimetable(stationConfig.uri, String(ODPT_API_KEY), API_BASE_URL);
     const now2 = new Date();
     const nowMins = timeToMinutes(
       `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}`,
@@ -250,11 +238,16 @@ async function renderBoard(): Promise<void> {
           timeToMinutes(t['odpt:departureTime']) >= nowMins,
       )
       .slice(0, 10);
+    // Refresh cached names for any new destinations, then render
+    await ensureStationNamesForDepartures(inT, outT);
     renderDirection('inbound', inT);
     renderDirection('outbound', outT);
   }, 150_000);
 
-  statusIntervalId = window.setInterval(fetchStatus, 300_000);
+  statusIntervalId = window.setInterval(
+    () => fetchStatus(String(ODPT_API_KEY), API_BASE_URL),
+    300_000,
+  );
 
   window.setInterval(updateClock, 1000);
   updateClock();
@@ -271,7 +264,25 @@ function renderDirection(directionId: 'inbound' | 'outbound', departures: Timeta
     .map((train) => {
       const departureTime = train['odpt:departureTime'];
       const trainTypeUri = train['odpt:trainType'] || '';
-      const destinationTitle = train['odpt:destinationStation']?.[0]?.['dc:title'] || 'N/A';
+      // Resolve destination display name:
+      let destinationTitle = 'N/A';
+      const dests = (train as any)['odpt:destinationStation'];
+      if (Array.isArray(dests) && dests.length > 0) {
+        const first = dests[0];
+        if (typeof first === 'string') {
+          destinationTitle = stationNameCache.get(first) || first;
+        } else if (first && typeof first === 'object') {
+          // Prefer an explicit dc:title (possibly language-map), else try to
+          // resolve an owl:sameAs URI via cache, else fallback to JSON value.
+          destinationTitle = getJapaneseText((first as any)['dc:title'] || (first as any)['title']);
+          if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
+            const uri = (first as any)['owl:sameAs'];
+            if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
+          }
+        }
+      } else if (typeof dests === 'string') {
+        destinationTitle = stationNameCache.get(dests) || dests;
+      }
       const trainType = TRAIN_TYPE_MAP[trainTypeUri] || { name: '不明', class: 'type-LOC' };
       return `
         <div class="train-row">
@@ -353,8 +364,14 @@ async function loadLocalConfig(): Promise<void> {
   try {
     const resp = await fetch('./config.json', { cache: 'no-store' });
     if (!resp.ok) return;
-    const cfg = (await resp.json()) as { ODPT_API_KEY?: string };
+    const cfg = (await resp.json()) as {
+      ODPT_API_KEY?: string;
+      DEFAULT_STATION_NAME?: string;
+      API_BASE_URL?: string;
+    };
     if (cfg?.ODPT_API_KEY) ODPT_API_KEY = cfg.ODPT_API_KEY;
+    if (cfg?.DEFAULT_STATION_NAME) DEFAULT_STATION_NAME = cfg.DEFAULT_STATION_NAME;
+    if (cfg?.API_BASE_URL) API_BASE_URL = cfg.API_BASE_URL;
   } catch (err) {
     console.warn('Failed to load ./config.json:', err);
   }
@@ -374,7 +391,23 @@ async function initializeBoard(): Promise<void> {
     return;
   }
 
-  await fetchRailwayStations();
+  try {
+    const data = await fetchStationsList(String(ODPT_API_KEY), API_BASE_URL, TOKYU_TOYOKO_LINE_URI);
+    STATION_CONFIGS = data
+      .map((station) => {
+        const stationNameJa = station['dc:title'] as string;
+        const stationCode = station['odpt:stationCode'] || '';
+        return {
+          name: `${stationNameJa} (${stationCode})`,
+          uri: station['owl:sameAs'],
+        } as StationConfig;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  } catch (err) {
+    console.error('Error fetching station list:', err);
+    const el = document.getElementById('station-header');
+    if (el) el.textContent = 'エラー: 駅リスト取得失敗';
+  }
   loadConfigFromStorage();
   setupModal();
   renderBoard();
