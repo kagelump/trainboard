@@ -28,12 +28,13 @@ npm start
 # open http://localhost:8080/trainboard.html (see package.json)
 ```
 
-Notes
+## API Key
 
-- The ODPT API key is in `trainboard.js` as `ODPT_API_KEY`. Replace it with your own key or change the code to load from an external config.
-- The page uses `defer` to load `trainboard.js` and expects the files to be served over HTTP (some browsers block fetch from file://).
+You need to sign up for a developer account at [ODPT](https://developer.odpt.org/) to get API keys.
+In particular, the Tokyu system is only available using the
+[challenge 2025](https://developer.odpt.org/challengeinfo) API endpoint and token.
 
-Config
+## Config
 
 - Copy `config.example.json` to `config.json` and replace `YOUR_KEY_HERE` with your actual ODPT API key.
 - `config.json` is included in `.gitignore` to avoid committing secrets. Example contents:
