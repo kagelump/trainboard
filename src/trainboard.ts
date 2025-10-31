@@ -288,7 +288,11 @@ async function loadLocalConfig(): Promise<void> {
 }
 
 async function initializeBoard(): Promise<void> {
-  await loadLocalConfig();
+  try {
+    await loadLocalConfig();
+  } catch (e) {
+    console.warn('Error loading local config:', e);
+  }
   console.log('ODPT_API_KEY:', ODPT_API_KEY, Date.now());
   if (!ODPT_API_KEY) {
     // No API key: open the API-key modal so the user can paste one.
