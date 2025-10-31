@@ -1,6 +1,7 @@
 // src/ui.ts
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
+import { timeToMinutes } from './utils';
 
 type StationCfg = { name: string; uri: string };
 
@@ -58,16 +59,63 @@ export function renderDirection(
         destinationTitle = stationNameCache.get(dests) || dests;
       }
       const trainType = trainTypeMap[trainTypeUri] || { name: '不明', class: 'type-LOC' };
+      // add a minutes column with a data attribute so it can be updated
+      // independently of API fetches
       return `
-        <div class="train-row">
-          <div class="time-col">${departureTime}</div>
+        <div class="train-row items-center justify-between">
+          <div class="minutes-col w-24 text-center" data-departure="${departureTime}">--</div>
+          <div class="time-col w-24 text-center">${departureTime}</div>
           <div class="flex justify-center items-center">
             <span class="train-type-badge ${trainType.class}">${trainType.name}</span>
           </div>
-          <div class="destination-text">${destinationTitle}行き</div>
+          <div class="destination-text">${destinationTitle}</div>
         </div>`;
     })
     .join('');
+}
+
+// --- Minutes-away updater ---
+let minutesUpdaterId: number | undefined;
+
+function parseTimeToSeconds(timeStr: string): number {
+  const [hStr, mStr] = (timeStr || '').split(':');
+  const h = Number(hStr || 0);
+  const m = Number(mStr || 0);
+  return h * 3600 + m * 60;
+}
+
+function updateMinutesOnce(): void {
+  const els = Array.from(document.querySelectorAll<HTMLElement>('[data-departure]'));
+  const now = new Date();
+  const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  for (const el of els) {
+    const dep = el.getAttribute('data-departure') || '';
+    const depSecs = parseTimeToSeconds(dep);
+    // If departure time appears to be earlier than now (cross-midnight not handled),
+    // treat as passed
+    const diff = depSecs - nowSeconds;
+    if (diff <= 0) {
+      el.textContent = '出発';
+    } else if (diff <= 60) {
+      el.textContent = '到着';
+    } else {
+      const mins = Math.ceil(diff / 60);
+      el.textContent = `${mins}分`;
+    }
+  }
+}
+
+export function startMinutesUpdater(intervalMs = 15_000): void {
+  updateMinutesOnce();
+  if (typeof minutesUpdaterId !== 'undefined') clearInterval(minutesUpdaterId);
+  minutesUpdaterId = window.setInterval(updateMinutesOnce, intervalMs) as unknown as number;
+}
+
+export function stopMinutesUpdater(): void {
+  if (typeof minutesUpdaterId !== 'undefined') {
+    clearInterval(minutesUpdaterId);
+    minutesUpdaterId = undefined;
+  }
 }
 
 export function updateClock(): void {

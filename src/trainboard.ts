@@ -35,6 +35,7 @@ import {
   openApiModal as uiOpenApiModal,
   showStatus as uiShowStatus,
   clearStatus as uiClearStatus,
+  startMinutesUpdater as uiStartMinutesUpdater,
 } from './ui';
 
 // --- 1. CONFIGURATION AND CONSTANTS ---
@@ -53,6 +54,8 @@ const TRAIN_TYPE_MAP: Record<string, TrainTypeMapEntry> = {
   'odpt.TrainType:Tokyu.CommuterExpress': { name: '通勤急行', class: 'type-CEXP' },
   'odpt.TrainType:Tokyu.LimitedExpress': { name: '特急', class: 'type-LE' },
   'odpt.TrainType:Tokyu.CommuterLimitedExpress': { name: '通勤特急', class: 'type-CLE' },
+  'odpt.TrainType:Tokyu.S-TRAIN': { name: 'Sトレイン', class: 'type-STR' },
+  'odpt.TrainType:Tokyu.F-Liner': { name: 'Fライナー', class: 'type-FLN' },
   'odpt.TrainType:Local': { name: '各停', class: 'type-LOC' },
   'odpt.TrainType:Express': { name: '急行', class: 'type-EXP' },
   'odpt.TrainType:LimitedExpress': { name: '特急', class: 'type-LE' },
@@ -168,6 +171,18 @@ async function renderBoard(): Promise<void> {
 
   uiRenderDirection('inbound', inboundTrains, stationNameCache, TRAIN_TYPE_MAP);
   uiRenderDirection('outbound', outboundTrains, stationNameCache, TRAIN_TYPE_MAP);
+  // Start the minutes-away updater which refreshes the "minutes" column
+  // independently of API fetches. This is safe to call multiple times
+  // because the UI module will clear any existing interval before starting.
+  uiStartMinutesUpdater();
+  // start minutes-away updater (updates independently of API fetches)
+  try {
+    // dynamic import to avoid circular deps at module-init time
+    // but ui exports startMinutesUpdater directly so import above is fine
+    // call via (window as any) if needed; here we assume named import below
+  } catch (e) {
+    // ignore
+  }
   try {
     await fetchStatus(String(ODPT_API_KEY), API_BASE_URL);
     uiClearStatus();
@@ -204,6 +219,8 @@ async function renderBoard(): Promise<void> {
     await ensureStationNamesForDepartures(inT, outT);
     uiRenderDirection('inbound', inT, stationNameCache, TRAIN_TYPE_MAP);
     uiRenderDirection('outbound', outT, stationNameCache, TRAIN_TYPE_MAP);
+    // restart/update the minutes-away updater after re-render
+    uiStartMinutesUpdater();
   }, 150_000);
 
   statusIntervalId = window.setInterval(
