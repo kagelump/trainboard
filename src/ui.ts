@@ -147,16 +147,13 @@ export function setupApiKeyModal(
   const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement | null;
   console.log(apiKeyInput);
   if (!modal || !apiKeyInput) return;
-  console.log('Open up API key modal setup 2');
 
   apiKeyInput.value = currentApiKey || '';
 
   const saveBtn = document.getElementById('save-api-key');
   const closeBtn = document.getElementById('close-api-key');
 
-  console.log('Open up API key modal setup 3');
   saveBtn?.addEventListener('click', () => {
-    console.log('Saved 3');
     const newKey = apiKeyInput.value ? apiKeyInput.value.trim() : null;
     if (newKey) localStorage.setItem('t2board_api_key', newKey);
     else localStorage.removeItem('t2board_api_key');
