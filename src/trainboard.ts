@@ -100,7 +100,10 @@ async function fetchRailwayStations(): Promise<void> {
       .map((station) => {
         const stationNameJa = station['dc:title'] as string;
         const stationCode = station['odpt:stationCode'] || '';
-        return { name: `${stationNameJa} (${stationCode})`, uri: station['owl:sameAs'] } as StationConfig;
+        return {
+          name: `${stationNameJa} (${stationCode})`,
+          uri: station['owl:sameAs'],
+        } as StationConfig;
       })
       .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
   } catch (err) {
@@ -137,7 +140,10 @@ async function fetchStatus(): Promise<void> {
   statusBanner.classList.add('hidden');
   statusBanner.innerHTML = '';
 
-  const params = new URLSearchParams({ 'acl:consumerKey': String(ODPT_API_KEY), 'odpt:railway': TOKYU_TOYOKO_LINE_URI });
+  const params = new URLSearchParams({
+    'acl:consumerKey': String(ODPT_API_KEY),
+    'odpt:railway': TOKYU_TOYOKO_LINE_URI,
+  });
   const url = `${API_BASE_URL}odpt:TrainInformation?${params.toString()}`;
   try {
     const resp = await apiFetch(url);
@@ -145,7 +151,12 @@ async function fetchStatus(): Promise<void> {
     if (data.length === 0) return;
     const info = data[0];
     const statusText = getJapaneseText(info['odpt:trainInformationText']);
-    if (statusText && !statusText.includes('通常運行') && !statusText.includes('平常通り運転しています') && !statusText.toLowerCase().includes('normal')) {
+    if (
+      statusText &&
+      !statusText.includes('通常運行') &&
+      !statusText.includes('平常通り運転しています') &&
+      !statusText.toLowerCase().includes('normal')
+    ) {
       statusBanner.innerHTML = `⚠️ <strong>運行情報:</strong> ${statusText}`;
       statusBanner.classList.remove('hidden');
       statusBanner.classList.add('bg-red-600', 'text-white');
@@ -164,8 +175,10 @@ async function renderBoard(): Promise<void> {
   if (!ODPT_API_KEY) {
     const inbound = safeGetElement('departures-inbound');
     const outbound = safeGetElement('departures-outbound');
-    if (inbound) inbound.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
-    if (outbound) outbound.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
+    if (inbound)
+      inbound.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
+    if (outbound)
+      outbound.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
     return;
   }
 
@@ -194,10 +207,24 @@ async function renderBoard(): Promise<void> {
 
   const allDepartures = await fetchStationTimetable(stationConfig.uri);
   const now = new Date();
-  const nowMinutes = timeToMinutes(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+  const nowMinutes = timeToMinutes(
+    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+  );
 
-  const inboundTrains = allDepartures.filter((t) => t['odpt:railDirection'] === INBOUND_DIRECTION_URI && timeToMinutes(t['odpt:departureTime']) >= nowMinutes).slice(0, 10);
-  const outboundTrains = allDepartures.filter((t) => t['odpt:railDirection'] === OUTBOUND_DIRECTION_URI && timeToMinutes(t['odpt:departureTime']) >= nowMinutes).slice(0, 10);
+  const inboundTrains = allDepartures
+    .filter(
+      (t) =>
+        t['odpt:railDirection'] === INBOUND_DIRECTION_URI &&
+        timeToMinutes(t['odpt:departureTime']) >= nowMinutes,
+    )
+    .slice(0, 10);
+  const outboundTrains = allDepartures
+    .filter(
+      (t) =>
+        t['odpt:railDirection'] === OUTBOUND_DIRECTION_URI &&
+        timeToMinutes(t['odpt:departureTime']) >= nowMinutes,
+    )
+    .slice(0, 10);
 
   renderDirection('inbound', inboundTrains);
   renderDirection('outbound', outboundTrains);
@@ -206,9 +233,23 @@ async function renderBoard(): Promise<void> {
   timetableIntervalId = window.setInterval(async () => {
     const deps = await fetchStationTimetable(stationConfig.uri);
     const now2 = new Date();
-    const nowMins = timeToMinutes(`${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}`);
-    const inT = deps.filter((t) => t['odpt:railDirection'] === INBOUND_DIRECTION_URI && timeToMinutes(t['odpt:departureTime']) >= nowMins).slice(0, 10);
-    const outT = deps.filter((t) => t['odpt:railDirection'] === OUTBOUND_DIRECTION_URI && timeToMinutes(t['odpt:departureTime']) >= nowMins).slice(0, 10);
+    const nowMins = timeToMinutes(
+      `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}`,
+    );
+    const inT = deps
+      .filter(
+        (t) =>
+          t['odpt:railDirection'] === INBOUND_DIRECTION_URI &&
+          timeToMinutes(t['odpt:departureTime']) >= nowMins,
+      )
+      .slice(0, 10);
+    const outT = deps
+      .filter(
+        (t) =>
+          t['odpt:railDirection'] === OUTBOUND_DIRECTION_URI &&
+          timeToMinutes(t['odpt:departureTime']) >= nowMins,
+      )
+      .slice(0, 10);
     renderDirection('inbound', inT);
     renderDirection('outbound', outT);
   }, 150_000);
@@ -230,7 +271,7 @@ function renderDirection(directionId: 'inbound' | 'outbound', departures: Timeta
     .map((train) => {
       const departureTime = train['odpt:departureTime'];
       const trainTypeUri = train['odpt:trainType'] || '';
-      const destinationTitle = (train['odpt:destinationStation']?.[0]?.['dc:title']) || 'N/A';
+      const destinationTitle = train['odpt:destinationStation']?.[0]?.['dc:title'] || 'N/A';
       const trainType = TRAIN_TYPE_MAP[trainTypeUri] || { name: '不明', class: 'type-LOC' };
       return `
         <div class="train-row">
@@ -254,7 +295,8 @@ function updateClock(): void {
 // --- Initialization & modal handlers ---
 function loadConfigFromStorage(): void {
   const savedUri = localStorage.getItem('t2board_station_uri');
-  const defaultStation = STATION_CONFIGS.find((c) => c.name === DEFAULT_STATION_NAME) || STATION_CONFIGS[0];
+  const defaultStation =
+    STATION_CONFIGS.find((c) => c.name === DEFAULT_STATION_NAME) || STATION_CONFIGS[0];
   let selectedStation = defaultStation;
   if (savedUri) {
     const found = STATION_CONFIGS.find((c) => c.uri === savedUri);
@@ -271,9 +313,10 @@ function setupModal(): void {
   const modal = safeGetElement('config-modal');
   const stationSelect = document.getElementById('station-select') as HTMLSelectElement | null;
   if (!modal || !stationSelect) return;
-  stationSelect.innerHTML = STATION_CONFIGS
-    .map((config) => `<option value="${config.uri}" ${config.uri === currentConfig.stationUri ? 'selected' : ''}>${config.name}</option>`)
-    .join('');
+  stationSelect.innerHTML = STATION_CONFIGS.map(
+    (config) =>
+      `<option value="${config.uri}" ${config.uri === currentConfig.stationUri ? 'selected' : ''}>${config.name}</option>`,
+  ).join('');
 
   const settingsBtn = safeGetElement('settings-button');
   settingsBtn?.addEventListener('click', () => {
@@ -324,8 +367,10 @@ async function initializeBoard(): Promise<void> {
     if (hdr) hdr.textContent = '設定エラー: config.json に ODPT_API_KEY を設定してください';
     const inC = safeGetElement('departures-inbound');
     const outC = safeGetElement('departures-outbound');
-    if (inC) inC.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
-    if (outC) outC.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
+    if (inC)
+      inC.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
+    if (outC)
+      outC.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
     return;
   }
 

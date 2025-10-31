@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "tsc",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
     "start": "http-server -c-1 -p 8080",
-    "prepare": "npm run build"
+    "format": "prettier --write \"src/**/*.{ts,js,tsx,jsx,json,md}\""
   },
   "devDependencies": {
     "http-server": "^14.1.1",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "prettier": "^3.6.0"
   }
 }

@@ -58,6 +58,47 @@ npm start
 # open http://localhost:8080/trainboard.html
 ```
 
+Vite development (recommended)
+------------------------------
+
+I added a Vite workflow for fast TypeScript edit/refresh cycles.
+
+1. Install dev dependencies:
+
+```bash
+npm install
+```
+
+2. Start the Vite dev server:
+
+```bash
+npm run dev
+```
+
+3. Open the URL printed by Vite (usually http://localhost:5173). Edit `src/trainboard.ts` and Vite will HMR/refresh the page instantly.
+
+Notes:
+- During dev the entry page is `index.html` which imports `/src/trainboard.ts` as an ES module (Vite handles TS).
+- `config.json` is served as a static asset at `http://localhost:5173/config.json` so the runtime fetch in the app will work without changes.
+
+Formatting / editor setup
+-------------------------
+
+This project uses Prettier with a 100-character line width. Files added:
+
+- `.prettierrc` — Prettier config (printWidth: 100)
+- `.editorconfig` — editor defaults (max_line_length = 100)
+- `.vscode/settings.json` — optional VS Code recommended settings (formatOnSave, ruler at 100)
+
+To format all source files:
+
+```bash
+npm install
+npm run format
+```
+
+In VS Code: install the 'Prettier - Code formatter' extension by Esben Petersen, then enable Format On Save (the workspace settings here already enable it). That will autoformat TypeScript files to the configured 100-character width on save.
+
 Next steps
 - Consider moving the API key out of source control.
 - Add automated tests or CI to validate build artifacts.
