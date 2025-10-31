@@ -276,6 +276,7 @@ async function loadLocalConfig(): Promise<void> {
   }
   // Allow user-supplied API key in localStorage to override config.json
   try {
+    console.log('Loading from localstorage ', Date.now());
     const userKey = localStorage.getItem('t2board_api_key');
     if (userKey) {
       console.log('Overriding API key from localStorage');
@@ -288,7 +289,7 @@ async function loadLocalConfig(): Promise<void> {
 
 async function initializeBoard(): Promise<void> {
   await loadLocalConfig();
-  console.log('ODPT_API_KEY:', ODPT_API_KEY);
+  console.log('ODPT_API_KEY:', ODPT_API_KEY, Date.now());
   if (!ODPT_API_KEY) {
     // No API key: open the API-key modal so the user can paste one.
     uiSetupApiKeyModal(ODPT_API_KEY, (newKey) => {
