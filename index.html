@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東急東横線 発車案内板 (dev)</title>
+    <!-- Load Tailwind CSS via CDN for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" crossorigin src="./assets/index-DQb2ZsE7.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DaGbFjlG.css">
+</head>
+<body class="p-4">
+
+    <!-- Main Header -->
+    <header class="flex justify-between items-center mb-4 border-b-4 border-white pb-2">
+        <h1 id="station-header" class="text-5xl font-extrabold tracking-tight">読込中...</h1>
+        <div class="flex items-center space-x-4">
+            <span id="time-header" class="text-4xl font-mono">--:--</span>
+            <button id="settings-button" class="rounded-lg shadow-xl hover:bg-white hover:text-black transition duration-150">
+                ⚙️
+            </button>
+        </div>
+    </header>
+
+    <!-- Real-time Status Banner -->
+    <div id="status-banner" class="hidden p-3 mb-4 rounded-lg active" role="alert">
+        <!-- Status message will be inserted here -->
+    </div>
+
+    <!-- Main Departure Board Grid -->
+    <main id="departure-board" class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Direction 1 Panel (Inbound/Shibuya) -->
+        <div id="panel-inbound" class="p-2 border-4 border-white rounded-xl">
+            <h2 id="direction-inbound-header" class="text-3xl font-bold mb-2 text-center underline pb-1">渋谷・副都心線方面</h2>
+            <div id="departures-inbound" class="space-y-1">
+                <p class="text-center text-2xl pt-8">時刻表を取得中...</p>
+            </div>
+        </div>
+
+        <!-- Direction 2 Panel (Outbound/Yokohama) -->
+        <div id="panel-outbound" class="p-2 border-4 border-white rounded-xl">
+            <h2 id="direction-outbound-header" class="text-3xl font-bold mb-2 text-center underline pb-1">横浜・元町中華街方面</h2>
+            <div id="departures-outbound" class="space-y-1">
+                <p class="text-center text-2xl pt-8">時刻表を取得中...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Configuration Modal -->
+    <div id="config-modal" class="fixed inset-0 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-black border-4 border-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
+            <h2 class="text-4xl font-extrabold mb-6 text-center">設定</h2>
+
+            <label for="station-select" class="block mb-2 font-medium">駅の選択 (東急東横線)</label>
+            <select id="station-select" class="w-full mb-6 py-3 px-4 rounded-lg">
+                <!-- Options will be populated by JS -->
+                <option>駅を読込中...</option>
+            </select>
+
+            <button id="save-settings" class="w-full bg-yellow-500 text-black py-3 rounded-lg hover:bg-yellow-400 transition">
+                適用して再読込
+            </button>
+            <button id="close-modal" class="w-full mt-3 bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <!-- Dev: Load the TypeScript module directly. Vite will serve/transform this during dev. -->
+
+</body>
+</html>
