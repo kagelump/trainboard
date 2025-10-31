@@ -1,0 +1,8 @@
+# Local config containing secrets
+config.json
+
+# Node modules (if using npm)
+node_modules/
+
+# Logs
+npm-debug.log*

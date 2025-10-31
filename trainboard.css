@@ -1,0 +1,106 @@
+/* trainboard.css - extracted from trainboard.html */
+
+/* Custom styles for E-Ink high contrast look */
+body {
+    /* Prioritize black background for classic departure board look / high contrast on e-ink */
+    background-color: #000; 
+    color: #FFF;
+    font-family: 'Inter', monospace, sans-serif; /* Monospace is good for tabular data/e-ink */
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Allow scrolling if content overflows */
+}
+
+/* Train row specific styling for maximum contrast and font size */
+.train-row {
+    transition: background-color 0.1s ease;
+    display: grid;
+    grid-template-columns: 1fr 2fr 3fr; /* Time | Type | Destination */
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #333; /* Subtle divider */
+}
+
+/* Time column - large and prominent */
+.time-col {
+    font-size: 3rem; /* Very large for visibility */
+    font-weight: 700;
+    line-height: 1;
+    align-self: center;
+}
+
+/* Train Type badge - adapted for B/W/R/Y palette */
+.train-type-badge {
+    font-size: 1.5rem;
+    font-weight: 800;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    line-height: 1.2;
+    align-self: center;
+    max-width: fit-content;
+    margin: auto;
+    white-space: nowrap;
+}
+
+/* Destination Text */
+.destination-text {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    align-self: center;
+    text-align: left;
+    word-break: break-word;
+}
+
+/* E-Ink Color Adaptation Classes (Japanese Train Type Names) */
+
+/* Limited Express (特急) - Red */
+.type-LE { background-color: #F00; color: #FFF; }
+/* Express (急行) - Yellow */
+.type-EXP { background-color: #FF0; color: #000; }
+/* Local (各停) - Default/Dark Gray */
+.type-LOC { background-color: #333; color: #FFF; }
+/* Commuter Limited Express (通勤特急) - Red with Yellow Border */
+.type-CLE { background-color: #F00; color: #FFF; border: 3px solid #FF0; }
+/* Commuter Express (通勤急行) - Yellow with Darker Border */
+.type-CEXP { background-color: #FF0; color: #000; border: 3px solid #333; }
+
+/* Delay Status Banner (Red) */
+#status-banner.active {
+    background-color: #F00; 
+    color: #FFF; 
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Settings button (clean, high contrast) */
+#settings-button {
+    border: 2px solid #FFF;
+    color: #FFF;
+    background-color: #333;
+    padding: 0.5rem 1rem;
+    font-size: 1.5rem;
+    border-radius: 0.5rem;
+}
+
+/* Modal styling - large and minimal */
+#config-modal {
+    background-color: rgba(0, 0, 0, 0.95);
+}
+#config-modal label {
+    font-size: 1.5rem;
+    margin-top: 1rem;
+}
+#config-modal select, #config-modal button {
+    background-color: #FFF;
+    color: #000;
+    border: none;
+    padding: 0.75rem;
+    font-size: 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+}
