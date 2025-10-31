@@ -148,6 +148,25 @@ body {
 
 /* Responsive: mobile-friendly layout tweaks */
 @media (max-width: 640px) {
+  body {
+    font-size: 0.9rem;
+  }
+  .text-3xl {
+    font-size: 1.2rem;
+    line-height: 1rem;
+  }
+  .text-5xl {
+    font-size: 1.5rem;
+    line-height: 1rem;
+  }
+  .text-4xl {
+    font-size: 1.5rem;
+    line-height: 1rem;
+  }
+  #settings-button {
+    font-size: 1.5rem;
+    padding: 0.2rem;
+  }
   .train-row {
     /* Columns: minutes | time | train-type | destination */
     grid-template-columns: 1fr 1fr 1fr 2fr;

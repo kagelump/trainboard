@@ -63,8 +63,8 @@ export function renderDirection(
       // independently of API fetches
       return `
         <div class="train-row items-center justify-between">
-          <div class="minutes-col w-24 text-center" data-departure="${departureTime}">--</div>
-          <div class="time-col w-24 text-center">${departureTime}</div>
+          <div class="minutes-col text-center" data-departure="${departureTime}">--</div>
+          <div class="time-col text-center">${departureTime}</div>
           <div class="flex justify-center items-center">
             <span class="train-type-badge ${trainType.class}">${trainType.name}</span>
           </div>
