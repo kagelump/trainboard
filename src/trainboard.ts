@@ -11,17 +11,26 @@ type TrainTypeMapEntry = {
   class: string;
 };
 
-type TimetableDestination = { 'dc:title'?: string };
-
-type TimetableObject = {
-  'odpt:departureTime': string;
-  'odpt:trainType'?: string;
-  'odpt:railDirection'?: string;
-  'odpt:destinationStation'?: TimetableDestination[];
-  [key: string]: unknown;
-};
+// timetable entry types are defined in src/types.ts (StationTimetableEntry)
 
 import { fetchStationTimetable, fetchStatus, fetchStationsByUris, fetchStationsList } from './api';
+import type { OdptStation, OdptStationTimetable, StationTimetableEntry } from './types';
+import {
+  getJapaneseText,
+  timeToMinutes,
+  getUpcomingDepartures,
+  collectDestinationUris,
+} from './utils';
+import { SimpleCache } from './cache';
+import {
+  setStationHeader,
+  setLoadingState,
+  setDirectionHeaders,
+  renderDirection as uiRenderDirection,
+  updateClock as uiUpdateClock,
+  chooseInitialStation,
+  setupModal as uiSetupModal,
+} from './ui';
 
 // --- 1. CONFIGURATION AND CONSTANTS ---
 let ODPT_API_KEY: string | null = null; // loaded from ./config.json at runtime
@@ -55,25 +64,15 @@ let timetableIntervalId: number | undefined;
 let statusIntervalId: number | undefined;
 
 // Cache for station display names keyed by station URI
-const stationNameCache: Map<string, string> = new Map();
+const stationNameCache = new SimpleCache<string>(500);
 
 // --- Utilities ---
-function getJapaneseText(langMap: unknown): string {
-  if (!langMap) return 'N/A';
-  if (typeof langMap === 'string') return langMap;
-  const map = langMap as Record<string, string>;
-  return map.ja || map.en || 'N/A';
-}
+// Lightweight helpers are in `src/utils.ts` (imported above)
 
 function getTodayCalendarURI(): string {
   const day = new Date().getDay();
   if (day >= 1 && day <= 5) return 'odpt.Calendar:Weekday';
   return 'odpt.Calendar:SaturdayHoliday';
-}
-
-function timeToMinutes(timeStr: string): number {
-  const [h, m] = timeStr.split(':').map((v) => Number(v));
-  return h * 60 + m;
 }
 
 // --- Data fetching ---
@@ -90,47 +89,14 @@ function safeGetElement(id: string): HTMLElement | null {
   return document.getElementById(id);
 }
 
-function getUpcomingDepartures(
-  departuresData: any[],
-  directionUri: string,
-  nowMins: number,
-  limit = 10,
-): TimetableObject[] {
-  const timetable = departuresData.find((d) => d['odpt:railDirection'] === directionUri);
-  const items = (timetable?.['odpt:stationTimetableObject'] ?? []) as TimetableObject[];
-  return items
-    .filter((it) => typeof it['odpt:departureTime'] === 'string')
-    .filter((it) => timeToMinutes(it['odpt:departureTime'] as string) >= nowMins)
-    .slice(0, limit);
-}
+// getUpcomingDepartures is provided by src/utils.ts
 
 /**
  * Collect destination station URIs from one or more TimetableObject arrays.
  * Returns a Set of URIs (strings). Handles destination entries that are
  * either plain URIs (string) or objects containing `owl:sameAs`.
  */
-function collectDestinationUris(...departureLists: TimetableObject[][]): Set<string> {
-  const s = new Set<string>();
-  for (const list of departureLists) {
-    for (const t of list ?? []) {
-      const dests = (t as any)['odpt:destinationStation'];
-      if (!dests) continue;
-      if (Array.isArray(dests)) {
-        for (const d of dests) {
-          if (!d) continue;
-          if (typeof d === 'string') s.add(d as string);
-          else if (typeof d === 'object') {
-            const maybeUri = (d as any)['owl:sameAs'] || (d as any)['@id'] || (d as any)['id'];
-            if (maybeUri && typeof maybeUri === 'string') s.add(maybeUri);
-          }
-        }
-      } else if (typeof dests === 'string') {
-        s.add(dests as string);
-      }
-    }
-  }
-  return s;
-}
+// collectDestinationUris is provided by src/utils.ts
 
 /**
  * Given arrays of departures, ensure we have display names for all destination
@@ -138,7 +104,7 @@ function collectDestinationUris(...departureLists: TimetableObject[][]): Set<str
  * from the ODPT `odpt:Station` endpoint in one batch call where possible.
  */
 async function ensureStationNamesForDepartures(
-  ...departureLists: TimetableObject[][]
+  ...departureLists: StationTimetableEntry[][]
 ): Promise<void> {
   if (!ODPT_API_KEY) return;
   const uris = collectDestinationUris(...departureLists);
@@ -163,8 +129,8 @@ async function ensureStationNamesForDepartures(
 
 async function renderBoard(): Promise<void> {
   if (!ODPT_API_KEY) {
-    const inbound = safeGetElement('departures-inbound');
-    const outbound = safeGetElement('departures-outbound');
+    const inbound = document.getElementById('departures-inbound');
+    const outbound = document.getElementById('departures-outbound');
     if (inbound)
       inbound.innerHTML = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
     if (outbound)
@@ -182,18 +148,9 @@ async function renderBoard(): Promise<void> {
     return;
   }
 
-  const hdr = safeGetElement('station-header');
-  if (hdr) hdr.textContent = stationConfig.name;
-
-  const loadingHtml = `<p class="text-center text-2xl pt-8">時刻表を取得中...</p>`;
-  const inContainer = safeGetElement('departures-inbound');
-  const outContainer = safeGetElement('departures-outbound');
-  if (inContainer) inContainer.innerHTML = loadingHtml;
-  if (outContainer) outContainer.innerHTML = loadingHtml;
-  const inHeader = safeGetElement('direction-inbound-header');
-  const outHeader = safeGetElement('direction-outbound-header');
-  if (inHeader) inHeader.textContent = INBOUND_FRIENDLY_NAME_JA;
-  if (outHeader) outHeader.textContent = OUTBOUND_FRIENDLY_NAME_JA;
+  setStationHeader(stationConfig.name);
+  setLoadingState();
+  setDirectionHeaders(INBOUND_FRIENDLY_NAME_JA, OUTBOUND_FRIENDLY_NAME_JA);
 
   const allDepartures = await fetchStationTimetable(
     stationConfig.uri,
@@ -214,8 +171,8 @@ async function renderBoard(): Promise<void> {
   // Ensure we have readable station names for destinations before rendering
   await ensureStationNamesForDepartures(inboundTrains, outboundTrains);
 
-  renderDirection('inbound', inboundTrains);
-  renderDirection('outbound', outboundTrains);
+  uiRenderDirection('inbound', inboundTrains, stationNameCache, TRAIN_TYPE_MAP);
+  uiRenderDirection('outbound', outboundTrains, stationNameCache, TRAIN_TYPE_MAP);
   await fetchStatus(String(ODPT_API_KEY), API_BASE_URL);
 
   timetableIntervalId = window.setInterval(async () => {
@@ -224,24 +181,20 @@ async function renderBoard(): Promise<void> {
     const nowMins = timeToMinutes(
       `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}`,
     );
-    const inT = deps
-      .filter(
-        (t) =>
-          t['odpt:railDirection'] === INBOUND_DIRECTION_URI &&
-          timeToMinutes(t['odpt:departureTime']) >= nowMins,
-      )
-      .slice(0, 10);
-    const outT = deps
-      .filter(
-        (t) =>
-          t['odpt:railDirection'] === OUTBOUND_DIRECTION_URI &&
-          timeToMinutes(t['odpt:departureTime']) >= nowMins,
-      )
-      .slice(0, 10);
+    const inT = getUpcomingDepartures(
+      deps as OdptStationTimetable[],
+      INBOUND_DIRECTION_URI,
+      nowMins,
+    );
+    const outT = getUpcomingDepartures(
+      deps as OdptStationTimetable[],
+      OUTBOUND_DIRECTION_URI,
+      nowMins,
+    );
     // Refresh cached names for any new destinations, then render
     await ensureStationNamesForDepartures(inT, outT);
-    renderDirection('inbound', inT);
-    renderDirection('outbound', outT);
+    uiRenderDirection('inbound', inT, stationNameCache, TRAIN_TYPE_MAP);
+    uiRenderDirection('outbound', outT, stationNameCache, TRAIN_TYPE_MAP);
   }, 150_000);
 
   statusIntervalId = window.setInterval(
@@ -249,115 +202,8 @@ async function renderBoard(): Promise<void> {
     300_000,
   );
 
-  window.setInterval(updateClock, 1000);
-  updateClock();
-}
-
-function renderDirection(directionId: 'inbound' | 'outbound', departures: TimetableObject[]): void {
-  const container = safeGetElement(`departures-${directionId}`);
-  if (!container) return;
-  if (departures.length === 0) {
-    container.innerHTML = `<p class="text-center text-2xl pt-8">本日の発車予定はありません。</p>`;
-    return;
-  }
-  container.innerHTML = departures
-    .map((train) => {
-      const departureTime = train['odpt:departureTime'];
-      const trainTypeUri = train['odpt:trainType'] || '';
-      // Resolve destination display name:
-      let destinationTitle = 'N/A';
-      const dests = (train as any)['odpt:destinationStation'];
-      if (Array.isArray(dests) && dests.length > 0) {
-        const first = dests[0];
-        if (typeof first === 'string') {
-          destinationTitle = stationNameCache.get(first) || first;
-        } else if (first && typeof first === 'object') {
-          // Prefer an explicit dc:title (possibly language-map), else try to
-          // resolve an owl:sameAs URI via cache, else fallback to JSON value.
-          destinationTitle = getJapaneseText((first as any)['dc:title'] || (first as any)['title']);
-          if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
-            const uri = (first as any)['owl:sameAs'];
-            if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
-          }
-        }
-      } else if (typeof dests === 'string') {
-        destinationTitle = stationNameCache.get(dests) || dests;
-      }
-      const trainType = TRAIN_TYPE_MAP[trainTypeUri] || { name: '不明', class: 'type-LOC' };
-      return `
-        <div class="train-row">
-          <div class="time-col">${departureTime}</div>
-          <div class="flex justify-center items-center">
-            <span class="train-type-badge ${trainType.class}">${trainType.name}</span>
-          </div>
-          <div class="destination-text">${destinationTitle}行き</div>
-        </div>`;
-    })
-    .join('');
-}
-
-function updateClock(): void {
-  const el = safeGetElement('time-header');
-  if (!el) return;
-  const now = new Date();
-  el.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-}
-
-// --- Initialization & modal handlers ---
-function loadConfigFromStorage(): void {
-  const savedUri = localStorage.getItem('t2board_station_uri');
-  const defaultStation =
-    STATION_CONFIGS.find((c) => c.name === DEFAULT_STATION_NAME) || STATION_CONFIGS[0];
-  let selectedStation = defaultStation;
-  if (savedUri) {
-    const found = STATION_CONFIGS.find((c) => c.uri === savedUri);
-    if (found) selectedStation = found;
-  } else if (STATION_CONFIGS.length > 0) {
-    selectedStation = defaultStation || STATION_CONFIGS[0];
-  }
-  if (selectedStation) {
-    currentConfig = { stationUri: selectedStation.uri, stationName: selectedStation.name };
-  }
-}
-
-function setupModal(): void {
-  const modal = safeGetElement('config-modal');
-  const stationSelect = document.getElementById('station-select') as HTMLSelectElement | null;
-  if (!modal || !stationSelect) return;
-  stationSelect.innerHTML = STATION_CONFIGS.map(
-    (config) =>
-      `<option value="${config.uri}" ${config.uri === currentConfig.stationUri ? 'selected' : ''}>${config.name}</option>`,
-  ).join('');
-
-  const settingsBtn = safeGetElement('settings-button');
-  settingsBtn?.addEventListener('click', () => {
-    stationSelect.value = currentConfig.stationUri || '';
-    modal.classList.remove('hidden');
-    modal.classList.add('flex', 'opacity-100');
-  });
-
-  const closeBtn = safeGetElement('close-modal');
-  closeBtn?.addEventListener('click', () => {
-    modal.classList.remove('flex', 'opacity-100');
-    modal.classList.add('hidden');
-  });
-
-  const saveBtn = safeGetElement('save-settings');
-  saveBtn?.addEventListener('click', () => {
-    const newUri = stationSelect.value;
-    localStorage.setItem('t2board_station_uri', newUri);
-    loadConfigFromStorage();
-    renderBoard();
-    modal.classList.remove('flex', 'opacity-100');
-    modal.classList.add('hidden');
-  });
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.remove('flex', 'opacity-100');
-      modal.classList.add('hidden');
-    }
-  });
+  window.setInterval(uiUpdateClock, 1000);
+  uiUpdateClock();
 }
 
 async function loadLocalConfig(): Promise<void> {
@@ -405,11 +251,19 @@ async function initializeBoard(): Promise<void> {
       .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
   } catch (err) {
     console.error('Error fetching station list:', err);
-    const el = document.getElementById('station-header');
-    if (el) el.textContent = 'エラー: 駅リスト取得失敗';
+    setStationHeader('エラー: 駅リスト取得失敗');
   }
-  loadConfigFromStorage();
-  setupModal();
+  // choose initial station (read from localStorage if present)
+  const selected = chooseInitialStation(STATION_CONFIGS, DEFAULT_STATION_NAME);
+  if (selected) currentConfig = { stationUri: selected.uri, stationName: selected.name };
+
+  // wire modal UI; onSave will update currentConfig and re-render
+  uiSetupModal(STATION_CONFIGS, currentConfig.stationUri, (newUri) => {
+    const found = STATION_CONFIGS.find((c) => c.uri === newUri);
+    currentConfig = { stationUri: newUri, stationName: found ? found.name : null };
+    renderBoard();
+  });
+
   renderBoard();
 }
 
