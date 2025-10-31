@@ -259,7 +259,7 @@ async function renderBoard(): Promise<void> {
   uiUpdateClock();
 }
 
-async function loadLocalConfig(): Promise<void> {
+async function loadFromLocalConfig(): Promise<void> {
   try {
     const resp = await fetch('./config.json', { cache: 'no-store' });
     if (!resp.ok) return;
@@ -274,6 +274,10 @@ async function loadLocalConfig(): Promise<void> {
   } catch (err) {
     console.warn('Failed to load ./config.json:', err);
   }
+}
+
+async function loadLocalConfig(): Promise<void> {
+  await loadFromLocalConfig();
   // Allow user-supplied API key in localStorage to override config.json
   try {
     console.log('Loading from localstorage ', Date.now());
