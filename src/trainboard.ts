@@ -59,10 +59,10 @@ function getJapaneseText(langMap: unknown): string {
   return map.ja || map.en || 'N/A';
 }
 
-function getTodayCalendarURIs(): string[] {
+function getTodayCalendarURI(): string {
   const day = new Date().getDay();
-  if (day >= 1 && day <= 5) return ['odpt.Calendar:Weekday'];
-  return ['odpt.Calendar:SaturdayHoliday'];
+  if (day >= 1 && day <= 5) return 'odpt.Calendar:Weekday';
+  return 'odpt.Calendar:SaturdayHoliday';
 }
 
 function timeToMinutes(timeStr: string): number {
@@ -114,19 +114,19 @@ async function fetchRailwayStations(): Promise<void> {
 }
 
 async function fetchStationTimetable(stationUri: string): Promise<TimetableObject[]> {
-  const calendarURIs = getTodayCalendarURIs();
+  const calendarURI = getTodayCalendarURI();
   const params = new URLSearchParams({
     'acl:consumerKey': String(ODPT_API_KEY),
     'odpt:railway': TOKYU_TOYOKO_LINE_URI,
     'odpt:station': stationUri,
+    'odpt:calendar': calendarURI,
   });
   const url = `${API_BASE_URL}odpt:StationTimetable?${params.toString()}`;
   try {
     const resp = await apiFetch(url);
     const data = (await resp.json()) as any[];
     if (data.length === 0) return [];
-    const expected = calendarURIs[0];
-    const timetable = data.find((t) => t['odpt:calendar'] === expected);
+    const timetable = data.find((t) => t['odpt:calendar'] === calendarURI);
     return (timetable?.['odpt:stationTimetableObject'] as TimetableObject[]) || [];
   } catch (err) {
     console.error('時刻表取得エラー:', err);
