@@ -145,3 +145,44 @@ body {
   border-radius: 0.5rem;
   font-weight: 700;
 }
+
+/* Responsive: mobile-friendly layout tweaks */
+@media (max-width: 640px) {
+  .train-row {
+    /* Columns: minutes | time | train-type | destination */
+    grid-template-columns: 1fr 1fr 1fr 2fr;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+  }
+
+  .minutes-col {
+    font-size: 1rem;
+  }
+
+  .time-col {
+    font-size: 1rem;
+    text-align: left;
+  }
+
+  /* the train-type wrapper is the third child; target it to fill the type area */
+  .train-row > div:nth-child(3) {
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .destination-text {
+    font-size: 1rem;
+    text-align: left;
+    word-break: break-word;
+  }
+
+  /* Reduce heavy fonts slightly to fit small screens */
+  .train-type-badge {
+    font-size: 1rem;
+    padding: 0.2rem 0.45rem;
+  }
+
+  .time-col {
+    line-height: 1;
+  }
+}
