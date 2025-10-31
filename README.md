@@ -1,99 +1,5 @@
 # Trainboard
 
-A compact static departure board for the Tokyu Toyoko Line.
-
-Files
-
-- `trainboard.html` — main HTML page
-- `trainboard.js` — extracted JavaScript logic (fetches ODPT data)
-- `trainboard.css` — extracted styles
-
-Quick run (two options)
-
-1. Python built-in HTTP server (no install required):
-
-```bash
-cd /workspaces/trainboard
-python3 -m http.server 8000
-# open http://localhost:8000/trainboard.html
-```
-
-2. Using `http-server` (npm)
-
-```bash
-cd /workspaces/trainboard
-# if you haven't installed http-server locally
-npm install
-npm start
-# open http://localhost:8080/trainboard.html (see package.json)
-```
-
-## API Key
-
-You need to sign up for a developer account at [ODPT](https://developer.odpt.org/) to get API keys.
-In particular, the Tokyu system is only available using the
-[challenge 2025](https://developer.odpt.org/challengeinfo) API endpoint and token.
-
-## Config
-
-- Copy `config.example.json` to `config.json` and replace `YOUR_KEY_HERE` with your actual ODPT API key.
-- `config.json` is included in `.gitignore` to avoid committing secrets. Example contents:
-
-```json
-{
-  "ODPT_API_KEY": "YOUR_KEY_HERE"
-}
-```
-
-## TypeScript build
-
-This repo includes a TypeScript source at `src/trainboard.ts`. To build it:
-
-```bash
-npm install
-npm run build
-```
-
-The compiled JavaScript will be emitted to `dist/` and `trainboard.html` is already set to load the built file. During development you can run the static server (after building):
-
-```bash
-npm start
-# open http://localhost:8080/trainboard.html
-```
-
-## Vite development (recommended)
-
-I added a Vite workflow for fast TypeScript edit/refresh cycles.
-
-1. Install dev dependencies:
-
-```bash
-npm install
-```
-
-2. Start the Vite dev server:
-
-```bash
-npm run dev
-```
-
-3. Open the URL printed by Vite (usually http://localhost:5173). Edit `src/trainboard.ts` and Vite will HMR/refresh the page instantly.
-
-Notes:
-
-- During dev the entry page is `index.html` which imports `/src/trainboard.ts` as an ES module (Vite handles TS).
-- `config.json` is served as a static asset at `http://localhost:5173/config.json` so the runtime fetch in the app will work without changes.
-
-## Formatting / editor setup
-
-This project uses Prettier with a 100-character line width. Files added:
-
-- `.prettierrc` — Prettier config (printWidth: 100)
-- `.editorconfig` — editor defaults (max_line_length = 100)
-- `.vscode/settings.json` — optional VS Code recommended settings (formatOnSave, ruler at 100)
-
-# Trainboard
-
 A compact static departure board for the Tokyu Toyoko Line. This repo contains a small TypeScript-powered static app that queries ODPT endpoints and shows upcoming departures.
 
 Highlights of changes in this repo
@@ -158,6 +64,10 @@ Requirements and branch expectations
 - The workflow uses the built-in `GITHUB_TOKEN` so it can push to `gh-pages`. If you require a different deployment strategy (deploy to a different branch or use a personal token), update the workflow accordingly.
 
 ## API key and configuration
+
+You need to sign up for a developer account at [ODPT](https://developer.odpt.org/) to get API keys.
+In particular, the Tokyu system is only available using the
+[challenge 2025](https://developer.odpt.org/challengeinfo) API endpoint and token.
 
 The app reads a `config.json` at runtime if present (useful for local testing or static hosting). Example `config.example.json` is provided. Additionally, the settings modal (⚙️ button) lets you paste a custom ODPT API key which will be persisted to `localStorage` and used in preference to `config.json`.
 
