@@ -70,32 +70,6 @@ let statusIntervalId: number | undefined;
 
 // Cache for station display names keyed by station URI
 const stationNameCache = new SimpleCache<string>(500);
-// Ensure settings button always opens the modal (fallback if setupModal
-// hasn't yet been called because station list is still loading).
-function attachSettingsButtonFallback(): void {
-  const btn = document.getElementById('settings-button');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    try {
-      // pre-fill API key input if available
-      const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement | null;
-      const stored = (() => {
-        try {
-          return localStorage.getItem('t2board_api_key');
-        } catch (e) {
-          return null;
-        }
-      })();
-      if (apiKeyInput) apiKeyInput.value = ODPT_API_KEY || stored || '';
-    } catch (e) {
-      // ignore DOM/localStorage errors
-    }
-    uiOpenStationModal();
-  });
-}
-
-// attach fallback immediately so UI responds even while fetching station list
-attachSettingsButtonFallback();
 
 // --- Utilities ---
 // Lightweight helpers are in `src/utils.ts` (imported above)
@@ -106,28 +80,10 @@ function getTodayCalendarURI(): string {
   return 'odpt.Calendar:SaturdayHoliday';
 }
 
-// --- Data fetching ---
-async function fetchRailwayStations(): Promise<void> {
-  // deprecated: implementation moved to src/api.ts; call fetchStationsList in initializeBoard
-}
-
-// fetchStationTimetable implementation moved to src/api.ts
-
-// fetchStatus implementation moved to src/api.ts
-
 // --- UI rendering ---
 function safeGetElement(id: string): HTMLElement | null {
   return document.getElementById(id);
 }
-
-// getUpcomingDepartures is provided by src/utils.ts
-
-/**
- * Collect destination station URIs from one or more TimetableObject arrays.
- * Returns a Set of URIs (strings). Handles destination entries that are
- * either plain URIs (string) or objects containing `owl:sameAs`.
- */
-// collectDestinationUris is provided by src/utils.ts
 
 /**
  * Given arrays of departures, ensure we have display names for all destination
