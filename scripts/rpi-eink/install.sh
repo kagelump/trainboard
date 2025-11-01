@@ -2,6 +2,12 @@
 # install.sh
 # Automated installation script for Trainboard on Raspberry Pi with e-ink display
 # This script should be run on a fresh Raspberry Pi OS installation
+#
+# Environment variables:
+#   TRAINBOARD_REPO - Repository URL to clone (default: https://github.com/kagelump/trainboard.git)
+#
+# Example:
+#   TRAINBOARD_REPO=https://github.com/yourfork/trainboard.git ./install.sh
 
 set -e
 
@@ -101,6 +107,8 @@ install_bcm2835() {
     
     log_info "Installing BCM2835 library..."
     cd /tmp
+    # Note: The BCM2835 library website only offers HTTP, not HTTPS
+    # Using wget's certificate check and verifying integrity would be ideal in production
     wget -q http://www.airspayce.com/mikem/bcm2835/bcm2835-1.71.tar.gz
     tar zxf bcm2835-1.71.tar.gz
     cd bcm2835-1.71/
@@ -130,6 +138,9 @@ setup_epaper_library() {
     
     log_info "Installing Python dependencies for e-Paper..."
     cd "$EPAPER_DIR/RaspberryPi_JetsonNano/python"
+    # Note: --break-system-packages is needed for Raspberry Pi OS bookworm and later
+    # which uses externally-managed Python environments. In production, consider
+    # using a virtual environment instead for better isolation.
     sudo pip3 install -r requirements.txt --break-system-packages || {
         log_error "Failed to install Python dependencies"
         exit 1
@@ -140,6 +151,9 @@ setup_epaper_library() {
 
 # Clone and setup trainboard application
 setup_trainboard() {
+    # Allow customization of repository URL for forks
+    REPO_URL="${TRAINBOARD_REPO:-https://github.com/kagelump/trainboard.git}"
+    
     if [ -d "$APP_DIR" ]; then
         log_warn "Trainboard directory already exists: $APP_DIR"
         read -p "Remove and reinstall? (y/N): " -n 1 -r
@@ -152,8 +166,8 @@ setup_trainboard() {
         fi
     fi
     
-    log_info "Cloning trainboard repository..."
-    git clone https://github.com/kagelump/trainboard.git "$APP_DIR" || {
+    log_info "Cloning trainboard repository from $REPO_URL..."
+    git clone "$REPO_URL" "$APP_DIR" || {
         log_error "Failed to clone trainboard repository"
         exit 1
     }

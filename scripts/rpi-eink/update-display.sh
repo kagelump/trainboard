@@ -48,7 +48,7 @@ fi
 if ! pgrep -f "http-server.*$HTTP_PORT" > /dev/null; then
     log "Starting local web server on port $HTTP_PORT..."
     cd "$APP_DIR/dist" || error_exit "dist directory not found"
-    nohup npx http-server -p $HTTP_PORT > /tmp/trainboard-server.log 2>&1 &
+    nohup npx http-server -p "$HTTP_PORT" > /tmp/trainboard-server.log 2>&1 &
     sleep 3
 fi
 
@@ -162,7 +162,12 @@ def main():
         
         if image.size != (display_width, display_height):
             logging.info(f"Resizing image from {image.size} to ({display_width}, {display_height})")
-            image = image.resize((display_width, display_height), Image.Resampling.LANCZOS)
+            # Use Image.LANCZOS for compatibility with older PIL versions
+            try:
+                image = image.resize((display_width, display_height), Image.Resampling.LANCZOS)
+            except AttributeError:
+                # Fallback for older PIL versions
+                image = image.resize((display_width, display_height), Image.LANCZOS)
         
         # Convert to mode compatible with the 4-color display
         # The display supports: White, Black, Red, Yellow
