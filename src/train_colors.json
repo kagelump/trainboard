@@ -170,7 +170,7 @@
     "fill": "gray"
   },
   "odpt.TrainType:Tokyu.CommuterLimitedExpress": {
-    "outline": "black",
+    "outline": "yellow",
     "text": "red",
     "fill": "white"
   },
@@ -185,9 +185,9 @@
     "fill": "black"
   },
   "odpt.TrainType:Tokyu.LimitedExpress": {
-    "outline": "black",
-    "text": "black",
-    "fill": "red"
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
   },
   "odpt.TrainType:Tokyu.Local": {
     "outline": "black",
