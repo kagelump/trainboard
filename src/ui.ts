@@ -2,7 +2,8 @@
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
 import { timeToMinutes, formatTimeHHMM } from './utils';
-import { getStationConfigs } from './dataLoaders';
+import { getStationConfigs, getRailwayConfigs } from './dataLoaders';
+import prefectures from './prefectures.json';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -12,6 +13,7 @@ export const STORAGE_KEY_RAILWAY_URI = 't2board_railway_uri';
 export const STORAGE_KEY_STATION_URI = 't2board_station_uri';
 export const STORAGE_KEY_API_KEY = 't2board_api_key';
 export const STORAGE_KEY_RECENT_RAILWAYS = 't2board_recent_railways';
+export const STORAGE_KEY_PREFECTURE = 't2board_prefecture';
 
 // Maximum number of recent railways to store
 const MAX_RECENT_RAILWAYS = 5;
@@ -260,15 +262,23 @@ export function setupSettingsModal(
   const modal = document.getElementById('config-modal');
   const railwaySelect = document.getElementById('railway-select') as HTMLSelectElement | null;
   const stationSelect = document.getElementById('station-select') as HTMLSelectElement | null;
-  if (!modal || !railwaySelect || !stationSelect) return;
+  const prefectureSelect = document.getElementById('prefecture-select') as HTMLSelectElement | null;
+  if (!modal || !railwaySelect || !stationSelect || !prefectureSelect) return;
 
-  function populateRailwayOptions(uri: string | null) {
+  function populateRailwayOptions(uri: string | null, prefecture?: string | null) {
     if (!railwaySelect) return;
     let html = '';
     const recentUris = getRecentRailways();
+    // Determine allowed railways based on prefecture filter
+    let allowedSet: Set<string> | null = null;
+    if (prefecture && (prefectures as Record<string, string[]>)[prefecture]) {
+      allowedSet = new Set((prefectures as Record<string, string[]>)[prefecture]);
+    }
+
     const recentConfigs = recentUris
       .map((u) => railwayConfigs.find((c) => c.uri === u))
-      .filter((c): c is RailwayCfg => c !== undefined);
+      .filter((c): c is RailwayCfg => c !== undefined)
+      .filter((c) => (allowedSet ? allowedSet.has(c.uri) : true));
 
     // Add recent railways section if there are any
     if (recentConfigs.length > 0) {
@@ -282,6 +292,7 @@ export function setupSettingsModal(
     // Group railways by operator
     const groupedByOperator = new Map<string, RailwayCfg[]>();
     for (const config of railwayConfigs) {
+      if (allowedSet && !allowedSet.has(config.uri)) continue;
       const operatorName = getOperatorName(config.operator);
       if (!groupedByOperator.has(operatorName)) {
         groupedByOperator.set(operatorName, []);
@@ -307,6 +318,16 @@ export function setupSettingsModal(
     railwaySelect.innerHTML = html;
   }
 
+  function populatePrefectureOptions(selected: string | null) {
+    if (!prefectureSelect) return;
+    const keys = Object.keys(prefectures as Record<string, string[]>).sort((a, b) =>
+      a.localeCompare(b, 'ja'),
+    );
+    prefectureSelect.innerHTML = keys
+      .map((k) => `<option value="${k}" ${k === selected ? 'selected' : ''}>${k}</option>`)
+      .join('');
+  }
+
   function populateStationOptions(uri: string | null) {
     if (!stationSelect) return;
     // Get fresh station configs instead of using stale closure variable
@@ -319,8 +340,10 @@ export function setupSettingsModal(
       .join('');
   }
 
-  // Populate both selects
-  populateRailwayOptions(currentRailwayUri);
+  // Populate prefecture and other selects. Use saved prefecture or default to 東京都
+  const savedPref = localStorage.getItem(STORAGE_KEY_PREFECTURE) || '東京都';
+  populatePrefectureOptions(savedPref);
+  populateRailwayOptions(currentRailwayUri, savedPref);
   populateStationOptions(currentStationUri);
 
   // Only add event listeners once
@@ -330,7 +353,9 @@ export function setupSettingsModal(
       // Read current values from localStorage to ensure we have fresh data
       const currentRailway = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
       const currentStation = localStorage.getItem(STORAGE_KEY_STATION_URI);
-      populateRailwayOptions(currentRailway);
+      const currentPref = localStorage.getItem(STORAGE_KEY_PREFECTURE) || '東京都';
+      populatePrefectureOptions(currentPref);
+      populateRailwayOptions(currentRailway, currentPref);
       populateStationOptions(currentStation);
       openStationModal();
     });
@@ -370,23 +395,40 @@ export function setupSettingsModal(
       }
     });
 
+    // Prefecture change: re-populate railway list filtered by prefecture
+    prefectureSelect?.addEventListener('change', async () => {
+      if (!prefectureSelect) return;
+      const newPref = prefectureSelect.value;
+      // Persist preference immediately so subsequent logic can read it
+      try {
+        localStorage.setItem(STORAGE_KEY_PREFECTURE, newPref);
+      } catch {
+        // ignore
+      }
+      // Repopulate railways for this prefecture and select the first option
+      populateRailwayOptions(null, newPref);
+    });
+
     const saveBtn = document.getElementById('save-settings');
     saveBtn?.addEventListener('click', () => {
-      if (!railwaySelect || !stationSelect) return;
+      if (!railwaySelect || !stationSelect || !prefectureSelect) return;
       const newRailwayUri = railwaySelect.value;
       const newStationUri = stationSelect.value;
+      const newPrefecture = prefectureSelect.value;
 
       // Read current values from localStorage instead of using stale closure variables
       const previousRailwayUri = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
       const previousStationUri = localStorage.getItem(STORAGE_KEY_STATION_URI);
+      const previousPrefecture = localStorage.getItem(STORAGE_KEY_PREFECTURE);
 
       // Save to localStorage
+      localStorage.setItem(STORAGE_KEY_PREFECTURE, newPrefecture);
       localStorage.setItem(STORAGE_KEY_RAILWAY_URI, newRailwayUri);
       localStorage.setItem(STORAGE_KEY_STATION_URI, newStationUri);
       addRecentRailway(newRailwayUri);
 
-      // If railway changed, call onRailwayChange which will also update stations
-      if (newRailwayUri !== previousRailwayUri) {
+      // If prefecture or railway changed, call onRailwayChange which will also update stations
+      if (newPrefecture !== previousPrefecture || newRailwayUri !== previousRailwayUri) {
         onRailwayChange(newRailwayUri);
       } else if (newStationUri !== previousStationUri) {
         // Only station changed
