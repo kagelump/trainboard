@@ -96,13 +96,13 @@ body {
 }
 /* F-Liner - Red with Yellow Border */
 /* Combines the fastest speed (Red) with special branding (Yellow border) */
-.type-FL {
+.type-FLN {
   background-color: #f00;
   color: #fff;
   border: 3px solid #ff0;
 }
 /* S-Train - White Background, Red Text (Premium/Special) */
-.type-ST {
+.type-STN {
   background-color: #fff;
   color: #f00;
   border: 3px solid #f00;
