@@ -13,16 +13,26 @@ body {
   overflow-y: auto; /* Allow scrolling if content overflows */
 }
 
-/* Train row specific styling for maximum contrast and font size */
-.train-row {
-  transition: background-color 0.1s ease;
+/* Make the departures lists grid containers so column sizing applies at the list level
+   Each train row's column cells are direct children of the departures container via
+   the generated markup; `.train-row` will be rendered as `display: contents` so
+   the four column elements flow into the grid. Using row-gap provides spacing
+   between rows while keeping the grid definition on the parent. */
+#departures-inbound,
+#departures-outbound {
   display: grid;
   /* Columns: minutes | time | train-type | destination */
   grid-template-columns: 1fr 1fr 1fr 1.5fr;
   gap: 0.5rem;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #333; /* Subtle divider */
+  row-gap: 0.5rem;
   align-items: center;
+}
+
+.train-row {
+  /* allow the child cells (minutes-col, time-col, etc.) to participate in
+     the parent grid. This flattens the wrapper visually but keeps the markup
+     semantics intact. */
+  display: contents;
 }
 
 /* Time column - large and prominent */
@@ -137,11 +147,13 @@ body {
     font-size: 1.5rem;
     padding: 0.2rem;
   }
-  .train-row {
-    /* Columns: minutes | time | train-type | destination */
+
+  /* On small screens, use slightly different column proportions */
+  #departures-inbound,
+  #departures-outbound {
     grid-template-columns: 1fr 1fr 1fr 2fr;
     gap: 0.25rem;
-    padding: 0.5rem 0;
+    row-gap: 0.25rem;
   }
 
   .minutes-col {
@@ -153,8 +165,11 @@ body {
     text-align: left;
   }
 
-  /* the train-type wrapper is the third child; target it to fill the type area */
-  .train-row > div:nth-child(3) {
+  /* the train-type wrapper is the third column; target the elements directly */
+  #departures-inbound > .train-row > .train-type-badge,
+  #departures-outbound > .train-row > .train-type-badge,
+  #departures-inbound > .train-type-badge,
+  #departures-outbound > .train-type-badge {
     align-items: center;
     justify-content: flex-start;
   }
