@@ -71,7 +71,7 @@ body {
   font-weight: 600;
   line-height: 1.2;
   align-self: center;
-  text-align: left;
+  text-align: center;
   word-break: break-word;
 }
 
@@ -176,7 +176,7 @@ body {
 
   .destination-text {
     font-size: 1rem;
-    text-align: left;
+    text-align: center;
     word-break: break-word;
   }
 
