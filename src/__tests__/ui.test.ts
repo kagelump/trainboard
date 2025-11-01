@@ -28,6 +28,7 @@ describe('Train caching behavior', () => {
 
   it('should replace departed trains with cached trains', () => {
     // Simulate the cache containing 15 trains
+    // Generate trains at 15-minute intervals: 9:00, 9:15, 9:30, etc.
     const trainCache = Array.from({ length: 15 }, (_, i) => ({
       'odpt:departureTime': `${9 + Math.floor((i * 15) / 60)}:${String((i * 15) % 60).padStart(2, '0')}`,
     }));

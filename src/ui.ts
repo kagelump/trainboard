@@ -44,6 +44,32 @@ export function setDirectionHeaders(inHeaderText: string, outHeaderText: string)
   if (outHeader) outHeader.textContent = outHeaderText;
 }
 
+/**
+ * Extract destination station title from train object
+ */
+function getDestinationTitle(
+  train: StationTimetableEntry,
+  stationNameCache: SimpleCache<string>,
+): string {
+  let destinationTitle = 'N/A';
+  const dests = (train as any)['odpt:destinationStation'];
+  if (Array.isArray(dests) && dests.length > 0) {
+    const first = dests[0];
+    if (typeof first === 'string') {
+      destinationTitle = stationNameCache.get(first) || first;
+    } else if (first && typeof first === 'object') {
+      destinationTitle = (first as any)['dc:title'] || (first as any)['title'] || 'N/A';
+      if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
+        const uri = (first as any)['owl:sameAs'];
+        if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
+      }
+    }
+  } else if (typeof dests === 'string') {
+    destinationTitle = stationNameCache.get(dests) || dests;
+  }
+  return destinationTitle;
+}
+
 export function renderDirection(
   directionId: 'inbound' | 'outbound',
   departures: StationTimetableEntry[],
@@ -60,22 +86,7 @@ export function renderDirection(
     .map((train) => {
       const departureTime = (train as any)['odpt:departureTime'];
       const trainTypeUri = (train as any)['odpt:trainType'] || '';
-      let destinationTitle = 'N/A';
-      const dests = (train as any)['odpt:destinationStation'];
-      if (Array.isArray(dests) && dests.length > 0) {
-        const first = dests[0];
-        if (typeof first === 'string') {
-          destinationTitle = stationNameCache.get(first) || first;
-        } else if (first && typeof first === 'object') {
-          destinationTitle = (first as any)['dc:title'] || (first as any)['title'] || 'N/A';
-          if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
-            const uri = (first as any)['owl:sameAs'];
-            if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
-          }
-        }
-      } else if (typeof dests === 'string') {
-        destinationTitle = stationNameCache.get(dests) || dests;
-      }
+      const destinationTitle = getDestinationTitle(train, stationNameCache);
       const trainType = trainTypeMap[trainTypeUri] || { name: '不明', class: 'type-LOC' };
       // add a minutes column with a data attribute so it can be updated
       // independently of API fetches
@@ -152,11 +163,9 @@ function updateMinutesOnce(
     // Remove departed trains and replace with cached trains
     if (trainsToRemove.length > 0) {
       // Find the next trains to display from cache
-      const currentDisplayCount = els.length - trainsToRemove.length;
-      const nextTrains = trainCache.slice(
-        currentDisplayCount,
-        currentDisplayCount + trainsToRemove.length,
-      );
+      // We need to get trains starting from the position after the highest displayed train
+      const displayedCount = displayedTimes.length;
+      const nextTrains = trainCache.slice(displayedCount, displayedCount + trainsToRemove.length);
 
       // Remove departed trains
       trainsToRemove.forEach((el) => {
@@ -174,22 +183,7 @@ function updateMinutesOnce(
         if (!departureTime || displayedTimes.includes(departureTime)) return;
 
         const trainTypeUri = (train as any)['odpt:trainType'] || '';
-        let destinationTitle = 'N/A';
-        const dests = (train as any)['odpt:destinationStation'];
-        if (Array.isArray(dests) && dests.length > 0) {
-          const first = dests[0];
-          if (typeof first === 'string') {
-            destinationTitle = stationNameCache.get(first) || first;
-          } else if (first && typeof first === 'object') {
-            destinationTitle = (first as any)['dc:title'] || (first as any)['title'] || 'N/A';
-            if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
-              const uri = (first as any)['owl:sameAs'];
-              if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
-            }
-          }
-        } else if (typeof dests === 'string') {
-          destinationTitle = stationNameCache.get(dests) || dests;
-        }
+        const destinationTitle = getDestinationTitle(train, stationNameCache);
         const trainType = trainTypeMap[trainTypeUri] || { name: '不明', class: 'type-LOC' };
 
         const trainHtml = `
