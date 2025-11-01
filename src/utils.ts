@@ -81,3 +81,22 @@ export function collectDestinationUris(...departureLists: StationTimetableEntry[
 export function formatTimeHHMM(date: Date = new Date()): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
+
+/**
+ * Gets the calendar URI for today (Weekday or SaturdayHoliday).
+ * @returns ODPT calendar URI string
+ */
+export function getTodayCalendarURI(): string {
+  const day = new Date().getDay();
+  if (day >= 1 && day <= 5) return 'odpt.Calendar:Weekday';
+  return 'odpt.Calendar:SaturdayHoliday';
+}
+
+/**
+ * Safely gets an HTML element by ID.
+ * @param id - The element ID to retrieve
+ * @returns The HTML element or null if not found
+ */
+export function safeGetElement(id: string): HTMLElement | null {
+  return document.getElementById(id);
+}
