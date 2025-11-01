@@ -218,26 +218,6 @@ export function chooseInitialRailway(
   }
   return selectedRailway;
 }
-export function setupStationModal(
-  stationConfigs: StationCfg[],
-  currentUri: string | null,
-  onSave: (newUri: string) => void,
-): void {
-  const stationSelect = document.getElementById('station-select') as HTMLSelectElement | null;
-  if (!stationSelect) return;
-
-  function populateOptions(uri: string | null) {
-    stationSelect!.innerHTML = stationConfigs
-      .map(
-        (config) =>
-          `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`,
-      )
-      .join('');
-  }
-
-  populateOptions(currentUri);
-}
-
 /**
  * Get a friendly operator name from the operator URI
  */
@@ -262,61 +242,6 @@ function getOperatorName(operatorUri: string): string {
     YokohamaMunicipal: '横浜市営',
   };
   return operatorMap[name] || name;
-}
-
-export function setupRailwayModal(
-  railwayConfigs: RailwayCfg[],
-  currentUri: string | null,
-  onSave: (newUri: string) => void,
-): void {
-  const railwaySelect = document.getElementById('railway-select') as HTMLSelectElement | null;
-  if (!railwaySelect) return;
-
-  function populateOptions(uri: string | null) {
-    let html = '';
-    const recentUris = getRecentRailways();
-    const recentConfigs = recentUris
-      .map((u) => railwayConfigs.find((c) => c.uri === u))
-      .filter((c): c is RailwayCfg => c !== undefined);
-
-    // Add recent railways section if there are any
-    if (recentConfigs.length > 0) {
-      html += '<optgroup label="最近使用した路線">';
-      for (const config of recentConfigs) {
-        html += `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`;
-      }
-      html += '</optgroup>';
-    }
-
-    // Group railways by operator
-    const groupedByOperator = new Map<string, RailwayCfg[]>();
-    for (const config of railwayConfigs) {
-      const operatorName = getOperatorName(config.operator);
-      if (!groupedByOperator.has(operatorName)) {
-        groupedByOperator.set(operatorName, []);
-      }
-      groupedByOperator.get(operatorName)!.push(config);
-    }
-
-    // Sort operators alphabetically
-    const sortedOperators = Array.from(groupedByOperator.keys()).sort((a, b) =>
-      a.localeCompare(b, 'ja'),
-    );
-
-    // Add grouped options
-    for (const operatorName of sortedOperators) {
-      const configs = groupedByOperator.get(operatorName)!;
-      html += `<optgroup label="${operatorName}">`;
-      for (const config of configs) {
-        html += `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`;
-      }
-      html += '</optgroup>';
-    }
-
-    railwaySelect!.innerHTML = html;
-  }
-
-  populateOptions(currentUri);
 }
 
 /**
