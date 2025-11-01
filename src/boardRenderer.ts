@@ -15,6 +15,8 @@ import {
   clearStatus as uiClearStatus,
   startMinutesUpdater as uiStartMinutesUpdater,
   openApiModal as uiOpenApiModal,
+  STORAGE_KEY_RAILWAY_URI,
+  STORAGE_KEY_STATION_URI,
 } from './ui';
 import {
   type StationConfig,
@@ -158,16 +160,41 @@ function setupPeriodicRefreshIntervals(stationUri: string): void {
   if (typeof timetableIntervalId !== 'undefined') clearInterval(timetableIntervalId);
   if (typeof statusIntervalId !== 'undefined') clearInterval(statusIntervalId);
 
-  // Timetable refresh interval
+  // Timetable refresh interval - always read the current station URI from config
   timetableIntervalId = window.setInterval(async () => {
-    await fetchAndRenderTimetableData(stationUri);
+    // Reload from localStorage to get the latest station URI
+    try {
+      const savedStationUri = localStorage.getItem(STORAGE_KEY_STATION_URI);
+      if (savedStationUri) {
+        await fetchAndRenderTimetableData(savedStationUri);
+      } else {
+        await fetchAndRenderTimetableData(currentConfig.stationUri!);
+      }
+    } catch (error) {
+      // Fallback to in-memory config if localStorage fails
+      if (currentConfig.stationUri) {
+        await fetchAndRenderTimetableData(currentConfig.stationUri);
+      }
+    }
   }, TIMETABLE_REFRESH_INTERVAL_MS);
 
-  // Status refresh interval
-  statusIntervalId = window.setInterval(() => {
+  // Status refresh interval - always read the current railway URI from config
+  statusIntervalId = window.setInterval(async () => {
     const apiKey = getApiKey();
-    if (currentConfig.railwayUri && apiKey) {
-      fetchStatus(apiKey, getApiBaseUrl(), currentConfig.railwayUri);
+    if (!apiKey) return;
+
+    // Reload from localStorage to get the latest railway URI
+    try {
+      const savedRailwayUri = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
+      const railwayUri = savedRailwayUri || currentConfig.railwayUri;
+      if (railwayUri) {
+        await fetchStatus(apiKey, getApiBaseUrl(), railwayUri);
+      }
+    } catch (error) {
+      // Fallback to in-memory config if localStorage fails
+      if (currentConfig.railwayUri) {
+        await fetchStatus(apiKey, getApiBaseUrl(), currentConfig.railwayUri);
+      }
     }
   }, STATUS_REFRESH_INTERVAL_MS);
 
@@ -181,6 +208,27 @@ function setupPeriodicRefreshIntervals(stationUri: string): void {
  * Validates prerequisites, fetches data, renders UI, and sets up periodic updates.
  */
 export async function renderBoard(): Promise<void> {
+  // Step 0: Reload current railway and station from localStorage to ensure we have fresh data
+  try {
+    const savedRailwayUri = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
+    const savedStationUri = localStorage.getItem(STORAGE_KEY_STATION_URI);
+    if (savedRailwayUri) {
+      currentConfig.railwayUri = savedRailwayUri;
+    }
+    if (savedStationUri) {
+      currentConfig.stationUri = savedStationUri;
+      // Update station name from the configs
+      const stationConfigs = getStationConfigs();
+      const found = stationConfigs.find((c) => c.uri === savedStationUri);
+      if (found) {
+        currentConfig.stationName = found.name;
+      }
+    }
+  } catch (error) {
+    // localStorage might not be available
+    console.warn('Failed to load config from localStorage:', error);
+  }
+
   // Step 1: Validate prerequisites
   const stationConfig = validateBoardPrerequisites();
   if (!stationConfig) return;

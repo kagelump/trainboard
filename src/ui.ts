@@ -327,8 +327,11 @@ export function setupSettingsModal(
   if (!stationModalInitialized) {
     const settingsBtn = document.getElementById('settings-button');
     settingsBtn?.addEventListener('click', () => {
-      populateRailwayOptions(currentRailwayUri);
-      populateStationOptions(currentStationUri);
+      // Read current values from localStorage to ensure we have fresh data
+      const currentRailway = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
+      const currentStation = localStorage.getItem(STORAGE_KEY_STATION_URI);
+      populateRailwayOptions(currentRailway);
+      populateStationOptions(currentStation);
       openStationModal();
     });
 
@@ -341,7 +344,7 @@ export function setupSettingsModal(
     railwaySelect?.addEventListener('change', async () => {
       if (!railwaySelect) return;
       const selectedRailwayUri = railwaySelect.value;
-      
+
       // Show loading state in station select
       if (stationSelect) {
         stationSelect.innerHTML = '<option>駅を読込中...</option>';
@@ -373,15 +376,19 @@ export function setupSettingsModal(
       const newRailwayUri = railwaySelect.value;
       const newStationUri = stationSelect.value;
 
+      // Read current values from localStorage instead of using stale closure variables
+      const previousRailwayUri = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
+      const previousStationUri = localStorage.getItem(STORAGE_KEY_STATION_URI);
+
       // Save to localStorage
       localStorage.setItem(STORAGE_KEY_RAILWAY_URI, newRailwayUri);
       localStorage.setItem(STORAGE_KEY_STATION_URI, newStationUri);
       addRecentRailway(newRailwayUri);
 
       // If railway changed, call onRailwayChange which will also update stations
-      if (newRailwayUri !== currentRailwayUri) {
+      if (newRailwayUri !== previousRailwayUri) {
         onRailwayChange(newRailwayUri);
-      } else if (newStationUri !== currentStationUri) {
+      } else if (newStationUri !== previousStationUri) {
         // Only station changed
         onStationChange(newStationUri);
       }
