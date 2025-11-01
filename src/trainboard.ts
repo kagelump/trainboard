@@ -42,6 +42,7 @@ import {
   timeToMinutes,
   getUpcomingDepartures,
   collectDestinationUris,
+  formatTimeHHMM,
 } from './utils';
 import { SimpleCache } from './cache';
 import {
@@ -267,9 +268,7 @@ async function renderBoard(): Promise<void> {
     return;
   }
   const now = new Date();
-  const nowMinutes = timeToMinutes(
-    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-  );
+  const nowMinutes = timeToMinutes(formatTimeHHMM(now));
   // Helper: get upcoming departures for a given direction from the
   // StationTimetable response. Use find + optional chaining so we don't
   // assume the array shape is always present, and guard the departureTime
@@ -321,9 +320,7 @@ async function renderBoard(): Promise<void> {
       return;
     }
     const now2 = new Date();
-    const nowMins = timeToMinutes(
-      `${String(now2.getHours()).padStart(2, '0')}:${String(now2.getMinutes()).padStart(2, '0')}`,
-    );
+    const nowMins = timeToMinutes(formatTimeHHMM(now2));
     const inT = getUpcomingDepartures(
       deps as OdptStationTimetable[],
       INBOUND_DIRECTION_URI || 'odpt.RailDirection:Inbound',

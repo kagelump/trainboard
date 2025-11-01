@@ -10,6 +10,14 @@ import type {
   OdptTrainType,
 } from './types';
 
+/**
+ * Fetches data from a URL with automatic retry logic.
+ * @param url - The URL to fetch
+ * @param retries - Number of retry attempts (default: 3)
+ * @param delay - Base delay in milliseconds between retries (default: 1000)
+ * @returns Promise resolving to the Response object
+ * @throws Error if all retry attempts fail
+ */
 export async function apiFetch(url: string, retries = 3, delay = 1000): Promise<Response> {
   for (let i = 0; i < retries; i++) {
     try {

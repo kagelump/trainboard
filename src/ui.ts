@@ -1,7 +1,7 @@
 // src/ui.ts
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
-import { timeToMinutes } from './utils';
+import { timeToMinutes, formatTimeHHMM } from './utils';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -136,8 +136,7 @@ export function stopMinutesUpdater(): void {
 export function updateClock(): void {
   const el = document.getElementById('time-header');
   if (!el) return;
-  const now = new Date();
-  el.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  el.textContent = formatTimeHHMM();
 }
 
 export function chooseInitialStation(
