@@ -2,6 +2,7 @@
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
 import { timeToMinutes, formatTimeHHMM } from './utils';
+import { getStationConfigs } from './dataLoaders';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -10,6 +11,10 @@ type RailwayCfg = { name: string; uri: string; operator: string };
 export const STORAGE_KEY_RAILWAY_URI = 't2board_railway_uri';
 export const STORAGE_KEY_STATION_URI = 't2board_station_uri';
 export const STORAGE_KEY_API_KEY = 't2board_api_key';
+export const STORAGE_KEY_RECENT_RAILWAYS = 't2board_recent_railways';
+
+// Maximum number of recent railways to store
+const MAX_RECENT_RAILWAYS = 5;
 
 // UI update intervals (milliseconds)
 export const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
@@ -167,6 +172,37 @@ export function chooseInitialStation(
   return selectedStation;
 }
 
+/**
+ * Get recently selected railway URIs from localStorage
+ */
+export function getRecentRailways(): string[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_RECENT_RAILWAYS);
+    if (!stored) return [];
+    return JSON.parse(stored) as string[];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Add a railway URI to the recent railways list
+ */
+export function addRecentRailway(railwayUri: string): void {
+  try {
+    let recent = getRecentRailways();
+    // Remove if already exists (to move to front)
+    recent = recent.filter((uri) => uri !== railwayUri);
+    // Add to front
+    recent.unshift(railwayUri);
+    // Keep only MAX_RECENT_RAILWAYS items
+    recent = recent.slice(0, MAX_RECENT_RAILWAYS);
+    localStorage.setItem(STORAGE_KEY_RECENT_RAILWAYS, JSON.stringify(recent));
+  } catch (e) {
+    console.warn('Failed to save recent railway:', e);
+  }
+}
+
 export function chooseInitialRailway(
   railwayConfigs: RailwayCfg[],
   defaultRailway: string,
@@ -183,17 +219,99 @@ export function chooseInitialRailway(
   }
   return selectedRailway;
 }
-export function setupStationModal(
+/**
+ * Get a friendly operator name from the operator URI
+ */
+function getOperatorName(operatorUri: string): string {
+  if (!operatorUri) return 'その他';
+  // Extract operator name from URI like "odpt.Operator:Tokyu" -> "Tokyu"
+  const parts = operatorUri.split(':');
+  const name = parts.length > 1 ? parts[1] : operatorUri;
+  // Convert common operator names to Japanese
+  const operatorMap: Record<string, string> = {
+    Tokyu: '東急',
+    JR: 'JR',
+    Toei: '都営',
+    TokyoMetro: '東京メトロ',
+    Odakyu: '小田急',
+    Keio: '京王',
+    Seibu: '西武',
+    Tobu: '東武',
+    Keisei: '京成',
+    Keikyu: '京急',
+    Sotetsu: '相鉄',
+    YokohamaMunicipal: '横浜市営',
+  };
+  return operatorMap[name] || name;
+}
+
+/**
+ * Setup the unified settings modal that handles both railway and station selection
+ */
+export function setupSettingsModal(
+  railwayConfigs: RailwayCfg[],
   stationConfigs: StationCfg[],
-  currentUri: string | null,
-  onSave: (newUri: string) => void,
+  currentRailwayUri: string | null,
+  currentStationUri: string | null,
+  onRailwayChange: (newUri: string) => void,
+  onStationChange: (newUri: string) => void,
+  onRailwaySelectChange?: (newUri: string) => Promise<void>,
 ): void {
   const modal = document.getElementById('config-modal');
+  const railwaySelect = document.getElementById('railway-select') as HTMLSelectElement | null;
   const stationSelect = document.getElementById('station-select') as HTMLSelectElement | null;
-  if (!modal || !stationSelect) return;
+  if (!modal || !railwaySelect || !stationSelect) return;
 
-  function populateOptions(uri: string | null) {
-    stationSelect!.innerHTML = stationConfigs
+  function populateRailwayOptions(uri: string | null) {
+    if (!railwaySelect) return;
+    let html = '';
+    const recentUris = getRecentRailways();
+    const recentConfigs = recentUris
+      .map((u) => railwayConfigs.find((c) => c.uri === u))
+      .filter((c): c is RailwayCfg => c !== undefined);
+
+    // Add recent railways section if there are any
+    if (recentConfigs.length > 0) {
+      html += '<optgroup label="最近使用した路線">';
+      for (const config of recentConfigs) {
+        html += `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`;
+      }
+      html += '</optgroup>';
+    }
+
+    // Group railways by operator
+    const groupedByOperator = new Map<string, RailwayCfg[]>();
+    for (const config of railwayConfigs) {
+      const operatorName = getOperatorName(config.operator);
+      if (!groupedByOperator.has(operatorName)) {
+        groupedByOperator.set(operatorName, []);
+      }
+      groupedByOperator.get(operatorName)!.push(config);
+    }
+
+    // Sort operators alphabetically
+    const sortedOperators = Array.from(groupedByOperator.keys()).sort((a, b) =>
+      a.localeCompare(b, 'ja'),
+    );
+
+    // Add grouped options
+    for (const operatorName of sortedOperators) {
+      const configs = groupedByOperator.get(operatorName)!;
+      html += `<optgroup label="${operatorName}">`;
+      for (const config of configs) {
+        html += `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`;
+      }
+      html += '</optgroup>';
+    }
+
+    railwaySelect.innerHTML = html;
+  }
+
+  function populateStationOptions(uri: string | null) {
+    if (!stationSelect) return;
+    // Get fresh station configs instead of using stale closure variable
+    const freshStationConfigs = getStationConfigs();
+    stationSelect.innerHTML = freshStationConfigs
       .map(
         (config) =>
           `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`,
@@ -201,13 +319,16 @@ export function setupStationModal(
       .join('');
   }
 
-  populateOptions(currentUri);
+  // Populate both selects
+  populateRailwayOptions(currentRailwayUri);
+  populateStationOptions(currentStationUri);
 
   // Only add event listeners once
   if (!stationModalInitialized) {
     const settingsBtn = document.getElementById('settings-button');
     settingsBtn?.addEventListener('click', () => {
-      populateOptions(currentUri);
+      populateRailwayOptions(currentRailwayUri);
+      populateStationOptions(currentStationUri);
       openStationModal();
     });
 
@@ -216,11 +337,55 @@ export function setupStationModal(
       closeStationModal();
     });
 
+    // Add railway select change listener to update station list immediately
+    railwaySelect?.addEventListener('change', async () => {
+      if (!railwaySelect) return;
+      const selectedRailwayUri = railwaySelect.value;
+      
+      // Show loading state in station select
+      if (stationSelect) {
+        stationSelect.innerHTML = '<option>駅を読込中...</option>';
+        stationSelect.disabled = true;
+      }
+
+      // Call the callback to load stations for the new railway
+      if (onRailwaySelectChange) {
+        try {
+          await onRailwaySelectChange(selectedRailwayUri);
+          // Stations will be reloaded, repopulate the station select
+          populateStationOptions(null); // Select first station by default
+        } catch (error) {
+          console.error('Failed to load stations:', error);
+          if (stationSelect) {
+            stationSelect.innerHTML = '<option>駅の読込に失敗しました</option>';
+          }
+        } finally {
+          if (stationSelect) {
+            stationSelect.disabled = false;
+          }
+        }
+      }
+    });
+
     const saveBtn = document.getElementById('save-settings');
     saveBtn?.addEventListener('click', () => {
-      const newUri = stationSelect.value;
-      localStorage.setItem(STORAGE_KEY_STATION_URI, newUri);
-      onSave(newUri);
+      if (!railwaySelect || !stationSelect) return;
+      const newRailwayUri = railwaySelect.value;
+      const newStationUri = stationSelect.value;
+
+      // Save to localStorage
+      localStorage.setItem(STORAGE_KEY_RAILWAY_URI, newRailwayUri);
+      localStorage.setItem(STORAGE_KEY_STATION_URI, newStationUri);
+      addRecentRailway(newRailwayUri);
+
+      // If railway changed, call onRailwayChange which will also update stations
+      if (newRailwayUri !== currentRailwayUri) {
+        onRailwayChange(newRailwayUri);
+      } else if (newStationUri !== currentStationUri) {
+        // Only station changed
+        onStationChange(newStationUri);
+      }
+
       closeStationModal();
     });
 
@@ -229,55 +394,6 @@ export function setupStationModal(
     });
 
     stationModalInitialized = true;
-  }
-}
-
-export function setupRailwayModal(
-  railwayConfigs: RailwayCfg[],
-  currentUri: string | null,
-  onSave: (newUri: string) => void,
-): void {
-  const modal = document.getElementById('railway-modal');
-  const railwaySelect = document.getElementById('railway-select') as HTMLSelectElement | null;
-  if (!modal || !railwaySelect) return;
-
-  function populateOptions(uri: string | null) {
-    railwaySelect!.innerHTML = railwayConfigs
-      .map(
-        (config) =>
-          `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`,
-      )
-      .join('');
-  }
-
-  populateOptions(currentUri);
-
-  // Only add event listeners once
-  if (!railwayModalInitialized) {
-    const railwayBtn = document.getElementById('railway-button');
-    railwayBtn?.addEventListener('click', () => {
-      populateOptions(currentUri);
-      openRailwayModal();
-    });
-
-    const closeBtn = document.getElementById('close-railway-modal');
-    closeBtn?.addEventListener('click', () => {
-      closeRailwayModal();
-    });
-
-    const saveBtn = document.getElementById('save-railway');
-    saveBtn?.addEventListener('click', () => {
-      const newUri = railwaySelect.value;
-      localStorage.setItem(STORAGE_KEY_RAILWAY_URI, newUri);
-      onSave(newUri);
-      closeRailwayModal();
-    });
-
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeRailwayModal();
-    });
-
-    railwayModalInitialized = true;
   }
 }
 
@@ -323,20 +439,6 @@ export function openStationModal(): void {
 
 export function closeStationModal(): void {
   const modal = document.getElementById('config-modal');
-  if (!modal) return;
-  modal.classList.remove('flex', 'opacity-100');
-  modal.classList.add('hidden');
-}
-
-export function openRailwayModal(): void {
-  const modal = document.getElementById('railway-modal');
-  if (!modal) return;
-  modal.classList.remove('hidden');
-  modal.classList.add('flex', 'opacity-100');
-}
-
-export function closeRailwayModal(): void {
-  const modal = document.getElementById('railway-modal');
   if (!modal) return;
   modal.classList.remove('flex', 'opacity-100');
   modal.classList.add('hidden');

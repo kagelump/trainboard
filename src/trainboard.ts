@@ -7,8 +7,7 @@ import { getJapaneseText, safeGetElement } from './utils';
 import {
   chooseInitialStation,
   chooseInitialRailway,
-  setupStationModal as uiSetupStationModal,
-  setupRailwayModal as uiSetupRailwayModal,
+  setupSettingsModal as uiSetupSettingsModal,
   setupApiKeyModal as uiSetupApiKeyModal,
   openApiModal as uiOpenApiModal,
 } from './ui';
@@ -102,37 +101,6 @@ async function initializeBoard(): Promise<void> {
     await loadRailwayMetadata(selectedRailway.uri, apiKey, apiBaseUrl);
   }
 
-  // Setup railway selection modal
-  uiSetupRailwayModal(getRailwayConfigs(), currentConfig.railwayUri, async (newUri) => {
-    let config = getCurrentConfig();
-    config.railwayUri = newUri;
-    setCurrentConfig(config);
-
-    await loadRailwayMetadata(newUri, apiKey, apiBaseUrl);
-    // Reload stations for the new railway
-    await loadStationsForRailway(newUri, apiKey, apiBaseUrl);
-
-    // Reset station selection
-    const selected = chooseInitialStation(getStationConfigs(), DEFAULT_STATION_NAME);
-    if (selected) {
-      config = getCurrentConfig();
-      config.stationUri = selected.uri;
-      config.stationName = selected.name;
-      setCurrentConfig(config);
-    }
-
-    // Update station modal with new stations
-    uiSetupStationModal(getStationConfigs(), getCurrentConfig().stationUri, (newStationUri) => {
-      const found = getStationConfigs().find((c) => c.uri === newStationUri);
-      const cfg = getCurrentConfig();
-      cfg.stationUri = newStationUri;
-      cfg.stationName = found ? found.name : null;
-      setCurrentConfig(cfg);
-      renderBoard();
-    });
-    renderBoard();
-  });
-
   // Load stations for the selected railway
   if (currentConfig.railwayUri) {
     await loadStationsForRailway(currentConfig.railwayUri, apiKey, apiBaseUrl);
@@ -154,15 +122,46 @@ async function initializeBoard(): Promise<void> {
     initializeBoard();
   });
 
-  // Setup the station-selection modal
-  uiSetupStationModal(getStationConfigs(), getCurrentConfig().stationUri, (newUri) => {
-    const found = getStationConfigs().find((c) => c.uri === newUri);
-    const config = getCurrentConfig();
-    config.stationUri = newUri;
-    config.stationName = found ? found.name : null;
-    setCurrentConfig(config);
-    renderBoard();
-  });
+  // Setup the unified settings modal for both railway and station selection
+  uiSetupSettingsModal(
+    getRailwayConfigs(),
+    getStationConfigs(),
+    getCurrentConfig().railwayUri,
+    getCurrentConfig().stationUri,
+    async (newRailwayUri) => {
+      // Railway changed - reload metadata and stations
+      let config = getCurrentConfig();
+      config.railwayUri = newRailwayUri;
+      setCurrentConfig(config);
+
+      await loadRailwayMetadata(newRailwayUri, apiKey, apiBaseUrl);
+      await loadStationsForRailway(newRailwayUri, apiKey, apiBaseUrl);
+
+      // Reset station selection to first station of new railway
+      const selected = chooseInitialStation(getStationConfigs(), DEFAULT_STATION_NAME);
+      if (selected) {
+        config = getCurrentConfig();
+        config.stationUri = selected.uri;
+        config.stationName = selected.name;
+        setCurrentConfig(config);
+      }
+
+      renderBoard();
+    },
+    (newStationUri) => {
+      // Only station changed
+      const found = getStationConfigs().find((c) => c.uri === newStationUri);
+      const config = getCurrentConfig();
+      config.stationUri = newStationUri;
+      config.stationName = found ? found.name : null;
+      setCurrentConfig(config);
+      renderBoard();
+    },
+    async (newRailwayUri) => {
+      // Railway selection changed in modal - load stations for the new railway
+      await loadStationsForRailway(newRailwayUri, apiKey, apiBaseUrl);
+    },
+  );
 
   // Initial board render
   renderBoard();

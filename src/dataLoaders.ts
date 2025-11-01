@@ -18,6 +18,7 @@ import { setPageTitle } from './ui';
 export type StationConfig = {
   name: string;
   uri: string;
+  code?: string;
 };
 
 export type TrainTypeMapEntry = {
@@ -184,10 +185,27 @@ export async function loadStationsForRailway(
         return {
           name: stationCode ? `${stationNameJa} (${stationCode})` : stationNameJa,
           uri: station['owl:sameAs'] || '',
+          code: stationCode,
         } as StationConfig;
       })
       .filter((s) => s.uri)
-      .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+      .sort((a, b) => {
+        // Sort by station code if both have codes
+        if (a.code && b.code) {
+          // Extract numeric part from codes like "TY11" -> 11
+          const aMatch = a.code.match(/\d+/);
+          const bMatch = b.code.match(/\d+/);
+          if (aMatch && bMatch) {
+            const aNum = parseInt(aMatch[0], 10);
+            const bNum = parseInt(bMatch[0], 10);
+            if (aNum !== bNum) return aNum - bNum;
+          }
+          // If numeric parts are equal or don't exist, sort by full code
+          return a.code.localeCompare(b.code);
+        }
+        // If codes don't exist, sort by name
+        return a.name.localeCompare(b.name, 'ja');
+      });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('Error fetching station list:', message);
