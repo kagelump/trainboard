@@ -65,6 +65,7 @@ import {
   STORAGE_KEY_API_KEY,
 } from './ui';
 import { injectTrainTypeStyles, getTrainTypeCssClass } from './trainTypeStyles';
+import { DISPLAYED_TRAINS_LIMIT, CACHED_TRAINS_LIMIT } from './constants';
 
 // --- 1. CONFIGURATION AND CONSTANTS ---
 let ODPT_API_KEY: string | null = null; // loaded from ./config.json at runtime
@@ -77,10 +78,6 @@ const TIMETABLE_REFRESH_INTERVAL_MS = 150_000; // 2.5 minutes
 const STATUS_REFRESH_INTERVAL_MS = 300_000; // 5 minutes
 const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
 const CLOCK_UPDATE_INTERVAL_MS = 1_000; // 1 second
-
-// Display configuration
-const DISPLAYED_TRAINS_LIMIT = 5; // Number of trains to display at once
-const CACHED_TRAINS_LIMIT = 15; // Number of trains to cache (more than displayed)
 
 // Dynamic values loaded from ODPT API based on selected railway
 let RAILWAY_CONFIGS: RailwayConfig[] = [];

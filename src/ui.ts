@@ -2,6 +2,7 @@
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
 import { timeToMinutes, formatTimeHHMM } from './utils';
+import { DISPLAYED_TRAINS_LIMIT } from './constants';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -13,9 +14,6 @@ export const STORAGE_KEY_API_KEY = 't2board_api_key';
 
 // UI update intervals (milliseconds)
 export const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
-
-// Display configuration
-const DISPLAYED_TRAINS_LIMIT = 5; // Number of trains to display at once
 
 // Track whether modals have been initialized to prevent duplicate event listeners
 let apiKeyModalInitialized = false;
@@ -183,11 +181,13 @@ function updateMinutesOnce(
       const nextStartIndex = highestShownIndex + 1;
       const nextTrains = trainCache.slice(nextStartIndex, nextStartIndex + trainsToRemove.length);
 
-      // Update the highest shown index
-      if (directionId === 'inbound') {
-        highestShownIndexInbound = nextStartIndex + nextTrains.length - 1;
-      } else {
-        highestShownIndexOutbound = nextStartIndex + nextTrains.length - 1;
+      // Update the highest shown index (only if we actually got new trains)
+      if (nextTrains.length > 0) {
+        if (directionId === 'inbound') {
+          highestShownIndexInbound = nextStartIndex + nextTrains.length - 1;
+        } else {
+          highestShownIndexOutbound = nextStartIndex + nextTrains.length - 1;
+        }
       }
 
       // Remove departed trains
