@@ -20,7 +20,7 @@ export class SimpleCache<V> {
           }
         }
       } catch (e) {
-        // ignore
+        console.warn(`Failed to restore cache from localStorage key "${persistKeyName}":`, e);
       }
     }
   }
@@ -61,7 +61,7 @@ export class SimpleCache<V> {
       for (const [k, v] of this.map.entries()) obj[k] = v;
       localStorage.setItem(this.persistKeyName, JSON.stringify(obj));
     } catch (e) {
-      // ignore
+      console.warn(`Failed to persist cache to localStorage key "${this.persistKeyName}":`, e);
     }
   }
 

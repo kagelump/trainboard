@@ -69,6 +69,12 @@ let ODPT_API_KEY: string | null = null; // loaded from ./config.json at runtime
 let API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
 let DEFAULT_RAILWAY = 'odpt.Railway:Tokyu.Toyoko';
 
+// Polling intervals (milliseconds)
+const TIMETABLE_REFRESH_INTERVAL_MS = 150_000; // 2.5 minutes
+const STATUS_REFRESH_INTERVAL_MS = 300_000; // 5 minutes
+const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
+const CLOCK_UPDATE_INTERVAL_MS = 1_000; // 1 second
+
 // Dynamic values loaded from ODPT API based on selected railway
 let RAILWAY_CONFIGS: RailwayConfig[] = [];
 let currentRailway: OdptRailway | null = null;
@@ -287,15 +293,8 @@ async function renderBoard(): Promise<void> {
   // Start the minutes-away updater which refreshes the "minutes" column
   // independently of API fetches. This is safe to call multiple times
   // because the UI module will clear any existing interval before starting.
-  uiStartMinutesUpdater();
-  // start minutes-away updater (updates independently of API fetches)
-  try {
-    // dynamic import to avoid circular deps at module-init time
-    // but ui exports startMinutesUpdater directly so import above is fine
-    // call via (window as any) if needed; here we assume named import below
-  } catch (e) {
-    // ignore
-  }
+  uiStartMinutesUpdater(MINUTES_UPDATE_INTERVAL_MS);
+
   try {
     if (currentConfig.railwayUri) {
       await fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri);
@@ -340,16 +339,16 @@ async function renderBoard(): Promise<void> {
     uiRenderDirection('inbound', inT, stationNameCache, TRAIN_TYPE_MAP);
     uiRenderDirection('outbound', outT, stationNameCache, TRAIN_TYPE_MAP);
     // restart/update the minutes-away updater after re-render
-    uiStartMinutesUpdater();
-  }, 150_000);
+    uiStartMinutesUpdater(MINUTES_UPDATE_INTERVAL_MS);
+  }, TIMETABLE_REFRESH_INTERVAL_MS);
 
   statusIntervalId = window.setInterval(() => {
     if (currentConfig.railwayUri) {
       fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri);
     }
-  }, 300_000);
+  }, STATUS_REFRESH_INTERVAL_MS);
 
-  window.setInterval(uiUpdateClock, 1000);
+  window.setInterval(uiUpdateClock, CLOCK_UPDATE_INTERVAL_MS);
   uiUpdateClock();
 }
 
@@ -376,10 +375,8 @@ async function loadLocalConfig(): Promise<void> {
   await loadFromLocalConfig();
   // Allow user-supplied API key in localStorage to override config.json
   try {
-    console.log('Loading from localstorage ', Date.now());
     const userKey = localStorage.getItem('t2board_api_key');
     if (userKey) {
-      console.log('Overriding API key from localStorage');
       ODPT_API_KEY = userKey;
     }
   } catch (e) {
@@ -393,7 +390,6 @@ async function initializeBoard(): Promise<void> {
   } catch (e) {
     console.warn('Error loading local config:', e);
   }
-  console.log('ODPT_API_KEY:', ODPT_API_KEY, Date.now());
   if (!ODPT_API_KEY) {
     // No API key: open the API-key modal so the user can paste one.
     uiSetupApiKeyModal(ODPT_API_KEY, (newKey) => {

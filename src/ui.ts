@@ -11,6 +11,11 @@ const STORAGE_KEY_RAILWAY_URI = 't2board_railway_uri';
 const STORAGE_KEY_STATION_URI = 't2board_station_uri';
 const STORAGE_KEY_API_KEY = 't2board_api_key';
 
+// Track whether modals have been initialized to prevent duplicate event listeners
+let apiKeyModalInitialized = false;
+let stationModalInitialized = false;
+let railwayModalInitialized = false;
+
 export function setPageTitle(title: string): void {
   document.title = title;
 }
@@ -188,28 +193,33 @@ export function setupStationModal(
 
   populateOptions(currentUri);
 
-  const settingsBtn = document.getElementById('settings-button');
-  settingsBtn?.addEventListener('click', () => {
-    populateOptions(currentUri);
-    openStationModal();
-  });
+  // Only add event listeners once
+  if (!stationModalInitialized) {
+    const settingsBtn = document.getElementById('settings-button');
+    settingsBtn?.addEventListener('click', () => {
+      populateOptions(currentUri);
+      openStationModal();
+    });
 
-  const closeBtn = document.getElementById('close-modal');
-  closeBtn?.addEventListener('click', () => {
-    closeStationModal();
-  });
+    const closeBtn = document.getElementById('close-modal');
+    closeBtn?.addEventListener('click', () => {
+      closeStationModal();
+    });
 
-  const saveBtn = document.getElementById('save-settings');
-  saveBtn?.addEventListener('click', () => {
-    const newUri = stationSelect.value;
-    localStorage.setItem(STORAGE_KEY_STATION_URI, newUri);
-    onSave(newUri);
-    closeStationModal();
-  });
+    const saveBtn = document.getElementById('save-settings');
+    saveBtn?.addEventListener('click', () => {
+      const newUri = stationSelect.value;
+      localStorage.setItem(STORAGE_KEY_STATION_URI, newUri);
+      onSave(newUri);
+      closeStationModal();
+    });
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeStationModal();
-  });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeStationModal();
+    });
+
+    stationModalInitialized = true;
+  }
 }
 
 export function setupRailwayModal(
@@ -232,59 +242,66 @@ export function setupRailwayModal(
 
   populateOptions(currentUri);
 
-  const railwayBtn = document.getElementById('railway-button');
-  railwayBtn?.addEventListener('click', () => {
-    populateOptions(currentUri);
-    openRailwayModal();
-  });
+  // Only add event listeners once
+  if (!railwayModalInitialized) {
+    const railwayBtn = document.getElementById('railway-button');
+    railwayBtn?.addEventListener('click', () => {
+      populateOptions(currentUri);
+      openRailwayModal();
+    });
 
-  const closeBtn = document.getElementById('close-railway-modal');
-  closeBtn?.addEventListener('click', () => {
-    closeRailwayModal();
-  });
+    const closeBtn = document.getElementById('close-railway-modal');
+    closeBtn?.addEventListener('click', () => {
+      closeRailwayModal();
+    });
 
-  const saveBtn = document.getElementById('save-railway');
-  saveBtn?.addEventListener('click', () => {
-    const newUri = railwaySelect.value;
-    localStorage.setItem(STORAGE_KEY_RAILWAY_URI, newUri);
-    onSave(newUri);
-    closeRailwayModal();
-  });
+    const saveBtn = document.getElementById('save-railway');
+    saveBtn?.addEventListener('click', () => {
+      const newUri = railwaySelect.value;
+      localStorage.setItem(STORAGE_KEY_RAILWAY_URI, newUri);
+      onSave(newUri);
+      closeRailwayModal();
+    });
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeRailwayModal();
-  });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeRailwayModal();
+    });
+
+    railwayModalInitialized = true;
+  }
 }
 
 export function setupApiKeyModal(
   currentApiKey: string | null,
   onSave: (apiKey: string | null) => void,
 ): void {
-  console.log('Open up API key modal setup');
   const modal = document.getElementById('api-key-modal');
-  console.log(modal);
   const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement | null;
-  console.log(apiKeyInput);
   if (!modal || !apiKeyInput) return;
 
   apiKeyInput.value = currentApiKey || '';
 
-  const saveBtn = document.getElementById('save-api-key');
-  const closeBtn = document.getElementById('close-api-key');
+  // Only add event listeners once
+  if (!apiKeyModalInitialized) {
+    const saveBtn = document.getElementById('save-api-key');
+    const closeBtn = document.getElementById('close-api-key');
 
-  saveBtn?.addEventListener('click', () => {
-    const newKey = apiKeyInput.value ? apiKeyInput.value.trim() : null;
-    if (newKey) localStorage.setItem(STORAGE_KEY_API_KEY, newKey);
-    else localStorage.removeItem(STORAGE_KEY_API_KEY);
-    onSave(newKey);
-    closeApiModal();
-  });
+    saveBtn?.addEventListener('click', () => {
+      const newKey = apiKeyInput.value ? apiKeyInput.value.trim() : null;
+      if (newKey) localStorage.setItem(STORAGE_KEY_API_KEY, newKey);
+      else localStorage.removeItem(STORAGE_KEY_API_KEY);
+      onSave(newKey);
+      closeApiModal();
+    });
 
-  closeBtn?.addEventListener('click', () => closeApiModal());
+    closeBtn?.addEventListener('click', () => closeApiModal());
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeApiModal();
-  });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeApiModal();
+    });
+
+    apiKeyModalInitialized = true;
+  }
 }
 
 export function openStationModal(): void {
