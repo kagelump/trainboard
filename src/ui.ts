@@ -6,10 +6,10 @@ import { timeToMinutes, formatTimeHHMM } from './utils';
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
 
-// LocalStorage keys
-const STORAGE_KEY_RAILWAY_URI = 't2board_railway_uri';
-const STORAGE_KEY_STATION_URI = 't2board_station_uri';
-const STORAGE_KEY_API_KEY = 't2board_api_key';
+// LocalStorage keys - exported for use in other modules
+export const STORAGE_KEY_RAILWAY_URI = 't2board_railway_uri';
+export const STORAGE_KEY_STATION_URI = 't2board_station_uri';
+export const STORAGE_KEY_API_KEY = 't2board_api_key';
 
 // Track whether modals have been initialized to prevent duplicate event listeners
 let apiKeyModalInitialized = false;

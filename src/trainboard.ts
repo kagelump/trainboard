@@ -62,6 +62,7 @@ import {
   clearStatus as uiClearStatus,
   startMinutesUpdater as uiStartMinutesUpdater,
   setPageTitle as uiSetPageTitle,
+  STORAGE_KEY_API_KEY,
 } from './ui';
 
 // --- 1. CONFIGURATION AND CONSTANTS ---
@@ -372,7 +373,7 @@ async function loadLocalConfig(): Promise<void> {
   await loadFromLocalConfig();
   // Allow user-supplied API key in localStorage to override config.json
   try {
-    const userKey = localStorage.getItem('t2board_api_key');
+    const userKey = localStorage.getItem(STORAGE_KEY_API_KEY);
     if (userKey) {
       ODPT_API_KEY = userKey;
     }
