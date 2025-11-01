@@ -2,6 +2,7 @@
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
 import { timeToMinutes, formatTimeHHMM } from './utils';
+import { getStationConfigs } from './dataLoaders';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -308,7 +309,9 @@ export function setupSettingsModal(
 
   function populateStationOptions(uri: string | null) {
     if (!stationSelect) return;
-    stationSelect.innerHTML = stationConfigs
+    // Get fresh station configs instead of using stale closure variable
+    const freshStationConfigs = getStationConfigs();
+    stationSelect.innerHTML = freshStationConfigs
       .map(
         (config) =>
           `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`,
