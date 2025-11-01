@@ -13,6 +13,7 @@ import { getJapaneseText, collectDestinationUris } from './utils';
 import { SimpleCache } from './cache';
 import { getTrainTypeCssClass } from './trainTypeStyles';
 import { setPageTitle } from './ui';
+import terminusData from './terminus.json';
 
 // --- Types ---
 export type StationConfig = {
@@ -40,6 +41,10 @@ export let OUTBOUND_DIRECTION_URI: string | null = null;
 export let INBOUND_FRIENDLY_NAME_JA = '渋谷・副都心線方面'; // fallback
 export let OUTBOUND_FRIENDLY_NAME_JA = '横浜・元町中華街方面'; // fallback
 
+// Terminus mapping loaded from static JSON (railway URI -> inbound/outbound labels)
+export const TERMINUS_MAP: Record<string, { inbound: string; outbound: string }> =
+  terminusData as unknown as Record<string, { inbound: string; outbound: string }>;
+
 export const TRAIN_TYPE_MAP: Record<string, TrainTypeMapEntry> = {};
 export const directionNameCache = new Map<string, string>();
 export let STATION_CONFIGS: StationConfig[] = [];
@@ -55,10 +60,24 @@ export function getOutboundDirectionUri(): string {
 }
 
 export function getInboundFriendlyName(): string {
+  // Prefer terminus.json mapping for the currently selected railway if available
+  try {
+    const uri = currentRailway ? currentRailway['owl:sameAs'] || currentRailway['@id'] : null;
+    if (uri && TERMINUS_MAP[uri] && TERMINUS_MAP[uri].inbound) return TERMINUS_MAP[uri].inbound;
+  } catch {
+    // ignore and fall back
+  }
   return INBOUND_FRIENDLY_NAME_JA;
 }
 
 export function getOutboundFriendlyName(): string {
+  // Prefer terminus.json mapping for the currently selected railway if available
+  try {
+    const uri = currentRailway ? currentRailway['owl:sameAs'] || currentRailway['@id'] : null;
+    if (uri && TERMINUS_MAP[uri] && TERMINUS_MAP[uri].outbound) return TERMINUS_MAP[uri].outbound;
+  } catch {
+    // ignore and fall back
+  }
   return OUTBOUND_FRIENDLY_NAME_JA;
 }
 
@@ -145,9 +164,12 @@ export async function loadRailwayMetadata(
     currentRailway = railway;
 
     // Set direction URIs from railway metadata
-    INBOUND_DIRECTION_URI = railway['odpt:ascendingRailDirection'] || 'odpt.RailDirection:Inbound';
+    // Note: ODPT's ascending/descending is OPPOSITE of typical inbound/outbound convention
+    // Ascending (上り) goes toward terminus, Descending (下り) goes away from terminus
+    // But for display, we swap them to match user expectations
+    INBOUND_DIRECTION_URI = railway['odpt:descendingRailDirection'] || 'odpt.RailDirection:Inbound';
     OUTBOUND_DIRECTION_URI =
-      railway['odpt:descendingRailDirection'] || 'odpt.RailDirection:Outbound';
+      railway['odpt:ascendingRailDirection'] || 'odpt.RailDirection:Outbound';
 
     // Set friendly direction names
     if (INBOUND_DIRECTION_URI && directionNameCache.has(INBOUND_DIRECTION_URI)) {

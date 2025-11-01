@@ -1,0 +1,850 @@
+{
+  "odpt.Railway:Odakyu.Odawara": {
+    "inbound": "新宿",
+    "outbound": "小田原"
+  },
+  "odpt.Railway:Keikyu.Main": {
+    "inbound": "品川",
+    "outbound": "浦賀"
+  },
+  "odpt.Railway:Tobu.Nikko": {
+    "inbound": "浅草",
+    "outbound": "東武日光"
+  },
+  "odpt.Railway:Tobu.TobuSkytree": {
+    "inbound": "浅草",
+    "outbound": "東武動物公園"
+  },
+  "odpt.Railway:JR-East.ChuoSobuLocal": {
+    "inbound": "三鷹",
+    "outbound": "千葉"
+  },
+  "odpt.Railway:Fujikyu.Fujikyu": {
+    "inbound": "大月",
+    "outbound": "河口湖"
+  },
+  "odpt.Railway:Keikyu.Airport": {
+    "inbound": "品川",
+    "outbound": "羽田空港"
+  },
+  "odpt.Railway:Keikyu.Daishi": {
+    "inbound": "京急川崎",
+    "outbound": "小島新田"
+  },
+  "odpt.Railway:Tokyu.DenEnToshi": {
+    "inbound": "渋谷",
+    "outbound": "中央林間"
+  },
+  "odpt.Railway:Tokyu.Ikegami": {
+    "inbound": "五反田",
+    "outbound": "蒲田"
+  },
+  "odpt.Railway:Tobu.Daishi": {
+    "inbound": "西新井",
+    "outbound": "大師前"
+  },
+  "odpt.Railway:Tobu.Isesaki": {
+    "inbound": "東武動物公園",
+    "outbound": "伊勢崎"
+  },
+  "odpt.Railway:Tobu.Kiryu": {
+    "inbound": "太田",
+    "outbound": "赤城"
+  },
+  "odpt.Railway:ChibaMonorail.Line2": {
+    "inbound": "千葉",
+    "outbound": "千城台"
+  },
+  "odpt.Railway:JR-East.Chuo": {
+    "inbound": "東京",
+    "outbound": "高尾"
+  },
+  "odpt.Railway:JR-East.Joban": {
+    "inbound": "上野",
+    "outbound": "水戸"
+  },
+  "odpt.Railway:Seibu.Toshima": {
+    "inbound": "練馬",
+    "outbound": "豊島園"
+  },
+  "odpt.Railway:Sotetsu.Izumino": {
+    "inbound": "二俣川",
+    "outbound": "湘南台"
+  },
+  "odpt.Railway:Sotetsu.Main": {
+    "inbound": "横浜",
+    "outbound": "海老名"
+  },
+  "odpt.Railway:Sotetsu.SotetsuShinYokohama": {
+    "inbound": "新横浜",
+    "outbound": "西谷"
+  },
+  "odpt.Railway:JR-Central.TokaidoShinkansen": {
+    "inbound": "東京",
+    "outbound": "新大阪"
+  },
+  "odpt.Railway:Odakyu.Enoshima": {
+    "inbound": "相模大野",
+    "outbound": "片瀬江ノ島"
+  },
+  "odpt.Railway:Odakyu.Tama": {
+    "inbound": "新百合ヶ丘",
+    "outbound": "唐木田"
+  },
+  "odpt.Railway:Keikyu.Kurihama": {
+    "inbound": "堀ノ内",
+    "outbound": "三崎口"
+  },
+  "odpt.Railway:Tokyu.Setagaya": {
+    "inbound": "三軒茶屋",
+    "outbound": "下高井戸"
+  },
+  "odpt.Railway:Keikyu.Zushi": {
+    "inbound": "金沢八景",
+    "outbound": "逗子・葉山"
+  },
+  "odpt.Railway:Seibu.Haijima": {
+    "inbound": "西武新宿",
+    "outbound": "拝島"
+  },
+  "odpt.Railway:Seibu.Ikebukuro": {
+    "inbound": "池袋",
+    "outbound": "飯能"
+  },
+  "odpt.Railway:Chichibu.Chichibu": {
+    "inbound": "羽生",
+    "outbound": "三峰口"
+  },
+  "odpt.Railway:Seibu.Kokubunji": {
+    "inbound": "国分寺",
+    "outbound": "東村山"
+  },
+  "odpt.Railway:Seibu.Sayama": {
+    "inbound": "西所沢",
+    "outbound": "西武球場前"
+  },
+  "odpt.Railway:Isumi.Isumi": {
+    "inbound": "大原",
+    "outbound": "上総中野"
+  },
+  "odpt.Railway:Seibu.SeibuChichibu": {
+    "inbound": "吾野",
+    "outbound": "西武秩父"
+  },
+  "odpt.Railway:Seibu.SeibuYurakucho": {
+    "inbound": "練馬",
+    "outbound": "小竹向原"
+  },
+  "odpt.Railway:Seibu.Seibuen": {
+    "inbound": "東村山",
+    "outbound": "西武園"
+  },
+  "odpt.Railway:Seibu.Shinjuku": {
+    "inbound": "西武新宿",
+    "outbound": "本川越"
+  },
+  "odpt.Railway:Seibu.Tamagawa": {
+    "inbound": "武蔵境",
+    "outbound": "是政"
+  },
+  "odpt.Railway:Seibu.Tamako": {
+    "inbound": "国分寺",
+    "outbound": "西武遊園地"
+  },
+  "odpt.Railway:Seibu.Yamaguchi": {
+    "inbound": "西武球場前",
+    "outbound": "西武遊園地"
+  },
+  "odpt.Railway:Tokyu.Kodomonokuni": {
+    "inbound": "長津田",
+    "outbound": "こどもの国"
+  },
+  "odpt.Railway:Tokyu.Meguro": {
+    "inbound": "目黒",
+    "outbound": "日吉"
+  },
+  "odpt.Railway:Tokyu.Oimachi": {
+    "inbound": "大井町",
+    "outbound": "溝の口"
+  },
+  "odpt.Railway:Tokyu.TokyuShinYokohama": {
+    "inbound": "新横浜",
+    "outbound": "西谷"
+  },
+  "odpt.Railway:JR-Central.Gotemba": {
+    "inbound": "国府津",
+    "outbound": "沼津"
+  },
+  "odpt.Railway:JR-Central.Minobu": {
+    "inbound": "富士",
+    "outbound": "甲府"
+  },
+  "odpt.Railway:Tokyu.TokyuTamagawa": {
+    "inbound": "多摩川",
+    "outbound": "蒲田"
+  },
+  "odpt.Railway:Choshi.Choshi": {
+    "inbound": "銚子",
+    "outbound": "外川"
+  },
+  "odpt.Railway:Tokyu.Toyoko": {
+    "inbound": "渋谷",
+    "outbound": "横浜"
+  },
+  "odpt.Railway:Tobu.Kameido": {
+    "inbound": "曳舟",
+    "outbound": "亀戸"
+  },
+  "odpt.Railway:Tobu.Kinugawa": {
+    "inbound": "下今市",
+    "outbound": "新藤原"
+  },
+  "odpt.Railway:IzuHakone.Sunzu": {
+    "inbound": "三島",
+    "outbound": "修善寺"
+  },
+  "odpt.Railway:Tobu.KoizumiBranch": {
+    "inbound": "館林",
+    "outbound": "西小泉"
+  },
+  "odpt.Railway:Tobu.Koizumi": {
+    "inbound": "太田",
+    "outbound": "西小泉"
+  },
+  "odpt.Railway:Enoden.Enoden": {
+    "inbound": "鎌倉",
+    "outbound": "藤沢"
+  },
+  "odpt.Railway:Tobu.Ogose": {
+    "inbound": "坂戸",
+    "outbound": "越生"
+  },
+  "odpt.Railway:Tobu.Sano": {
+    "inbound": "館林",
+    "outbound": "葛生"
+  },
+  "odpt.Railway:Izukyu.Izukyu": {
+    "inbound": "伊東",
+    "outbound": "伊豆急下田"
+  },
+  "odpt.Railway:JR-Central.Chuo": {
+    "inbound": "名古屋",
+    "outbound": "中津川"
+  },
+  "odpt.Railway:Tobu.TobuSkytreeBranch": {
+    "inbound": "曳舟",
+    "outbound": "亀戸"
+  },
+  "odpt.Railway:Tobu.TobuUrbanPark": {
+    "inbound": "大宮",
+    "outbound": "船橋"
+  },
+  "odpt.Railway:Tobu.Tojo": {
+    "inbound": "池袋",
+    "outbound": "寄居"
+  },
+  "odpt.Railway:Tobu.Utsunomiya": {
+    "inbound": "新栃木",
+    "outbound": "東武宇都宮"
+  },
+  "odpt.Railway:Aizu.Aizu": {
+    "inbound": "西若松",
+    "outbound": "会津高原"
+  },
+  "odpt.Railway:ChibaMonorail.Line1": {
+    "inbound": "千葉みなと",
+    "outbound": "県庁前"
+  },
+  "odpt.Railway:Hitachinaka.Minato": {
+    "inbound": "勝田",
+    "outbound": "阿字ヶ浦"
+  },
+  "odpt.Railway:Hokuetsu.Hokuhoku": {
+    "inbound": "六日町",
+    "outbound": "犀潟"
+  },
+  "odpt.Railway:Hokuso.Hokuso": {
+    "inbound": "京成高砂",
+    "outbound": "印旛日本医大"
+  },
+  "odpt.Railway:IzuHakone.Daiyuzan": {
+    "inbound": "小田原",
+    "outbound": "大雄山"
+  },
+  "odpt.Railway:JR-Central.Tokaido": {
+    "inbound": "東京",
+    "outbound": "熱海"
+  },
+  "odpt.Railway:JR-East.AkitaShinkansen": {
+    "inbound": "東京",
+    "outbound": "秋田"
+  },
+  "odpt.Railway:JR-East.Aterazawa": {
+    "inbound": "山形",
+    "outbound": "左沢"
+  },
+  "odpt.Railway:JR-East.BanetsuEast": {
+    "inbound": "郡山",
+    "outbound": "いわき"
+  },
+  "odpt.Railway:JR-East.BanetsuWest": {
+    "inbound": "郡山",
+    "outbound": "新潟"
+  },
+  "odpt.Railway:JR-East.Kitakami": {
+    "inbound": "北上",
+    "outbound": "横手"
+  },
+  "odpt.Railway:JR-East.ChuoTatsunoBranch": {
+    "inbound": "岡谷",
+    "outbound": "辰野"
+  },
+  "odpt.Railway:JR-East.Echigo": {
+    "inbound": "新潟",
+    "outbound": "柏崎"
+  },
+  "odpt.Railway:JR-East.Gono": {
+    "inbound": "東能代",
+    "outbound": "川部"
+  },
+  "odpt.Railway:JR-East.Hachinohe": {
+    "inbound": "八戸",
+    "outbound": "久慈"
+  },
+  "odpt.Railway:JR-East.Hakushin": {
+    "inbound": "新潟",
+    "outbound": "新発田"
+  },
+  "odpt.Railway:JR-East.Hanawa": {
+    "inbound": "大館",
+    "outbound": "好摩"
+  },
+  "odpt.Railway:JR-East.HokurikuShinkansen": {
+    "inbound": "東京",
+    "outbound": "金沢"
+  },
+  "odpt.Railway:JR-East.Iiyama": {
+    "inbound": "豊野",
+    "outbound": "越後川口"
+  },
+  "odpt.Railway:JR-East.Ishinomaki": {
+    "inbound": "小牛田",
+    "outbound": "女川"
+  },
+  "odpt.Railway:JR-East.JoetsuShinkansen": {
+    "inbound": "東京",
+    "outbound": "新潟"
+  },
+  "odpt.Railway:JR-East.Kamaishi": {
+    "inbound": "花巻",
+    "outbound": "釜石"
+  },
+  "odpt.Railway:JR-East.Karasuyama": {
+    "inbound": "宝積寺",
+    "outbound": "烏山"
+  },
+  "odpt.Railway:JR-East.Kesennuma": {
+    "inbound": "前谷地",
+    "outbound": "気仙沼"
+  },
+  "odpt.Railway:JR-East.Koumi": {
+    "inbound": "小淵沢",
+    "outbound": "小諸"
+  },
+  "odpt.Railway:JR-East.Mito": {
+    "inbound": "小山",
+    "outbound": "水戸"
+  },
+  "odpt.Railway:JR-East.Nikko": {
+    "inbound": "宇都宮",
+    "outbound": "日光"
+  },
+  "odpt.Railway:JR-East.Ofunato": {
+    "inbound": "一ノ関",
+    "outbound": "盛"
+  },
+  "odpt.Railway:JR-East.Oga": {
+    "inbound": "追分",
+    "outbound": "男鹿"
+  },
+  "odpt.Railway:JR-East.Oito": {
+    "inbound": "松本",
+    "outbound": "南小谷"
+  },
+  "odpt.Railway:JR-East.Ominato": {
+    "inbound": "野辺地",
+    "outbound": "大湊"
+  },
+  "odpt.Railway:JR-East.OuYamagata": {
+    "inbound": "福島",
+    "outbound": "新庄"
+  },
+  "odpt.Railway:JR-East.Ou": {
+    "inbound": "福島",
+    "outbound": "青森"
+  },
+  "odpt.Railway:JR-East.RikuEast": {
+    "inbound": "小牛田",
+    "outbound": "新庄"
+  },
+  "odpt.Railway:JR-East.RikuWest": {
+    "inbound": "新庄",
+    "outbound": "余目"
+  },
+  "odpt.Railway:JR-East.Ryomo": {
+    "inbound": "小山",
+    "outbound": "新前橋"
+  },
+  "odpt.Railway:JR-East.SensekiTohoku": {
+    "inbound": "仙台",
+    "outbound": "石巻"
+  },
+  "odpt.Railway:JR-East.Senseki": {
+    "inbound": "仙台",
+    "outbound": "石巻"
+  },
+  "odpt.Railway:JR-East.Senzan": {
+    "inbound": "仙台",
+    "outbound": "羽前千歳"
+  },
+  "odpt.Railway:JR-East.Shinetsu": {
+    "inbound": "高崎",
+    "outbound": "新潟"
+  },
+  "odpt.Railway:JR-East.Shinonoi": {
+    "inbound": "塩尻",
+    "outbound": "篠ノ井"
+  },
+  "odpt.Railway:JR-East.SuigunBranch": {
+    "inbound": "郡山",
+    "outbound": "水戸"
+  },
+  "odpt.Railway:JR-East.Suigun": {
+    "inbound": "水戸",
+    "outbound": "郡山"
+  },
+  "odpt.Railway:JR-East.Tadami": {
+    "inbound": "会津若松",
+    "outbound": "小出"
+  },
+  "odpt.Railway:JR-East.Tazawako": {
+    "inbound": "盛岡",
+    "outbound": "大曲"
+  },
+  "odpt.Railway:JR-East.TohokuShinkansen": {
+    "inbound": "東京",
+    "outbound": "新青森"
+  },
+  "odpt.Railway:JR-East.Tohoku": {
+    "inbound": "東京",
+    "outbound": "一ノ関"
+  },
+  "odpt.Railway:JR-East.Tsugaru": {
+    "inbound": "青森",
+    "outbound": "三厩"
+  },
+  "odpt.Railway:JR-East.Uetsu": {
+    "inbound": "新津",
+    "outbound": "秋田"
+  },
+  "odpt.Railway:JR-East.Yahiko": {
+    "inbound": "東三条",
+    "outbound": "弥彦"
+  },
+  "odpt.Railway:JR-East.Yamada": {
+    "inbound": "盛岡",
+    "outbound": "宮古"
+  },
+  "odpt.Railway:JR-East.YamagataShinkansen": {
+    "inbound": "東京",
+    "outbound": "新庄"
+  },
+  "odpt.Railway:JR-East.Yonesaka": {
+    "inbound": "米沢",
+    "outbound": "坂町"
+  },
+  "odpt.Railway:JR-Shikoku.SetoOhashi": {
+    "inbound": "岡山",
+    "outbound": "高松"
+  },
+  "odpt.Railway:JR-West.Sanin": {
+    "inbound": "京都",
+    "outbound": "幡生"
+  },
+  "odpt.Railway:Jomo.Jomo": {
+    "inbound": "高崎",
+    "outbound": "西桐生"
+  },
+  "odpt.Railway:Joshin.Joshin": {
+    "inbound": "高崎",
+    "outbound": "下仁田"
+  },
+  "odpt.Railway:KantoRailway.Ryugasaki": {
+    "inbound": "佐貫",
+    "outbound": "竜ヶ崎"
+  },
+  "odpt.Railway:KashimaRinkai.OaraiKashima": {
+    "inbound": "水戸",
+    "outbound": "鹿島神宮"
+  },
+  "odpt.Railway:Keisei.Chiba": {
+    "inbound": "京成津田沼",
+    "outbound": "千葉中央"
+  },
+  "odpt.Railway:Keisei.HigashiNarita": {
+    "inbound": "京成成田",
+    "outbound": "東成田"
+  },
+  "odpt.Railway:Keisei.Kanamachi": {
+    "inbound": "京成高砂",
+    "outbound": "金町"
+  },
+  "odpt.Railway:Keisei.Main": {
+    "inbound": "京成上野",
+    "outbound": "成田空港"
+  },
+  "odpt.Railway:Keisei.NaritaSkyAccess": {
+    "inbound": "京成上野",
+    "outbound": "成田空港"
+  },
+  "odpt.Railway:Keisei.Oshiage": {
+    "inbound": "押上",
+    "outbound": "京成高砂"
+  },
+  "odpt.Railway:Kominato.Kominato": {
+    "inbound": "五井",
+    "outbound": "上総中野"
+  },
+  "odpt.Railway:TokyoMetro.Hanzomon": {
+    "inbound": "渋谷",
+    "outbound": "押上"
+  },
+  "odpt.Railway:MIR.TsukubaExpress": {
+    "inbound": "秋葉原",
+    "outbound": "つくば"
+  },
+  "odpt.Railway:MaihamaResort.DisneyResort": {
+    "inbound": "リゾートゲートウェイ",
+    "outbound": "東京ディズニーランド"
+  },
+  "odpt.Railway:Minatomirai.Minatomirai": {
+    "inbound": "横浜",
+    "outbound": "元町・中華街"
+  },
+  "odpt.Railway:OdakyuHakone.HakoneTozan": {
+    "inbound": "小田原",
+    "outbound": "強羅"
+  },
+  "odpt.Railway:Ryutetsu.Nagareyama": {
+    "inbound": "馬橋",
+    "outbound": "流山"
+  },
+  "odpt.Railway:SaitamaRailway.SaitamaRailway": {
+    "inbound": "赤羽岩淵",
+    "outbound": "浦和美園"
+  },
+  "odpt.Railway:SaitamaTransit.NewShuttle": {
+    "inbound": "大宮",
+    "outbound": "内宿"
+  },
+  "odpt.Railway:SendaiAirportTransit.SendaiAirport": {
+    "inbound": "仙台",
+    "outbound": "仙台空港"
+  },
+  "odpt.Railway:SendaiMunicipal.Namboku": {
+    "inbound": "泉中央",
+    "outbound": "富沢"
+  },
+  "odpt.Railway:SendaiMunicipal.Tozai": {
+    "inbound": "八木山動物公園",
+    "outbound": "荒井"
+  },
+  "odpt.Railway:Shibayama.Shibayama": {
+    "inbound": "東成田",
+    "outbound": "芝山千代田"
+  },
+  "odpt.Railway:ShinKeisei.ShinKeisei": {
+    "inbound": "松戸",
+    "outbound": "京成津田沼"
+  },
+  "odpt.Railway:ShonanMonorail.ShonanMonorail": {
+    "inbound": "大船",
+    "outbound": "湘南江の島"
+  },
+  "odpt.Railway:TWR.Rinkai": {
+    "inbound": "大崎",
+    "outbound": "新木場"
+  },
+  "odpt.Railway:TamaMonorail.TamaMonorail": {
+    "inbound": "上北台",
+    "outbound": "多摩センター"
+  },
+  "odpt.Railway:Toei.Arakawa": {
+    "inbound": "早稲田",
+    "outbound": "三ノ輪橋"
+  },
+  "odpt.Railway:Toei.Asakusa": {
+    "inbound": "西馬込",
+    "outbound": "押上"
+  },
+  "odpt.Railway:Toei.Mita": {
+    "inbound": "目黒",
+    "outbound": "西高島平"
+  },
+  "odpt.Railway:Toei.NipporiToneri": {
+    "inbound": "日暮里",
+    "outbound": "見沼代親水公園"
+  },
+  "odpt.Railway:Toei.Oedo": {
+    "inbound": "光が丘",
+    "outbound": "大門"
+  },
+  "odpt.Railway:Toei.Shinjuku": {
+    "inbound": "新宿",
+    "outbound": "本八幡"
+  },
+  "odpt.Railway:TokyoMetro.Chiyoda": {
+    "inbound": "代々木上原",
+    "outbound": "取手"
+  },
+  "odpt.Railway:TokyoMetro.Fukutoshin": {
+    "inbound": "渋谷",
+    "outbound": "和光市"
+  },
+  "odpt.Railway:TokyoMetro.Ginza": {
+    "inbound": "渋谷",
+    "outbound": "浅草"
+  },
+  "odpt.Railway:TokyoMetro.Hibiya": {
+    "inbound": "中目黒",
+    "outbound": "北千住"
+  },
+  "odpt.Railway:TokyoMetro.Marunouchi": {
+    "inbound": "荻窪",
+    "outbound": "池袋"
+  },
+  "odpt.Railway:TokyoMetro.Namboku": {
+    "inbound": "目黒",
+    "outbound": "赤羽岩淵"
+  },
+  "odpt.Railway:TokyoMetro.Tozai": {
+    "inbound": "中野",
+    "outbound": "西船橋"
+  },
+  "odpt.Railway:TokyoMetro.Yurakucho": {
+    "inbound": "新木場",
+    "outbound": "和光市"
+  },
+  "odpt.Railway:TokyoMonorail.HanedaAirport": {
+    "inbound": "浜松町",
+    "outbound": "羽田空港"
+  },
+  "odpt.Railway:UtsunomiyaLightRail.UtsunomiyaLightRail": {
+    "inbound": "宇都宮駅東口",
+    "outbound": "芳賀・高根沢工業団地"
+  },
+  "odpt.Railway:WataraseKeikoku.WataraseKeikoku": {
+    "inbound": "桐生",
+    "outbound": "間藤"
+  },
+  "odpt.Railway:Yagan.AizuKinugawa": {
+    "inbound": "新藤原",
+    "outbound": "会津高原"
+  },
+  "odpt.Railway:YokohamaMunicipal.Blue": {
+    "inbound": "湘南台",
+    "outbound": "あざみ野"
+  },
+  "odpt.Railway:YokohamaMunicipal.Green": {
+    "inbound": "中山",
+    "outbound": "日吉"
+  },
+  "odpt.Railway:YokohamaSeaside.KanazawaSeaside": {
+    "inbound": "新杉田",
+    "outbound": "金沢八景"
+  },
+  "odpt.Railway:Yurikamome.Yurikamome": {
+    "inbound": "新橋",
+    "outbound": "豊洲"
+  },
+  "odpt.Railway:Keio.Inokashira": {
+    "inbound": "渋谷",
+    "outbound": "吉祥寺"
+  },
+  "odpt.Railway:Keio.KeioNew": {
+    "inbound": "新宿",
+    "outbound": "笹塚"
+  },
+  "odpt.Railway:Keio.Keio": {
+    "inbound": "新宿",
+    "outbound": "京王八王子"
+  },
+  "odpt.Railway:Keio.Sagamihara": {
+    "inbound": "調布",
+    "outbound": "橋本"
+  },
+  "odpt.Railway:KantoRailway.Joso": {
+    "inbound": "取手",
+    "outbound": "下館"
+  },
+  "odpt.Railway:Keio.Takao": {
+    "inbound": "北野",
+    "outbound": "高尾山口"
+  },
+  "odpt.Railway:ToyoRapid.ToyoRapid": {
+    "inbound": "西船橋",
+    "outbound": "東葉勝田台"
+  },
+  "odpt.Railway:JR-East.Agatsuma": {
+    "inbound": "渋川",
+    "outbound": "大前"
+  },
+  "odpt.Railway:JR-East.ChuoRapid": {
+    "inbound": "東京",
+    "outbound": "高尾"
+  },
+  "odpt.Railway:JR-East.Hachiko": {
+    "inbound": "八王子",
+    "outbound": "高崎"
+  },
+  "odpt.Railway:JR-East.Ito": {
+    "inbound": "熱海",
+    "outbound": "伊東"
+  },
+  "odpt.Railway:JR-East.Kawagoe": {
+    "inbound": "大宮",
+    "outbound": "高麗川"
+  },
+  "odpt.Railway:JR-East.Itsukaichi": {
+    "inbound": "拝島",
+    "outbound": "武蔵五日市"
+  },
+  "odpt.Railway:JR-East.JobanLocal": {
+    "inbound": "代々木上原",
+    "outbound": "取手"
+  },
+  "odpt.Railway:JR-East.JobanRapid": {
+    "inbound": "上野",
+    "outbound": "取手"
+  },
+  "odpt.Railway:JR-East.Joetsu": {
+    "inbound": "高崎",
+    "outbound": "長岡"
+  },
+  "odpt.Railway:JR-East.Kashima": {
+    "inbound": "香取",
+    "outbound": "鹿島神宮"
+  },
+  "odpt.Railway:JR-East.KeihinTohokuNegishi": {
+    "inbound": "大宮",
+    "outbound": "大船"
+  },
+  "odpt.Railway:JR-East.Keiyo": {
+    "inbound": "東京",
+    "outbound": "蘇我"
+  },
+  "odpt.Railway:JR-East.Kururi": {
+    "inbound": "木更津",
+    "outbound": "上総亀山"
+  },
+  "odpt.Railway:JR-East.Narita": {
+    "inbound": "佐倉",
+    "outbound": "銚子"
+  },
+  "odpt.Railway:JR-East.Musashino": {
+    "inbound": "府中本町",
+    "outbound": "西船橋"
+  },
+  "odpt.Railway:JR-East.NambuBranch": {
+    "inbound": "尻手",
+    "outbound": "浜川崎"
+  },
+  "odpt.Railway:JR-East.Nambu": {
+    "inbound": "川崎",
+    "outbound": "立川"
+  },
+  "odpt.Railway:JR-East.NaritaAbikoBranch": {
+    "inbound": "我孫子",
+    "outbound": "成田"
+  },
+  "odpt.Railway:JR-East.NaritaAirportBranch": {
+    "inbound": "成田",
+    "outbound": "成田空港"
+  },
+  "odpt.Railway:JR-East.Ome": {
+    "inbound": "立川",
+    "outbound": "奥多摩"
+  },
+  "odpt.Railway:JR-East.Sagami": {
+    "inbound": "茅ヶ崎",
+    "outbound": "橋本"
+  },
+  "odpt.Railway:JR-East.SaikyoKawagoe": {
+    "inbound": "大崎",
+    "outbound": "川越"
+  },
+  "odpt.Railway:JR-East.ShonanShinjuku": {
+    "inbound": "大宮",
+    "outbound": "大船"
+  },
+  "odpt.Railway:JR-East.SobuRapid": {
+    "inbound": "東京",
+    "outbound": "千葉"
+  },
+  "odpt.Railway:JR-East.Sobu": {
+    "inbound": "千葉",
+    "outbound": "銚子"
+  },
+  "odpt.Railway:JR-East.SotetsuDirect": {
+    "inbound": "新宿",
+    "outbound": "海老名"
+  },
+  "odpt.Railway:JR-East.Sotobo": {
+    "inbound": "千葉",
+    "outbound": "安房鴨川"
+  },
+  "odpt.Railway:JR-East.Takasaki": {
+    "inbound": "上野",
+    "outbound": "高崎"
+  },
+  "odpt.Railway:JR-East.Togane": {
+    "inbound": "成東",
+    "outbound": "大網"
+  },
+  "odpt.Railway:JR-East.Tokaido": {
+    "inbound": "東京",
+    "outbound": "熱海"
+  },
+  "odpt.Railway:JR-East.TsurumiOkawaBranch": {
+    "inbound": "浅野",
+    "outbound": "大川"
+  },
+  "odpt.Railway:JR-East.TsurumiUmiShibauraBranch": {
+    "inbound": "浅野",
+    "outbound": "海芝浦"
+  },
+  "odpt.Railway:JR-East.Tsurumi": {
+    "inbound": "鶴見",
+    "outbound": "扇町"
+  },
+  "odpt.Railway:JR-East.Uchibo": {
+    "inbound": "蘇我",
+    "outbound": "安房鴨川"
+  },
+  "odpt.Railway:JR-East.Utsunomiya": {
+    "inbound": "上野",
+    "outbound": "黒磯"
+  },
+  "odpt.Railway:JR-East.Yamanote": {
+    "inbound": "内回り",
+    "outbound": "外回り"
+  },
+  "odpt.Railway:JR-East.Yokohama": {
+    "inbound": "東神奈川",
+    "outbound": "八王子"
+  },
+  "odpt.Railway:JR-East.Yokosuka": {
+    "inbound": "東京",
+    "outbound": "久里浜"
+  }
+}
