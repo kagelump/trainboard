@@ -4,6 +4,7 @@ import type { SimpleCache } from './cache';
 import { timeToMinutes, formatTimeHHMM } from './utils';
 import { getStationConfigs, getRailwayConfigs } from './dataLoaders';
 import prefectures from './prefectures.json';
+import sortedPrefectures from './sorted_prefectures.json';
 import operators from './operators.json';
 
 type StationCfg = { name: string; uri: string };
@@ -308,9 +309,10 @@ export function setupSettingsModal(
 
   function populatePrefectureOptions(selected: string | null) {
     if (!prefectureSelect) return;
-    const keys = Object.keys(prefectures as Record<string, string[]>).sort((a, b) =>
-      a.localeCompare(b, 'ja'),
-    );
+    // Use explicit ordering from sorted_prefectures.json, but only include
+    // prefectures that actually exist in the `prefectures` mapping.
+    const available = new Set(Object.keys(prefectures as Record<string, string[]>));
+    const keys = (sortedPrefectures as string[]).filter((k) => available.has(k));
     prefectureSelect.innerHTML = keys
       .map((k) => `<option value="${k}" ${k === selected ? 'selected' : ''}>${k}</option>`)
       .join('');
