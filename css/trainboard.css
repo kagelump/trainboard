@@ -65,47 +65,12 @@ body {
   word-break: break-word;
 }
 
-/* E-Ink Color Adaptation Classes (Japanese Train Type Names) */
-
-/* Limited Express (特急) - Red */
-.type-LE {
-  background-color: #f00;
-  color: #fff;
-}
-/* Express (急行) - Yellow */
-.type-EXP {
-  background-color: #ff0;
-  color: #000;
-}
-/* Local (各停) - Default/Dark Gray */
+/* Default style for unknown/local train types */
+/* Specific train type colors are dynamically generated from train_colors.json */
 .type-LOC {
   background-color: #333;
   color: #fff;
-}
-/* Commuter Limited Express (通勤特急) - Red with Yellow Border */
-.type-CLE {
-  background-color: #f00;
-  color: #fff;
-  border: 3px solid #ff0;
-}
-/* Commuter Express (通勤急行) - Yellow with Darker Border */
-.type-CEXP {
-  background-color: #ff0;
-  color: #000;
-  border: 3px solid #333;
-}
-/* F-Liner - Red with Yellow Border */
-/* Combines the fastest speed (Red) with special branding (Yellow border) */
-.type-FLN {
-  background-color: #f00;
-  color: #fff;
-  border: 3px solid #ff0;
-}
-/* S-Train - White Background, Red Text (Premium/Special) */
-.type-STN {
-  background-color: #fff;
-  color: #f00;
-  border: 3px solid #f00;
+  border: 2px solid #333;
 }
 
 /* Delay Status Banner (Red) */

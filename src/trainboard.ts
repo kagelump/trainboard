@@ -64,6 +64,7 @@ import {
   setPageTitle as uiSetPageTitle,
   STORAGE_KEY_API_KEY,
 } from './ui';
+import { injectTrainTypeStyles, getTrainTypeCssClass } from './trainTypeStyles';
 
 // --- 1. CONFIGURATION AND CONSTANTS ---
 let ODPT_API_KEY: string | null = null; // loaded from ./config.json at runtime
@@ -135,25 +136,27 @@ async function loadDirectionNames(apiKey: string, apiBaseUrl: string): Promise<v
 async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promise<void> {
   try {
     const trainTypes = await fetchTrainTypes(apiKey, apiBaseUrl);
+
     for (const tt of trainTypes) {
       const uri = tt['owl:sameAs'] || tt['@id'];
-      const name = getJapaneseText(tt['dc:title']);
-      if (uri && typeof uri === 'string') {
-        // Determine CSS class based on name patterns
-        let cssClass = 'type-LOC'; // default
-        const lowerName = name.toLowerCase();
-        if (lowerName.includes('特急') || lowerName.includes('limited')) {
-          cssClass = lowerName.includes('通勤') ? 'type-CLE' : 'type-LE';
-        } else if (lowerName.includes('急行') || lowerName.includes('express')) {
-          cssClass = lowerName.includes('通勤') ? 'type-CEXP' : 'type-EXP';
-        } else if (lowerName.includes('s-train') || lowerName.includes('sトレイン')) {
-          cssClass = 'type-STR';
-        } else if (lowerName.includes('f-liner') || lowerName.includes('fライナー')) {
-          cssClass = 'type-FLN';
-        }
-        TRAIN_TYPE_MAP[uri] = { name, class: cssClass };
+
+      // Skip entries without a valid URI
+      if (!uri || typeof uri !== 'string') {
+        continue;
       }
+
+      const name = getJapaneseText(tt['dc:title']);
+
+      // Skip entries without a name
+      if (!name) {
+        continue;
+      }
+
+      const cssClass = getTrainTypeCssClass(uri);
+      TRAIN_TYPE_MAP[uri] = { name, class: cssClass };
     }
+
+    console.log(`Loaded ${Object.keys(TRAIN_TYPE_MAP).length} train types`);
   } catch (err) {
     console.warn('Failed to load train types:', err);
   }
@@ -388,6 +391,10 @@ async function initializeBoard(): Promise<void> {
   } catch (e) {
     console.warn('Error loading local config:', e);
   }
+
+  // Inject dynamic CSS styles for train types
+  injectTrainTypeStyles();
+
   if (!ODPT_API_KEY) {
     // No API key: open the API-key modal so the user can paste one.
     uiSetupApiKeyModal(ODPT_API_KEY, (newKey) => {
