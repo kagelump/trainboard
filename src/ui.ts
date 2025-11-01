@@ -4,6 +4,7 @@ import type { SimpleCache } from './cache';
 import { timeToMinutes, formatTimeHHMM } from './utils';
 import { getStationConfigs, getRailwayConfigs } from './dataLoaders';
 import prefectures from './prefectures.json';
+import operators from './operators.json';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -229,21 +230,8 @@ function getOperatorName(operatorUri: string): string {
   // Extract operator name from URI like "odpt.Operator:Tokyu" -> "Tokyu"
   const parts = operatorUri.split(':');
   const name = parts.length > 1 ? parts[1] : operatorUri;
-  // Convert common operator names to Japanese
-  const operatorMap: Record<string, string> = {
-    Tokyu: '東急',
-    JR: 'JR',
-    Toei: '都営',
-    TokyoMetro: '東京メトロ',
-    Odakyu: '小田急',
-    Keio: '京王',
-    Seibu: '西武',
-    Tobu: '東武',
-    Keisei: '京成',
-    Keikyu: '京急',
-    Sotetsu: '相鉄',
-    YokohamaMunicipal: '横浜市営',
-  };
+  // Prefer mapping from operators.json, fall back to the raw name
+  const operatorMap = operators as Record<string, string>;
   return operatorMap[name] || name;
 }
 
