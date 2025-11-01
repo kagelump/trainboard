@@ -117,6 +117,23 @@ npm run format
 
 The included Actions workflow runs on push to `main`, builds the site, and publishes the `dist/` directory to GitHub Pages using `peaceiris/actions-gh-pages`.
 
+## Raspberry Pi E-Ink Display
+
+You can run this trainboard on a Raspberry Pi with an e-ink display for a physical departure board! See [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) for detailed instructions on:
+
+- Setting up a Raspberry Pi Zero 2 W with Waveshare e-ink display
+- Installing and configuring the software environment
+- Automatic display refresh and power management
+- Troubleshooting and maintenance
+
+Quick start:
+```bash
+# On your Raspberry Pi
+cd ~/trainboard/scripts/rpi-eink
+chmod +x install.sh
+./install.sh
+```
+
 Notes & next steps
 
 - Consider moving more settings (like API base URL) to `config.json` and adding validation.
