@@ -14,6 +14,9 @@ export const STORAGE_KEY_API_KEY = 't2board_api_key';
 // UI update intervals (milliseconds)
 export const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
 
+// Display configuration
+const DISPLAYED_TRAINS_LIMIT = 5; // Number of trains to display at once
+
 // Track whether modals have been initialized to prevent duplicate event listeners
 let apiKeyModalInitialized = false;
 let stationModalInitialized = false;
@@ -132,7 +135,17 @@ function updateMinutesOnce(
     trainCache?: StationTimetableEntry[],
   ) => {
     const container = document.getElementById(`departures-${directionId}`);
-    if (!container || !trainCache || !stationNameCache || !trainTypeMap) return;
+    if (!container || !trainCache || !stationNameCache || !trainTypeMap) {
+      if (!container || !trainCache || !stationNameCache || !trainTypeMap) {
+        console.warn(`updateMinutesOnce: Missing required parameters for ${directionId}`, {
+          container: !!container,
+          trainCache: !!trainCache,
+          stationNameCache: !!stationNameCache,
+          trainTypeMap: !!trainTypeMap,
+        });
+      }
+      return;
+    }
 
     const els = Array.from(container.querySelectorAll<HTMLElement>('.train-row[data-departure]'));
     const displayedTimes =
@@ -162,10 +175,13 @@ function updateMinutesOnce(
 
     // Remove departed trains and replace with cached trains
     if (trainsToRemove.length > 0) {
-      // Find the next trains to display from cache
-      // We need to get trains starting from the position after the highest displayed train
-      const displayedCount = displayedTimes.length;
-      const nextTrains = trainCache.slice(displayedCount, displayedCount + trainsToRemove.length);
+      // Find the next trains to display from cache BEFORE removing trains
+      // We need to get trains starting from the position after all currently displayed trains
+      const currentDisplayedCount = displayedTimes.length;
+      const nextTrains = trainCache.slice(
+        currentDisplayedCount,
+        currentDisplayedCount + trainsToRemove.length,
+      );
 
       // Remove departed trains
       trainsToRemove.forEach((el) => {
@@ -217,13 +233,13 @@ export function startMinutesUpdater(
   // Reset displayed trains tracking when starting a new updater
   if (trainCacheInbound) {
     displayedTrainsInbound = trainCacheInbound
-      .slice(0, 5)
+      .slice(0, DISPLAYED_TRAINS_LIMIT)
       .map((t) => (t as any)['odpt:departureTime'])
       .filter(Boolean);
   }
   if (trainCacheOutbound) {
     displayedTrainsOutbound = trainCacheOutbound
-      .slice(0, 5)
+      .slice(0, DISPLAYED_TRAINS_LIMIT)
       .map((t) => (t as any)['odpt:departureTime'])
       .filter(Boolean);
   }

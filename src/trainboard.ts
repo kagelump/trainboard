@@ -78,6 +78,10 @@ const STATUS_REFRESH_INTERVAL_MS = 300_000; // 5 minutes
 const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
 const CLOCK_UPDATE_INTERVAL_MS = 1_000; // 1 second
 
+// Display configuration
+const DISPLAYED_TRAINS_LIMIT = 5; // Number of trains to display at once
+const CACHED_TRAINS_LIMIT = 15; // Number of trains to cache (more than displayed)
+
 // Dynamic values loaded from ODPT API based on selected railway
 let RAILWAY_CONFIGS: RailwayConfig[] = [];
 let currentRailway: OdptRailway | null = null;
@@ -282,26 +286,36 @@ async function renderBoard(): Promise<void> {
   // StationTimetable response. Use find + optional chaining so we don't
   // assume the array shape is always present, and guard the departureTime
   // to be a string before converting.
-  // Fetch 15 trains for caching (we display 5, keep 10 extra in reserve)
+  // Fetch trains for caching (we display 5, keep extra in reserve)
   trainCacheInbound = getUpcomingDepartures(
     allDepartures,
     INBOUND_DIRECTION_URI || 'odpt.RailDirection:Inbound',
     nowMinutes,
-    15,
+    CACHED_TRAINS_LIMIT,
   );
   trainCacheOutbound = getUpcomingDepartures(
     allDepartures,
     OUTBOUND_DIRECTION_URI || 'odpt.RailDirection:Outbound',
     nowMinutes,
-    15,
+    CACHED_TRAINS_LIMIT,
   );
 
   // Ensure we have readable station names for destinations before rendering
   await ensureStationNamesForDepartures(trainCacheInbound, trainCacheOutbound);
 
-  // Display only the first 5 trains from cache
-  uiRenderDirection('inbound', trainCacheInbound.slice(0, 5), stationNameCache, TRAIN_TYPE_MAP);
-  uiRenderDirection('outbound', trainCacheOutbound.slice(0, 5), stationNameCache, TRAIN_TYPE_MAP);
+  // Display only the first trains from cache
+  uiRenderDirection(
+    'inbound',
+    trainCacheInbound.slice(0, DISPLAYED_TRAINS_LIMIT),
+    stationNameCache,
+    TRAIN_TYPE_MAP,
+  );
+  uiRenderDirection(
+    'outbound',
+    trainCacheOutbound.slice(0, DISPLAYED_TRAINS_LIMIT),
+    stationNameCache,
+    TRAIN_TYPE_MAP,
+  );
   // Start the minutes-away updater which refreshes the "minutes" column
   // independently of API fetches. This is safe to call multiple times
   // because the UI module will clear any existing interval before starting.
@@ -334,23 +348,33 @@ async function renderBoard(): Promise<void> {
     }
     const now2 = new Date();
     const nowMins = timeToMinutes(formatTimeHHMM(now2));
-    // Fetch 15 trains for caching (we display 5, keep 10 extra in reserve)
+    // Fetch trains for caching (we display 5, keep extra in reserve)
     trainCacheInbound = getUpcomingDepartures(
       deps as OdptStationTimetable[],
       INBOUND_DIRECTION_URI || 'odpt.RailDirection:Inbound',
       nowMins,
-      15,
+      CACHED_TRAINS_LIMIT,
     );
     trainCacheOutbound = getUpcomingDepartures(
       deps as OdptStationTimetable[],
       OUTBOUND_DIRECTION_URI || 'odpt.RailDirection:Outbound',
       nowMins,
-      15,
+      CACHED_TRAINS_LIMIT,
     );
     // Refresh cached names for any new destinations, then render
     await ensureStationNamesForDepartures(trainCacheInbound, trainCacheOutbound);
-    uiRenderDirection('inbound', trainCacheInbound.slice(0, 5), stationNameCache, TRAIN_TYPE_MAP);
-    uiRenderDirection('outbound', trainCacheOutbound.slice(0, 5), stationNameCache, TRAIN_TYPE_MAP);
+    uiRenderDirection(
+      'inbound',
+      trainCacheInbound.slice(0, DISPLAYED_TRAINS_LIMIT),
+      stationNameCache,
+      TRAIN_TYPE_MAP,
+    );
+    uiRenderDirection(
+      'outbound',
+      trainCacheOutbound.slice(0, DISPLAYED_TRAINS_LIMIT),
+      stationNameCache,
+      TRAIN_TYPE_MAP,
+    );
     // restart/update the minutes-away updater after re-render
     uiStartMinutesUpdater(trainCacheInbound, trainCacheOutbound, stationNameCache, TRAIN_TYPE_MAP);
   }, TIMETABLE_REFRESH_INTERVAL_MS);
