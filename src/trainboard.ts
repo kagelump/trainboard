@@ -305,12 +305,7 @@ async function renderBoard(): Promise<void> {
   // Start the minutes-away updater which refreshes the "minutes" column
   // independently of API fetches. This is safe to call multiple times
   // because the UI module will clear any existing interval before starting.
-  uiStartMinutesUpdater(
-    trainCacheInbound,
-    trainCacheOutbound,
-    stationNameCache,
-    TRAIN_TYPE_MAP,
-  );
+  uiStartMinutesUpdater(trainCacheInbound, trainCacheOutbound, stationNameCache, TRAIN_TYPE_MAP);
 
   try {
     if (currentConfig.railwayUri) {
@@ -357,12 +352,7 @@ async function renderBoard(): Promise<void> {
     uiRenderDirection('inbound', trainCacheInbound.slice(0, 5), stationNameCache, TRAIN_TYPE_MAP);
     uiRenderDirection('outbound', trainCacheOutbound.slice(0, 5), stationNameCache, TRAIN_TYPE_MAP);
     // restart/update the minutes-away updater after re-render
-    uiStartMinutesUpdater(
-      trainCacheInbound,
-      trainCacheOutbound,
-      stationNameCache,
-      TRAIN_TYPE_MAP,
-    );
+    uiStartMinutesUpdater(trainCacheInbound, trainCacheOutbound, stationNameCache, TRAIN_TYPE_MAP);
   }, TIMETABLE_REFRESH_INTERVAL_MS);
 
   statusIntervalId = window.setInterval(() => {

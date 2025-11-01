@@ -123,9 +123,7 @@ function updateMinutesOnce(
     const container = document.getElementById(`departures-${directionId}`);
     if (!container || !trainCache || !stationNameCache || !trainTypeMap) return;
 
-    const els = Array.from(
-      container.querySelectorAll<HTMLElement>('.train-row[data-departure]'),
-    );
+    const els = Array.from(container.querySelectorAll<HTMLElement>('.train-row[data-departure]'));
     const displayedTimes =
       directionId === 'inbound' ? displayedTrainsInbound : displayedTrainsOutbound;
 
@@ -155,7 +153,10 @@ function updateMinutesOnce(
     if (trainsToRemove.length > 0) {
       // Find the next trains to display from cache
       const currentDisplayCount = els.length - trainsToRemove.length;
-      const nextTrains = trainCache.slice(currentDisplayCount, currentDisplayCount + trainsToRemove.length);
+      const nextTrains = trainCache.slice(
+        currentDisplayCount,
+        currentDisplayCount + trainsToRemove.length,
+      );
 
       // Remove departed trains
       trainsToRemove.forEach((el) => {

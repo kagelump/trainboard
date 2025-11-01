@@ -29,7 +29,7 @@ describe('Train caching behavior', () => {
   it('should replace departed trains with cached trains', () => {
     // Simulate the cache containing 15 trains
     const trainCache = Array.from({ length: 15 }, (_, i) => ({
-      'odpt:departureTime': `${9 + Math.floor(i * 15 / 60)}:${String((i * 15) % 60).padStart(2, '0')}`,
+      'odpt:departureTime': `${9 + Math.floor((i * 15) / 60)}:${String((i * 15) % 60).padStart(2, '0')}`,
     }));
 
     // Initially display first 5
@@ -71,4 +71,3 @@ describe('Train caching behavior', () => {
     expect(upcomingSeconds - nowSeconds).toBeGreaterThan(0); // Still upcoming
   });
 });
-
