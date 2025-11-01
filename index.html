@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>東急東横線 発車案内板</title>
+    <title>発車案内板</title>
     <!-- Load Tailwind CSS via CDN for utility classes -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/trainboard.css" />
@@ -15,8 +15,16 @@
       <div class="flex items-center space-x-4">
         <span id="time-header" class="text-2xl sm:text-4xl font-mono">--:--</span>
         <button
+          id="railway-button"
+          class="rounded-md sm:rounded-lg shadow-xl hover:bg-white hover:text-black transition duration-150"
+          title="路線を選択"
+        >
+          🚃
+        </button>
+        <button
           id="settings-button"
           class="rounded-md sm:rounded-lg shadow-xl hover:bg-white hover:text-black transition duration-150"
+          title="駅を選択"
         >
           ⚙️
         </button>
@@ -63,9 +71,9 @@
       class="fixed inset-0 hidden items-center justify-center z-50 transition-opacity duration-300"
     >
       <div class="bg-black border-4 border-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
-        <h2 class="text-4xl font-extrabold mb-6 text-center">設定</h2>
+        <h2 class="text-4xl font-extrabold mb-6 text-center">駅の選択</h2>
 
-        <label for="station-select" class="block mb-2 font-medium">駅の選択 (東急東横線)</label>
+        <label for="station-select" class="block mb-2 font-medium">駅を選択してください</label>
         <select id="station-select" class="w-full mb-6 py-3 px-4 rounded-lg">
           <!-- Options will be populated by JS -->
           <option>駅を読込中...</option>
@@ -79,6 +87,35 @@
         </button>
         <button
           id="close-modal"
+          class="w-full mt-3 bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
+
+    <!-- Railway Modal (railway selection) -->
+    <div
+      id="railway-modal"
+      class="fixed inset-0 hidden items-center justify-center z-50 transition-opacity duration-300"
+    >
+      <div class="bg-black border-4 border-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
+        <h2 class="text-4xl font-extrabold mb-6 text-center">路線の選択</h2>
+
+        <label for="railway-select" class="block mb-2 font-medium">路線を選択してください</label>
+        <select id="railway-select" class="w-full mb-6 py-3 px-4 rounded-lg">
+          <!-- Options will be populated by JS -->
+          <option>路線を読込中...</option>
+        </select>
+
+        <button
+          id="save-railway"
+          class="w-full bg-yellow-500 text-black py-3 rounded-lg hover:bg-yellow-400 transition"
+        >
+          適用して再読込
+        </button>
+        <button
+          id="close-railway-modal"
           class="w-full mt-3 bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition"
         >
           閉じる

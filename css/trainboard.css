@@ -118,7 +118,8 @@ body {
 }
 
 /* Settings button (clean, high contrast) */
-#settings-button {
+#settings-button,
+#railway-button {
   border: 2px solid #fff;
   color: #fff;
   background-color: #333;
@@ -164,6 +165,10 @@ body {
     line-height: 1rem;
   }
   #settings-button {
+    font-size: 1.5rem;
+    padding: 0.2rem;
+  }
+  #railway-button {
     font-size: 1.5rem;
     padding: 0.2rem;
   }

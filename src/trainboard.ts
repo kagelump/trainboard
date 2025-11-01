@@ -11,10 +11,32 @@ type TrainTypeMapEntry = {
   class: string;
 };
 
+type RailwayConfig = {
+  uri: string;
+  name: string;
+  operator: string;
+};
+
 // timetable entry types are defined in src/types.ts (StationTimetableEntry)
 
-import { fetchStationTimetable, fetchStatus, fetchStationsByUris, fetchStationsList } from './api';
-import type { OdptStation, OdptStationTimetable, StationTimetableEntry } from './types';
+import {
+  fetchStationTimetable,
+  fetchStatus,
+  fetchStationsByUris,
+  fetchStationsList,
+  fetchRailways,
+  fetchRailwayByUri,
+  fetchRailDirections,
+  fetchTrainTypes,
+} from './api';
+import type {
+  OdptStation,
+  OdptStationTimetable,
+  StationTimetableEntry,
+  OdptRailway,
+  OdptRailDirection,
+  OdptTrainType,
+} from './types';
 import {
   getJapaneseText,
   timeToMinutes,
@@ -29,41 +51,45 @@ import {
   renderDirection as uiRenderDirection,
   updateClock as uiUpdateClock,
   chooseInitialStation,
+  chooseInitialRailway,
   setupStationModal as uiSetupStationModal,
+  setupRailwayModal as uiSetupRailwayModal,
   setupApiKeyModal as uiSetupApiKeyModal,
   openStationModal as uiOpenStationModal,
   openApiModal as uiOpenApiModal,
   showStatus as uiShowStatus,
   clearStatus as uiClearStatus,
   startMinutesUpdater as uiStartMinutesUpdater,
+  setPageTitle as uiSetPageTitle,
 } from './ui';
 
 // --- 1. CONFIGURATION AND CONSTANTS ---
 let ODPT_API_KEY: string | null = null; // loaded from ./config.json at runtime
 // These have sensible defaults but can be overridden via ./config.json
 let API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
-const TOKYU_TOYOKO_LINE_URI = 'odpt.Railway:Tokyu.Toyoko';
-const INBOUND_DIRECTION_URI = 'odpt.RailDirection:Inbound';
-const OUTBOUND_DIRECTION_URI = 'odpt.RailDirection:Outbound';
-const INBOUND_FRIENDLY_NAME_JA = '渋谷・副都心線方面';
-const OUTBOUND_FRIENDLY_NAME_JA = '横浜・元町中華街方面';
+let DEFAULT_RAILWAY = 'odpt.Railway:Tokyu.Toyoko';
 
-const TRAIN_TYPE_MAP: Record<string, TrainTypeMapEntry> = {
-  'odpt.TrainType:Tokyu.Local': { name: '各停', class: 'type-LOC' },
-  'odpt.TrainType:Tokyu.Express': { name: '急行', class: 'type-EXP' },
-  'odpt.TrainType:Tokyu.CommuterExpress': { name: '通勤急行', class: 'type-CEXP' },
-  'odpt.TrainType:Tokyu.LimitedExpress': { name: '特急', class: 'type-LE' },
-  'odpt.TrainType:Tokyu.CommuterLimitedExpress': { name: '通勤特急', class: 'type-CLE' },
-  'odpt.TrainType:Tokyu.S-TRAIN': { name: 'Sトレイン', class: 'type-STR' },
-  'odpt.TrainType:Tokyu.F-Liner': { name: 'Fライナー', class: 'type-FLN' },
-  'odpt.TrainType:Local': { name: '各停', class: 'type-LOC' },
-  'odpt.TrainType:Express': { name: '急行', class: 'type-EXP' },
-  'odpt.TrainType:LimitedExpress': { name: '特急', class: 'type-LE' },
-};
+// Dynamic values loaded from ODPT API based on selected railway
+let RAILWAY_CONFIGS: RailwayConfig[] = [];
+let currentRailway: OdptRailway | null = null;
+let INBOUND_DIRECTION_URI: string | null = null;
+let OUTBOUND_DIRECTION_URI: string | null = null;
+let INBOUND_FRIENDLY_NAME_JA = '渋谷・副都心線方面'; // fallback
+let OUTBOUND_FRIENDLY_NAME_JA = '横浜・元町中華街方面'; // fallback
+
+const TRAIN_TYPE_MAP: Record<string, TrainTypeMapEntry> = {};
+
+// Direction name cache
+const directionNameCache = new Map<string, string>();
 
 let STATION_CONFIGS: StationConfig[] = [];
 let DEFAULT_STATION_NAME = '武蔵小杉 (TY11)';
-let currentConfig: { stationUri: string | null; stationName: string | null } = {
+let currentConfig: {
+  railwayUri: string | null;
+  stationUri: string | null;
+  stationName: string | null;
+} = {
+  railwayUri: null,
   stationUri: null,
   stationName: null,
 };
@@ -81,6 +107,84 @@ function getTodayCalendarURI(): string {
   const day = new Date().getDay();
   if (day >= 1 && day <= 5) return 'odpt.Calendar:Weekday';
   return 'odpt.Calendar:SaturdayHoliday';
+}
+
+async function loadDirectionNames(apiKey: string, apiBaseUrl: string): Promise<void> {
+  try {
+    const directions = await fetchRailDirections(apiKey, apiBaseUrl);
+    for (const dir of directions) {
+      const uri = dir['owl:sameAs'] || dir['@id'];
+      const name = getJapaneseText(dir['dc:title']);
+      if (uri && typeof uri === 'string') {
+        directionNameCache.set(uri, name);
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to load direction names:', err);
+  }
+}
+
+async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promise<void> {
+  try {
+    const trainTypes = await fetchTrainTypes(apiKey, apiBaseUrl);
+    for (const tt of trainTypes) {
+      const uri = tt['owl:sameAs'] || tt['@id'];
+      const name = getJapaneseText(tt['dc:title']);
+      if (uri && typeof uri === 'string') {
+        // Determine CSS class based on name patterns
+        let cssClass = 'type-LOC'; // default
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('特急') || lowerName.includes('limited')) {
+          cssClass = lowerName.includes('通勤') ? 'type-CLE' : 'type-LE';
+        } else if (lowerName.includes('急行') || lowerName.includes('express')) {
+          cssClass = lowerName.includes('通勤') ? 'type-CEXP' : 'type-EXP';
+        } else if (lowerName.includes('s-train') || lowerName.includes('sトレイン')) {
+          cssClass = 'type-STR';
+        } else if (lowerName.includes('f-liner') || lowerName.includes('fライナー')) {
+          cssClass = 'type-FLN';
+        }
+        TRAIN_TYPE_MAP[uri] = { name, class: cssClass };
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to load train types:', err);
+  }
+}
+
+async function loadRailwayMetadata(
+  railwayUri: string,
+  apiKey: string,
+  apiBaseUrl: string,
+): Promise<void> {
+  try {
+    const railway = await fetchRailwayByUri(railwayUri, apiKey, apiBaseUrl);
+    if (!railway) {
+      console.warn('Railway not found:', railwayUri);
+      return;
+    }
+    currentRailway = railway;
+
+    // Set direction URIs from railway metadata
+    INBOUND_DIRECTION_URI = railway['odpt:ascendingRailDirection'] || 'odpt.RailDirection:Inbound';
+    OUTBOUND_DIRECTION_URI =
+      railway['odpt:descendingRailDirection'] || 'odpt.RailDirection:Outbound';
+
+    // Set friendly direction names
+    if (INBOUND_DIRECTION_URI && directionNameCache.has(INBOUND_DIRECTION_URI)) {
+      INBOUND_FRIENDLY_NAME_JA =
+        directionNameCache.get(INBOUND_DIRECTION_URI) || INBOUND_FRIENDLY_NAME_JA;
+    }
+    if (OUTBOUND_DIRECTION_URI && directionNameCache.has(OUTBOUND_DIRECTION_URI)) {
+      OUTBOUND_FRIENDLY_NAME_JA =
+        directionNameCache.get(OUTBOUND_DIRECTION_URI) || OUTBOUND_FRIENDLY_NAME_JA;
+    }
+
+    // Update page title
+    const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
+    uiSetPageTitle(`${railwayName} 発車案内板`);
+  } catch (err) {
+    console.warn('Failed to load railway metadata:', err);
+  }
 }
 
 // --- UI rendering ---
@@ -132,9 +236,9 @@ async function renderBoard(): Promise<void> {
   if (typeof statusIntervalId !== 'undefined') clearInterval(statusIntervalId);
 
   const stationConfig = STATION_CONFIGS.find((c) => c.uri === currentConfig.stationUri);
-  if (!stationConfig) {
+  if (!stationConfig || !currentConfig.railwayUri) {
     const hdr = safeGetElement('station-header');
-    if (hdr) hdr.textContent = 'エラー: 駅が選択されていません';
+    if (hdr) hdr.textContent = 'エラー: 駅または路線が選択されていません';
     return;
   }
 
@@ -148,6 +252,7 @@ async function renderBoard(): Promise<void> {
       stationConfig.uri,
       String(ODPT_API_KEY),
       API_BASE_URL,
+      currentConfig.railwayUri,
     );
   } catch (err) {
     console.error('Failed to fetch timetable:', err);
@@ -163,8 +268,16 @@ async function renderBoard(): Promise<void> {
   // StationTimetable response. Use find + optional chaining so we don't
   // assume the array shape is always present, and guard the departureTime
   // to be a string before converting.
-  const inboundTrains = getUpcomingDepartures(allDepartures, INBOUND_DIRECTION_URI, nowMinutes);
-  const outboundTrains = getUpcomingDepartures(allDepartures, OUTBOUND_DIRECTION_URI, nowMinutes);
+  const inboundTrains = getUpcomingDepartures(
+    allDepartures,
+    INBOUND_DIRECTION_URI || 'odpt.RailDirection:Inbound',
+    nowMinutes,
+  );
+  const outboundTrains = getUpcomingDepartures(
+    allDepartures,
+    OUTBOUND_DIRECTION_URI || 'odpt.RailDirection:Outbound',
+    nowMinutes,
+  );
 
   // Ensure we have readable station names for destinations before rendering
   await ensureStationNamesForDepartures(inboundTrains, outboundTrains);
@@ -184,8 +297,10 @@ async function renderBoard(): Promise<void> {
     // ignore
   }
   try {
-    await fetchStatus(String(ODPT_API_KEY), API_BASE_URL);
-    uiClearStatus();
+    if (currentConfig.railwayUri) {
+      await fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri);
+      uiClearStatus();
+    }
   } catch (err) {
     console.warn('Failed to fetch status:', err);
     uiShowStatus('運行情報取得でエラーが発生しました。API キーを確認してください。', 'warn');
@@ -194,7 +309,12 @@ async function renderBoard(): Promise<void> {
   timetableIntervalId = window.setInterval(async () => {
     let deps: OdptStationTimetable[] = [];
     try {
-      deps = await fetchStationTimetable(stationConfig.uri, String(ODPT_API_KEY), API_BASE_URL);
+      deps = await fetchStationTimetable(
+        stationConfig.uri,
+        String(ODPT_API_KEY),
+        API_BASE_URL,
+        currentConfig.railwayUri!,
+      );
     } catch (err) {
       console.error('Periodic timetable fetch failed:', err);
       uiShowStatus('定期更新の取得中にエラーが発生しました。API キーを確認してください。', 'warn');
@@ -207,12 +327,12 @@ async function renderBoard(): Promise<void> {
     );
     const inT = getUpcomingDepartures(
       deps as OdptStationTimetable[],
-      INBOUND_DIRECTION_URI,
+      INBOUND_DIRECTION_URI || 'odpt.RailDirection:Inbound',
       nowMins,
     );
     const outT = getUpcomingDepartures(
       deps as OdptStationTimetable[],
-      OUTBOUND_DIRECTION_URI,
+      OUTBOUND_DIRECTION_URI || 'odpt.RailDirection:Outbound',
       nowMins,
     );
     // Refresh cached names for any new destinations, then render
@@ -223,10 +343,11 @@ async function renderBoard(): Promise<void> {
     uiStartMinutesUpdater();
   }, 150_000);
 
-  statusIntervalId = window.setInterval(
-    () => fetchStatus(String(ODPT_API_KEY), API_BASE_URL),
-    300_000,
-  );
+  statusIntervalId = window.setInterval(() => {
+    if (currentConfig.railwayUri) {
+      fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri);
+    }
+  }, 300_000);
 
   window.setInterval(uiUpdateClock, 1000);
   uiUpdateClock();
@@ -238,10 +359,12 @@ async function loadFromLocalConfig(): Promise<void> {
     if (!resp.ok) return;
     const cfg = (await resp.json()) as {
       ODPT_API_KEY?: string;
+      DEFAULT_RAILWAY?: string;
       DEFAULT_STATION_NAME?: string;
       API_BASE_URL?: string;
     };
     if (cfg?.ODPT_API_KEY) ODPT_API_KEY = cfg.ODPT_API_KEY;
+    if (cfg?.DEFAULT_RAILWAY) DEFAULT_RAILWAY = cfg.DEFAULT_RAILWAY;
     if (cfg?.DEFAULT_STATION_NAME) DEFAULT_STATION_NAME = cfg.DEFAULT_STATION_NAME;
     if (cfg?.API_BASE_URL) API_BASE_URL = cfg.API_BASE_URL;
   } catch (err) {
@@ -281,25 +404,70 @@ async function initializeBoard(): Promise<void> {
     return;
   }
 
+  // Load static data (directions and train types)
+  await loadDirectionNames(String(ODPT_API_KEY), API_BASE_URL);
+  await loadTrainTypes(String(ODPT_API_KEY), API_BASE_URL);
+
+  // Load available railways
   try {
-    const data = await fetchStationsList(String(ODPT_API_KEY), API_BASE_URL, TOKYU_TOYOKO_LINE_URI);
-    STATION_CONFIGS = data
-      .map((station) => {
-        const stationNameJa = station['dc:title'] as string;
-        const stationCode = station['odpt:stationCode'] || '';
+    const railways = await fetchRailways(String(ODPT_API_KEY), API_BASE_URL);
+    RAILWAY_CONFIGS = railways
+      .filter((r) => r['@type'] === 'odpt:Railway')
+      .map((railway) => {
+        const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
+        const operatorUri = railway['odpt:operator'] || '';
         return {
-          name: `${stationNameJa} (${stationCode})`,
-          uri: station['owl:sameAs'],
-        } as StationConfig;
+          uri: railway['owl:sameAs'] || railway['@id'] || '',
+          name: railwayName,
+          operator: operatorUri,
+        } as RailwayConfig;
       })
+      .filter((r) => r.uri && r.name)
       .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
   } catch (err) {
-    console.error('Error fetching station list:', err);
-    setStationHeader('エラー: 駅リスト取得失敗');
+    console.error('Error fetching railway list:', err);
+    setStationHeader('エラー: 路線リスト取得失敗');
   }
+
+  // Choose initial railway (read from localStorage if present)
+  const selectedRailway = chooseInitialRailway(RAILWAY_CONFIGS, DEFAULT_RAILWAY);
+  if (selectedRailway) {
+    currentConfig.railwayUri = selectedRailway.uri;
+    await loadRailwayMetadata(selectedRailway.uri, String(ODPT_API_KEY), API_BASE_URL);
+  }
+
+  // Setup railway selection modal
+  uiSetupRailwayModal(RAILWAY_CONFIGS, currentConfig.railwayUri, async (newUri) => {
+    currentConfig.railwayUri = newUri;
+    await loadRailwayMetadata(newUri, String(ODPT_API_KEY), API_BASE_URL);
+    // Reload stations for the new railway
+    await loadStationsForRailway(newUri);
+    // Reset station selection
+    const selected = chooseInitialStation(STATION_CONFIGS, DEFAULT_STATION_NAME);
+    if (selected)
+      currentConfig = { ...currentConfig, stationUri: selected.uri, stationName: selected.name };
+    // Update station modal with new stations
+    uiSetupStationModal(STATION_CONFIGS, currentConfig.stationUri, (newStationUri) => {
+      const found = STATION_CONFIGS.find((c) => c.uri === newStationUri);
+      currentConfig = {
+        ...currentConfig,
+        stationUri: newStationUri,
+        stationName: found ? found.name : null,
+      };
+      renderBoard();
+    });
+    renderBoard();
+  });
+
+  // Load stations for the selected railway
+  if (currentConfig.railwayUri) {
+    await loadStationsForRailway(currentConfig.railwayUri);
+  }
+
   // choose initial station (read from localStorage if present)
   const selected = chooseInitialStation(STATION_CONFIGS, DEFAULT_STATION_NAME);
-  if (selected) currentConfig = { stationUri: selected.uri, stationName: selected.name };
+  if (selected)
+    currentConfig = { ...currentConfig, stationUri: selected.uri, stationName: selected.name };
 
   // wire modal UI; onSave will update currentConfig and optionally replace the API key
   // setup the API key modal so users can change the key at any time
@@ -312,11 +480,35 @@ async function initializeBoard(): Promise<void> {
   // setup the station-selection modal
   uiSetupStationModal(STATION_CONFIGS, currentConfig.stationUri, (newUri) => {
     const found = STATION_CONFIGS.find((c) => c.uri === newUri);
-    currentConfig = { stationUri: newUri, stationName: found ? found.name : null };
+    currentConfig = {
+      ...currentConfig,
+      stationUri: newUri,
+      stationName: found ? found.name : null,
+    };
     renderBoard();
   });
 
   renderBoard();
+}
+
+async function loadStationsForRailway(railwayUri: string): Promise<void> {
+  try {
+    const data = await fetchStationsList(String(ODPT_API_KEY), API_BASE_URL, railwayUri);
+    STATION_CONFIGS = data
+      .map((station) => {
+        const stationNameJa = getJapaneseText(station['dc:title'] || station['odpt:stationTitle']);
+        const stationCode = station['odpt:stationCode'] || '';
+        return {
+          name: stationCode ? `${stationNameJa} (${stationCode})` : stationNameJa,
+          uri: station['owl:sameAs'] || '',
+        } as StationConfig;
+      })
+      .filter((s) => s.uri)
+      .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  } catch (err) {
+    console.error('Error fetching station list:', err);
+    setStationHeader('エラー: 駅リスト取得失敗');
+  }
 }
 
 // Expose to window for bootstrapping

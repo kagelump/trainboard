@@ -1,7 +1,14 @@
 // src/api.ts
 // Small API client for ODPT endpoints used by the app. Functions are
 // parameterized with apiKey and apiBaseUrl to avoid tight coupling.
-import type { OdptStation, OdptStationTimetable, OdptTrainInformation } from './types';
+import type {
+  OdptStation,
+  OdptStationTimetable,
+  OdptTrainInformation,
+  OdptRailway,
+  OdptRailDirection,
+  OdptTrainType,
+} from './types';
 
 export async function apiFetch(url: string, retries = 3, delay = 1000): Promise<Response> {
   for (let i = 0; i < retries; i++) {
@@ -24,7 +31,6 @@ export async function fetchStationsList(
 ): Promise<OdptStation[]> {
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
   if (railwayUri) params.append('odpt:railway', railwayUri);
-  params.append('odpt:operator', 'odpt.Operator:Tokyu');
   const url = `${apiBaseUrl}odpt:Station?${params.toString()}`;
   const resp = await apiFetch(url);
   return (await resp.json()) as OdptStation[];
@@ -34,6 +40,7 @@ export async function fetchStationTimetable(
   stationUri: string,
   apiKey: string,
   apiBaseUrl: string,
+  railwayUri: string,
 ): Promise<OdptStationTimetable[]> {
   const calendarURI = (() => {
     const d = new Date().getDay();
@@ -41,7 +48,7 @@ export async function fetchStationTimetable(
   })();
   const params = new URLSearchParams({
     'acl:consumerKey': String(apiKey),
-    'odpt:railway': 'odpt.Railway:Tokyu.Toyoko',
+    'odpt:railway': railwayUri,
     'odpt:station': stationUri,
     'odpt:calendar': calendarURI,
   });
@@ -50,10 +57,14 @@ export async function fetchStationTimetable(
   return (await resp.json()) as OdptStationTimetable[];
 }
 
-export async function fetchStatus(apiKey: string, apiBaseUrl: string): Promise<any[]> {
+export async function fetchStatus(
+  apiKey: string,
+  apiBaseUrl: string,
+  railwayUri: string,
+): Promise<OdptTrainInformation[]> {
   const params = new URLSearchParams({
     'acl:consumerKey': String(apiKey),
-    'odpt:railway': 'odpt.Railway:Tokyu.Toyoko',
+    'odpt:railway': railwayUri,
   });
   const url = `${apiBaseUrl}odpt:TrainInformation?${params.toString()}`;
   const resp = await apiFetch(url);
@@ -72,4 +83,44 @@ export async function fetchStationsByUris(
   const url = `${apiBaseUrl}odpt:Station?${params.toString()}`;
   const resp = await apiFetch(url);
   return (await resp.json()) as OdptStation[];
+}
+
+export async function fetchRailways(apiKey: string, apiBaseUrl: string): Promise<OdptRailway[]> {
+  const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
+  const url = `${apiBaseUrl}odpt:Railway?${params.toString()}`;
+  const resp = await apiFetch(url);
+  return (await resp.json()) as OdptRailway[];
+}
+
+export async function fetchRailwayByUri(
+  railwayUri: string,
+  apiKey: string,
+  apiBaseUrl: string,
+): Promise<OdptRailway | null> {
+  const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
+  params.append('owl:sameAs', railwayUri);
+  const url = `${apiBaseUrl}odpt:Railway?${params.toString()}`;
+  const resp = await apiFetch(url);
+  const data = (await resp.json()) as OdptRailway[];
+  return data.length > 0 ? data[0] : null;
+}
+
+export async function fetchRailDirections(
+  apiKey: string,
+  apiBaseUrl: string,
+): Promise<OdptRailDirection[]> {
+  const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
+  const url = `${apiBaseUrl}odpt:RailDirection?${params.toString()}`;
+  const resp = await apiFetch(url);
+  return (await resp.json()) as OdptRailDirection[];
+}
+
+export async function fetchTrainTypes(
+  apiKey: string,
+  apiBaseUrl: string,
+): Promise<OdptTrainType[]> {
+  const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
+  const url = `${apiBaseUrl}odpt:TrainType?${params.toString()}`;
+  const resp = await apiFetch(url);
+  return (await resp.json()) as OdptTrainType[];
 }
