@@ -254,6 +254,7 @@ export function setupSettingsModal(
   currentStationUri: string | null,
   onRailwayChange: (newUri: string) => void,
   onStationChange: (newUri: string) => void,
+  onRailwaySelectChange?: (newUri: string) => Promise<void>,
 ): void {
   const modal = document.getElementById('config-modal');
   const railwaySelect = document.getElementById('railway-select') as HTMLSelectElement | null;
@@ -331,6 +332,36 @@ export function setupSettingsModal(
     const closeBtn = document.getElementById('close-modal');
     closeBtn?.addEventListener('click', () => {
       closeStationModal();
+    });
+
+    // Add railway select change listener to update station list immediately
+    railwaySelect?.addEventListener('change', async () => {
+      if (!railwaySelect) return;
+      const selectedRailwayUri = railwaySelect.value;
+      
+      // Show loading state in station select
+      if (stationSelect) {
+        stationSelect.innerHTML = '<option>駅を読込中...</option>';
+        stationSelect.disabled = true;
+      }
+
+      // Call the callback to load stations for the new railway
+      if (onRailwaySelectChange) {
+        try {
+          await onRailwaySelectChange(selectedRailwayUri);
+          // Stations will be reloaded, repopulate the station select
+          populateStationOptions(null); // Select first station by default
+        } catch (error) {
+          console.error('Failed to load stations:', error);
+          if (stationSelect) {
+            stationSelect.innerHTML = '<option>駅の読込に失敗しました</option>';
+          }
+        } finally {
+          if (stationSelect) {
+            stationSelect.disabled = false;
+          }
+        }
+      }
     });
 
     const saveBtn = document.getElementById('save-settings');

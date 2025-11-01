@@ -157,6 +157,10 @@ async function initializeBoard(): Promise<void> {
       setCurrentConfig(config);
       renderBoard();
     },
+    async (newRailwayUri) => {
+      // Railway selection changed in modal - load stations for the new railway
+      await loadStationsForRailway(newRailwayUri, apiKey, apiBaseUrl);
+    },
   );
 
   // Initial board render
