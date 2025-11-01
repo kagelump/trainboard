@@ -88,8 +88,9 @@ export async function loadDirectionNames(apiKey: string, apiBaseUrl: string): Pr
         directionNameCache.set(uri, name);
       }
     }
-  } catch (err) {
-    console.warn('Failed to load direction names:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('Failed to load direction names:', message);
   }
 }
 
@@ -120,8 +121,9 @@ export async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promis
     }
 
     console.log(`Loaded ${Object.keys(TRAIN_TYPE_MAP).length} train types`);
-  } catch (err) {
-    console.warn('Failed to load train types:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('Failed to load train types:', message);
   }
 }
 
@@ -159,8 +161,9 @@ export async function loadRailwayMetadata(
     // Update page title
     const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
     setPageTitle(`${railwayName} 発車案内板`);
-  } catch (err) {
-    console.warn('Failed to load railway metadata:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('Failed to load railway metadata:', message);
   }
 }
 
@@ -185,8 +188,9 @@ export async function loadStationsForRailway(
       })
       .filter((s) => s.uri)
       .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-  } catch (err) {
-    console.error('Error fetching station list:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error fetching station list:', message);
   }
 }
 
@@ -215,7 +219,8 @@ export async function ensureStationNamesForDepartures(
     for (const u of missing) {
       if (!stationNameCache.has(u)) stationNameCache.set(u, u);
     }
-  } catch (err) {
-    console.warn('Failed to fetch station names for destinations:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('Failed to fetch station names for destinations:', message);
   }
 }

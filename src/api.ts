@@ -24,8 +24,8 @@ export async function apiFetch(url: string, retries = 3, delay = 1000): Promise<
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return response;
-    } catch (err) {
-      if (i === retries - 1) throw err;
+    } catch (error) {
+      if (i === retries - 1) throw error;
       await new Promise((r) => setTimeout(r, delay * 2 ** i));
     }
   }
@@ -37,6 +37,9 @@ export async function fetchStationsList(
   apiBaseUrl: string,
   railwayUri?: string,
 ): Promise<OdptStation[]> {
+  if (!apiKey || !apiBaseUrl) {
+    throw new Error('API key and base URL are required');
+  }
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
   if (railwayUri) params.append('odpt:railway', railwayUri);
   const url = `${apiBaseUrl}odpt:Station?${params.toString()}`;
@@ -50,6 +53,9 @@ export async function fetchStationTimetable(
   apiBaseUrl: string,
   railwayUri: string,
 ): Promise<OdptStationTimetable[]> {
+  if (!apiKey || !apiBaseUrl || !stationUri || !railwayUri) {
+    throw new Error('API key, base URL, station URI, and railway URI are required');
+  }
   const calendarURI = (() => {
     const d = new Date().getDay();
     return d >= 1 && d <= 5 ? 'odpt.Calendar:Weekday' : 'odpt.Calendar:SaturdayHoliday';
@@ -70,6 +76,9 @@ export async function fetchStatus(
   apiBaseUrl: string,
   railwayUri: string,
 ): Promise<OdptTrainInformation[]> {
+  if (!apiKey || !apiBaseUrl || !railwayUri) {
+    throw new Error('API key, base URL, and railway URI are required');
+  }
   const params = new URLSearchParams({
     'acl:consumerKey': String(apiKey),
     'odpt:railway': railwayUri,
@@ -84,6 +93,9 @@ export async function fetchStationsByUris(
   apiKey: string,
   apiBaseUrl: string,
 ): Promise<OdptStation[]> {
+  if (!apiKey || !apiBaseUrl) {
+    throw new Error('API key and base URL are required');
+  }
   if (uris.length === 0) return [];
   // ODPT supports comma-separated OR filters; query owl:sameAs
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
@@ -94,6 +106,9 @@ export async function fetchStationsByUris(
 }
 
 export async function fetchRailways(apiKey: string, apiBaseUrl: string): Promise<OdptRailway[]> {
+  if (!apiKey || !apiBaseUrl) {
+    throw new Error('API key and base URL are required');
+  }
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
   const url = `${apiBaseUrl}odpt:Railway?${params.toString()}`;
   const resp = await apiFetch(url);
@@ -105,6 +120,9 @@ export async function fetchRailwayByUri(
   apiKey: string,
   apiBaseUrl: string,
 ): Promise<OdptRailway | null> {
+  if (!apiKey || !apiBaseUrl || !railwayUri) {
+    throw new Error('API key, base URL, and railway URI are required');
+  }
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
   params.append('owl:sameAs', railwayUri);
   const url = `${apiBaseUrl}odpt:Railway?${params.toString()}`;
@@ -117,6 +135,9 @@ export async function fetchRailDirections(
   apiKey: string,
   apiBaseUrl: string,
 ): Promise<OdptRailDirection[]> {
+  if (!apiKey || !apiBaseUrl) {
+    throw new Error('API key and base URL are required');
+  }
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
   const url = `${apiBaseUrl}odpt:RailDirection?${params.toString()}`;
   const resp = await apiFetch(url);
@@ -127,6 +148,9 @@ export async function fetchTrainTypes(
   apiKey: string,
   apiBaseUrl: string,
 ): Promise<OdptTrainType[]> {
+  if (!apiKey || !apiBaseUrl) {
+    throw new Error('API key and base URL are required');
+  }
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
   const url = `${apiBaseUrl}odpt:TrainType?${params.toString()}`;
   const resp = await apiFetch(url);

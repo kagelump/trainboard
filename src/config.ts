@@ -53,8 +53,9 @@ async function loadFromLocalConfig(): Promise<void> {
     if (cfg?.DEFAULT_RAILWAY) DEFAULT_RAILWAY = cfg.DEFAULT_RAILWAY;
     if (cfg?.DEFAULT_STATION_NAME) DEFAULT_STATION_NAME = cfg.DEFAULT_STATION_NAME;
     if (cfg?.API_BASE_URL) API_BASE_URL = cfg.API_BASE_URL;
-  } catch (err) {
-    console.warn('Failed to load ./config.json:', err);
+  } catch (error) {
+    const e = error instanceof Error ? error : new Error(String(error));
+    console.warn('Failed to load ./config.json:', e.message);
   }
 }
 
@@ -70,7 +71,8 @@ export async function loadLocalConfig(): Promise<void> {
     if (userKey) {
       ODPT_API_KEY = userKey;
     }
-  } catch (e) {
-    // ignore localStorage access errors
+  } catch (error) {
+    // localStorage may be unavailable in some environments (e.g., private browsing)
+    // Silent fail is acceptable here as it's a fallback mechanism
   }
 }

@@ -102,8 +102,9 @@ async function fetchAndRenderTimetableData(stationUri: string): Promise<boolean>
       getApiBaseUrl(),
       currentConfig.railwayUri!,
     );
-  } catch (err) {
-    console.error('Failed to fetch timetable:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Failed to fetch timetable:', message);
     uiShowStatus('API エラーが発生しました。API キーを確認してください。', 'error');
     uiOpenApiModal();
     return false;
@@ -141,8 +142,9 @@ async function updateRailwayStatus(): Promise<void> {
       await fetchStatus(apiKey, getApiBaseUrl(), currentConfig.railwayUri);
       uiClearStatus();
     }
-  } catch (err) {
-    console.warn('Failed to fetch status:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('Failed to fetch status:', message);
     uiShowStatus('運行情報取得でエラーが発生しました。API キーを確認してください。', 'warn');
   }
 }

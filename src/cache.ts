@@ -30,8 +30,9 @@ export class SimpleCache<V> {
             if (!ent.expires || ent.expires > Date.now()) this.map.set(k, ent);
           }
         }
-      } catch (e) {
-        console.warn(`Failed to restore cache from localStorage key "${persistKeyName}":`, e);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`Failed to restore cache from localStorage key "${persistKeyName}":`, message);
       }
     }
   }
@@ -87,8 +88,12 @@ export class SimpleCache<V> {
       const obj: Record<string, { v: V; expires?: number }> = {};
       for (const [k, v] of this.map.entries()) obj[k] = v;
       localStorage.setItem(this.persistKeyName, JSON.stringify(obj));
-    } catch (e) {
-      console.warn(`Failed to persist cache to localStorage key "${this.persistKeyName}":`, e);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `Failed to persist cache to localStorage key "${this.persistKeyName}":`,
+        message,
+      );
     }
   }
 

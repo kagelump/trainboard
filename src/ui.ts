@@ -58,31 +58,39 @@ export function renderDirection(
   }
   container.innerHTML = departures
     .map((train) => {
-      const departureTime = (train as any)['odpt:departureTime'];
-      const trainTypeUri = (train as any)['odpt:trainType'] || '';
+      // Type-safe property access using the interface
+      const departureTime = train['odpt:departureTime'];
+      const trainTypeUri = train['odpt:trainType'] || '';
       let destinationTitle = 'N/A';
-      const dests = (train as any)['odpt:destinationStation'];
+      const dests = train['odpt:destinationStation'];
+
       if (Array.isArray(dests) && dests.length > 0) {
         const first = dests[0];
         if (typeof first === 'string') {
           destinationTitle = stationNameCache.get(first) || first;
         } else if (first && typeof first === 'object') {
-          destinationTitle = (first as any)['dc:title'] || (first as any)['title'] || 'N/A';
-          if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
-            const uri = (first as any)['owl:sameAs'];
-            if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
+          // Handle object with dc:title or title properties
+          const titleObj = first as Record<string, unknown>;
+          destinationTitle =
+            (titleObj['dc:title'] as string) || (titleObj['title'] as string) || 'N/A';
+
+          if ((!destinationTitle || destinationTitle === 'N/A') && titleObj['owl:sameAs']) {
+            const uri = titleObj['owl:sameAs'];
+            if (typeof uri === 'string') {
+              destinationTitle = stationNameCache.get(uri) || uri;
+            }
           }
         }
       } else if (typeof dests === 'string') {
         destinationTitle = stationNameCache.get(dests) || dests;
       }
+
       const trainType = trainTypeMap[trainTypeUri] || { name: '不明', class: 'type-LOC' };
-      // add a minutes column with a data attribute so it can be updated
-      // independently of API fetches
+
       return `
         <div class="train-row items-center justify-between">
-          <div class="minutes-col text-center" data-departure="${departureTime}">--</div>
-          <div class="time-col text-center">${departureTime}</div>
+          <div class="minutes-col text-center" data-departure="${departureTime || ''}">--</div>
+          <div class="time-col text-center">${departureTime || '--'}</div>
           <div class="flex justify-center items-center">
             <span class="train-type-badge ${trainType.class}">${trainType.name}</span>
           </div>

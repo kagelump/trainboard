@@ -41,8 +41,9 @@ async function initializeBoard(): Promise<void> {
   // Load configuration from file and localStorage
   try {
     await loadLocalConfig();
-  } catch (e) {
-    console.warn('Error loading local config:', e);
+  } catch (error) {
+    const e = error instanceof Error ? error : new Error(String(error));
+    console.warn('Error loading local config:', e.message);
   }
 
   // Inject dynamic CSS styles for train types
@@ -84,8 +85,9 @@ async function initializeBoard(): Promise<void> {
       .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
 
     setRailwayConfigs(railwayConfigs);
-  } catch (err) {
-    console.error('Error fetching railway list:', err);
+  } catch (error) {
+    const e = error instanceof Error ? error : new Error(String(error));
+    console.error('Error fetching railway list:', e.message);
     const hdr = safeGetElement('station-header');
     if (hdr) hdr.textContent = 'エラー: 路線リスト取得失敗';
   }
