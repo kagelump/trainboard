@@ -4,6 +4,11 @@ import type { SimpleCache } from './cache';
 import { timeToMinutes } from './utils';
 
 type StationCfg = { name: string; uri: string };
+type RailwayCfg = { name: string; uri: string; operator: string };
+
+export function setPageTitle(title: string): void {
+  document.title = title;
+}
 
 export function setStationHeader(name: string | null): void {
   const el = document.getElementById('station-header');
@@ -141,6 +146,23 @@ export function chooseInitialStation(
   }
   return selectedStation;
 }
+
+export function chooseInitialRailway(
+  railwayConfigs: RailwayCfg[],
+  defaultRailway: string,
+): RailwayCfg | undefined {
+  const savedUri = localStorage.getItem('t2board_railway_uri');
+  const defaultRailwayConfig =
+    railwayConfigs.find((c) => c.uri === defaultRailway) || railwayConfigs[0];
+  let selectedRailway = defaultRailwayConfig;
+  if (savedUri) {
+    const found = railwayConfigs.find((c) => c.uri === savedUri);
+    if (found) selectedRailway = found;
+  } else if (railwayConfigs.length > 0) {
+    selectedRailway = defaultRailwayConfig || railwayConfigs[0];
+  }
+  return selectedRailway;
+}
 export function setupStationModal(
   stationConfigs: StationCfg[],
   currentUri: string | null,
@@ -185,6 +207,50 @@ export function setupStationModal(
   });
 }
 
+export function setupRailwayModal(
+  railwayConfigs: RailwayCfg[],
+  currentUri: string | null,
+  onSave: (newUri: string) => void,
+): void {
+  const modal = document.getElementById('railway-modal');
+  const railwaySelect = document.getElementById('railway-select') as HTMLSelectElement | null;
+  if (!modal || !railwaySelect) return;
+
+  function populateOptions(uri: string | null) {
+    railwaySelect!.innerHTML = railwayConfigs
+      .map(
+        (config) =>
+          `<option value="${config.uri}" ${config.uri === uri ? 'selected' : ''}>${config.name}</option>`,
+      )
+      .join('');
+  }
+
+  populateOptions(currentUri);
+
+  const railwayBtn = document.getElementById('railway-button');
+  railwayBtn?.addEventListener('click', () => {
+    populateOptions(currentUri);
+    openRailwayModal();
+  });
+
+  const closeBtn = document.getElementById('close-railway-modal');
+  closeBtn?.addEventListener('click', () => {
+    closeRailwayModal();
+  });
+
+  const saveBtn = document.getElementById('save-railway');
+  saveBtn?.addEventListener('click', () => {
+    const newUri = railwaySelect.value;
+    localStorage.setItem('t2board_railway_uri', newUri);
+    onSave(newUri);
+    closeRailwayModal();
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeRailwayModal();
+  });
+}
+
 export function setupApiKeyModal(
   currentApiKey: string | null,
   onSave: (apiKey: string | null) => void,
@@ -225,6 +291,20 @@ export function openStationModal(): void {
 
 export function closeStationModal(): void {
   const modal = document.getElementById('config-modal');
+  if (!modal) return;
+  modal.classList.remove('flex', 'opacity-100');
+  modal.classList.add('hidden');
+}
+
+export function openRailwayModal(): void {
+  const modal = document.getElementById('railway-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex', 'opacity-100');
+}
+
+export function closeRailwayModal(): void {
+  const modal = document.getElementById('railway-modal');
   if (!modal) return;
   modal.classList.remove('flex', 'opacity-100');
   modal.classList.add('hidden');

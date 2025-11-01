@@ -39,3 +39,33 @@ export interface OdptTrainInformation {
   'odpt:trainInformationText'?: string | { ja?: string; en?: string };
   [key: string]: unknown;
 }
+
+export interface OdptRailway {
+  '@id'?: string;
+  '@type'?: string;
+  'owl:sameAs'?: string;
+  'dc:title'?: string | { ja?: string; en?: string };
+  'odpt:railwayTitle'?: { ja?: string; en?: string } | string;
+  'odpt:operator'?: string;
+  'odpt:lineCode'?: string;
+  'odpt:ascendingRailDirection'?: string;
+  'odpt:descendingRailDirection'?: string;
+  [key: string]: unknown;
+}
+
+export interface OdptRailDirection {
+  '@id'?: string;
+  '@type'?: string;
+  'owl:sameAs'?: string;
+  'dc:title'?: string | { ja?: string; en?: string };
+  [key: string]: unknown;
+}
+
+export interface OdptTrainType {
+  '@id'?: string;
+  '@type'?: string;
+  'owl:sameAs'?: string;
+  'dc:title'?: string | { ja?: string; en?: string };
+  'odpt:operator'?: string;
+  [key: string]: unknown;
+}
