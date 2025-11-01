@@ -11,6 +11,9 @@ export const STORAGE_KEY_RAILWAY_URI = 't2board_railway_uri';
 export const STORAGE_KEY_STATION_URI = 't2board_station_uri';
 export const STORAGE_KEY_API_KEY = 't2board_api_key';
 
+// UI update intervals (milliseconds)
+export const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
+
 // Track whether modals have been initialized to prevent duplicate event listeners
 let apiKeyModalInitialized = false;
 let stationModalInitialized = false;
@@ -120,7 +123,7 @@ function updateMinutesOnce(): void {
   }
 }
 
-export function startMinutesUpdater(intervalMs = 15_000): void {
+export function startMinutesUpdater(intervalMs = MINUTES_UPDATE_INTERVAL_MS): void {
   updateMinutesOnce();
   if (typeof minutesUpdaterId !== 'undefined') clearInterval(minutesUpdaterId);
   minutesUpdaterId = window.setInterval(updateMinutesOnce, intervalMs) as unknown as number;
