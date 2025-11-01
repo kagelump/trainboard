@@ -80,7 +80,7 @@ export function renderDirection(
       // add a minutes column with a data attribute so it can be updated
       // independently of API fetches
       return `
-        <div class="train-row items-center justify-between">
+        <div class="train-row items-center justify-between" data-departure="${departureTime}">
           <div class="minutes-col text-center" data-departure="${departureTime}">--</div>
           <div class="time-col text-center">${departureTime}</div>
           <div class="flex justify-center items-center">
@@ -95,6 +95,10 @@ export function renderDirection(
 // --- Minutes-away updater ---
 let minutesUpdaterId: number | undefined;
 
+// Track which trains are currently displayed (by departure time)
+let displayedTrainsInbound: string[] = [];
+let displayedTrainsOutbound: string[] = [];
+
 function parseTimeToSeconds(timeStr: string): number {
   const [hStr, mStr] = (timeStr || '').split(':');
   const h = Number(hStr || 0);
@@ -102,31 +106,139 @@ function parseTimeToSeconds(timeStr: string): number {
   return h * 3600 + m * 60;
 }
 
-function updateMinutesOnce(): void {
-  const els = Array.from(document.querySelectorAll<HTMLElement>('[data-departure]'));
+function updateMinutesOnce(
+  trainCacheInbound?: StationTimetableEntry[],
+  trainCacheOutbound?: StationTimetableEntry[],
+  stationNameCache?: SimpleCache<string>,
+  trainTypeMap?: Record<string, { name: string; class: string }>,
+): void {
   const now = new Date();
   const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  for (const el of els) {
-    const dep = el.getAttribute('data-departure') || '';
-    const depSecs = parseTimeToSeconds(dep);
-    // If departure time appears to be earlier than now (cross-midnight not handled),
-    // treat as passed
-    const diff = depSecs - nowSeconds;
-    if (diff <= 0) {
-      el.textContent = '出発';
-    } else if (diff <= 60) {
-      el.textContent = '到着';
-    } else {
-      const mins = Math.ceil(diff / 60);
-      el.textContent = `${mins}分`;
+
+  // Helper function to update a single direction
+  const updateDirection = (
+    directionId: 'inbound' | 'outbound',
+    trainCache?: StationTimetableEntry[],
+  ) => {
+    const container = document.getElementById(`departures-${directionId}`);
+    if (!container || !trainCache || !stationNameCache || !trainTypeMap) return;
+
+    const els = Array.from(
+      container.querySelectorAll<HTMLElement>('.train-row[data-departure]'),
+    );
+    const displayedTimes =
+      directionId === 'inbound' ? displayedTrainsInbound : displayedTrainsOutbound;
+
+    // Track which trains to remove
+    const trainsToRemove: HTMLElement[] = [];
+
+    for (const el of els) {
+      const dep = el.getAttribute('data-departure') || '';
+      const depSecs = parseTimeToSeconds(dep);
+      const diff = depSecs - nowSeconds;
+
+      const minutesCol = el.querySelector('.minutes-col');
+      if (!minutesCol) continue;
+
+      if (diff <= 0) {
+        // Train has departed - mark for removal
+        trainsToRemove.push(el);
+      } else if (diff <= 60) {
+        minutesCol.textContent = '到着';
+      } else {
+        const mins = Math.ceil(diff / 60);
+        minutesCol.textContent = `${mins}分`;
+      }
     }
-  }
+
+    // Remove departed trains and replace with cached trains
+    if (trainsToRemove.length > 0) {
+      // Find the next trains to display from cache
+      const currentDisplayCount = els.length - trainsToRemove.length;
+      const nextTrains = trainCache.slice(currentDisplayCount, currentDisplayCount + trainsToRemove.length);
+
+      // Remove departed trains
+      trainsToRemove.forEach((el) => {
+        const dep = el.getAttribute('data-departure') || '';
+        const index = displayedTimes.indexOf(dep);
+        if (index > -1) {
+          displayedTimes.splice(index, 1);
+        }
+        el.remove();
+      });
+
+      // Add new trains from cache
+      nextTrains.forEach((train) => {
+        const departureTime = (train as any)['odpt:departureTime'];
+        if (!departureTime || displayedTimes.includes(departureTime)) return;
+
+        const trainTypeUri = (train as any)['odpt:trainType'] || '';
+        let destinationTitle = 'N/A';
+        const dests = (train as any)['odpt:destinationStation'];
+        if (Array.isArray(dests) && dests.length > 0) {
+          const first = dests[0];
+          if (typeof first === 'string') {
+            destinationTitle = stationNameCache.get(first) || first;
+          } else if (first && typeof first === 'object') {
+            destinationTitle = (first as any)['dc:title'] || (first as any)['title'] || 'N/A';
+            if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
+              const uri = (first as any)['owl:sameAs'];
+              if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
+            }
+          }
+        } else if (typeof dests === 'string') {
+          destinationTitle = stationNameCache.get(dests) || dests;
+        }
+        const trainType = trainTypeMap[trainTypeUri] || { name: '不明', class: 'type-LOC' };
+
+        const trainHtml = `
+          <div class="train-row items-center justify-between" data-departure="${departureTime}">
+            <div class="minutes-col text-center" data-departure="${departureTime}">--</div>
+            <div class="time-col text-center">${departureTime}</div>
+            <div class="flex justify-center items-center">
+              <span class="train-type-badge ${trainType.class}">${trainType.name}</span>
+            </div>
+            <div class="destination-text">${destinationTitle}</div>
+          </div>`;
+
+        container.insertAdjacentHTML('beforeend', trainHtml);
+        displayedTimes.push(departureTime);
+      });
+    }
+  };
+
+  // Update both directions
+  updateDirection('inbound', trainCacheInbound);
+  updateDirection('outbound', trainCacheOutbound);
 }
 
-export function startMinutesUpdater(intervalMs = MINUTES_UPDATE_INTERVAL_MS): void {
-  updateMinutesOnce();
+export function startMinutesUpdater(
+  trainCacheInbound?: StationTimetableEntry[],
+  trainCacheOutbound?: StationTimetableEntry[],
+  stationNameCache?: SimpleCache<string>,
+  trainTypeMap?: Record<string, { name: string; class: string }>,
+  intervalMs = MINUTES_UPDATE_INTERVAL_MS,
+): void {
+  // Reset displayed trains tracking when starting a new updater
+  if (trainCacheInbound) {
+    displayedTrainsInbound = trainCacheInbound
+      .slice(0, 5)
+      .map((t) => (t as any)['odpt:departureTime'])
+      .filter(Boolean);
+  }
+  if (trainCacheOutbound) {
+    displayedTrainsOutbound = trainCacheOutbound
+      .slice(0, 5)
+      .map((t) => (t as any)['odpt:departureTime'])
+      .filter(Boolean);
+  }
+
+  updateMinutesOnce(trainCacheInbound, trainCacheOutbound, stationNameCache, trainTypeMap);
   if (typeof minutesUpdaterId !== 'undefined') clearInterval(minutesUpdaterId);
-  minutesUpdaterId = window.setInterval(updateMinutesOnce, intervalMs) as unknown as number;
+  minutesUpdaterId = window.setInterval(
+    () => updateMinutesOnce(trainCacheInbound, trainCacheOutbound, stationNameCache, trainTypeMap),
+    intervalMs,
+  ) as unknown as number;
 }
 
 export function stopMinutesUpdater(): void {
