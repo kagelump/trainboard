@@ -254,9 +254,9 @@ git push --force origin main  # Use with caution
 
 ### Bundle Size
 - Monitor `dist/` size after changes
-- Current bundle: ~13KB JS (gzipped: ~5KB)
 - Keep dependencies minimal
 - Use code splitting if needed
+- Check build output for actual sizes (displayed after `npm run build`)
 
 ### Deployment Speed
 - Total workflow time: ~30-60 seconds

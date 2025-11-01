@@ -1,7 +1,7 @@
 # Testing Agent Instructions
 
 ## Testing Framework
-This project uses **Vitest** for unit testing. Vitest is a fast, modern test framework compatible with Vite.
+This project uses **Vitest** for unit testing. Vitest is a fast, modern test framework specifically designed for Vite projects, providing native integration and optimal performance.
 
 ## Running Tests
 
