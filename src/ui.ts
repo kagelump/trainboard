@@ -113,6 +113,10 @@ let minutesUpdaterId: number | undefined;
 let displayedTrainsInbound: string[] = [];
 let displayedTrainsOutbound: string[] = [];
 
+// Track the highest cache index we've shown for each direction
+let highestShownIndexInbound = DISPLAYED_TRAINS_LIMIT - 1;
+let highestShownIndexOutbound = DISPLAYED_TRAINS_LIMIT - 1;
+
 function parseTimeToSeconds(timeStr: string): number {
   const [hStr, mStr] = (timeStr || '').split(':');
   const h = Number(hStr || 0);
@@ -136,20 +140,20 @@ function updateMinutesOnce(
   ) => {
     const container = document.getElementById(`departures-${directionId}`);
     if (!container || !trainCache || !stationNameCache || !trainTypeMap) {
-      if (!container || !trainCache || !stationNameCache || !trainTypeMap) {
-        console.warn(`updateMinutesOnce: Missing required parameters for ${directionId}`, {
-          container: !!container,
-          trainCache: !!trainCache,
-          stationNameCache: !!stationNameCache,
-          trainTypeMap: !!trainTypeMap,
-        });
-      }
+      console.warn(`updateMinutesOnce: Missing required parameters for ${directionId}`, {
+        container: !!container,
+        trainCache: !!trainCache,
+        stationNameCache: !!stationNameCache,
+        trainTypeMap: !!trainTypeMap,
+      });
       return;
     }
 
     const els = Array.from(container.querySelectorAll<HTMLElement>('.train-row[data-departure]'));
     const displayedTimes =
       directionId === 'inbound' ? displayedTrainsInbound : displayedTrainsOutbound;
+    const highestShownIndex =
+      directionId === 'inbound' ? highestShownIndexInbound : highestShownIndexOutbound;
 
     // Track which trains to remove
     const trainsToRemove: HTMLElement[] = [];
@@ -175,13 +179,16 @@ function updateMinutesOnce(
 
     // Remove departed trains and replace with cached trains
     if (trainsToRemove.length > 0) {
-      // Find the next trains to display from cache BEFORE removing trains
-      // We need to get trains starting from the position after all currently displayed trains
-      const currentDisplayedCount = displayedTimes.length;
-      const nextTrains = trainCache.slice(
-        currentDisplayedCount,
-        currentDisplayedCount + trainsToRemove.length,
-      );
+      // Get next trains from cache starting from after the highest index we've shown
+      const nextStartIndex = highestShownIndex + 1;
+      const nextTrains = trainCache.slice(nextStartIndex, nextStartIndex + trainsToRemove.length);
+
+      // Update the highest shown index
+      if (directionId === 'inbound') {
+        highestShownIndexInbound = nextStartIndex + nextTrains.length - 1;
+      } else {
+        highestShownIndexOutbound = nextStartIndex + nextTrains.length - 1;
+      }
 
       // Remove departed trains
       trainsToRemove.forEach((el) => {
@@ -236,12 +243,14 @@ export function startMinutesUpdater(
       .slice(0, DISPLAYED_TRAINS_LIMIT)
       .map((t) => (t as any)['odpt:departureTime'])
       .filter(Boolean);
+    highestShownIndexInbound = DISPLAYED_TRAINS_LIMIT - 1;
   }
   if (trainCacheOutbound) {
     displayedTrainsOutbound = trainCacheOutbound
       .slice(0, DISPLAYED_TRAINS_LIMIT)
       .map((t) => (t as any)['odpt:departureTime'])
       .filter(Boolean);
+    highestShownIndexOutbound = DISPLAYED_TRAINS_LIMIT - 1;
   }
 
   updateMinutesOnce(trainCacheInbound, trainCacheOutbound, stationNameCache, trainTypeMap);
