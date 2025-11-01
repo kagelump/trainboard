@@ -115,7 +115,10 @@ export async function fetchRailDirections(
   return (await resp.json()) as OdptRailDirection[];
 }
 
-export async function fetchTrainTypes(apiKey: string, apiBaseUrl: string): Promise<OdptTrainType[]> {
+export async function fetchTrainTypes(
+  apiKey: string,
+  apiBaseUrl: string,
+): Promise<OdptTrainType[]> {
   const params = new URLSearchParams({ 'acl:consumerKey': String(apiKey) });
   const url = `${apiBaseUrl}odpt:TrainType?${params.toString()}`;
   const resp = await apiFetch(url);

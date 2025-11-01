@@ -1,10 +1,11 @@
 # Trainboard
 
-A compact static departure board for the Tokyu Toyoko Line. This repo contains a small TypeScript-powered static app that queries ODPT endpoints and shows upcoming departures.
+A compact static departure board for ODPT train lines. This repo contains a small TypeScript-powered static app that queries ODPT endpoints and shows upcoming departures for any train line supported by the ODPT API.
 
 Highlights of changes in this repo
 
 - Rewrote app in TypeScript with modules: `src/api.ts`, `src/utils.ts`, `src/ui.ts`, `src/cache.ts`, `src/trainboard.ts`.
+- **Generalized to support any ODPT train line** with a railway line selector.
 - Vite is used for development and fast HMR.
 - Support for a user-supplied API key via the settings modal (persisted to localStorage).
 - Destination station name caching (SimpleCache) and batch station metadata lookup.
@@ -78,6 +79,7 @@ How to supply an API key:
 ```json
 {
   "ODPT_API_KEY": "YOUR_KEY_HERE",
+  "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
   "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)",
   "API_BASE_URL": "https://api-challenge.odpt.org/api/v4/"
 }
@@ -86,6 +88,14 @@ How to supply an API key:
 2. Or: open the settings modal in the UI and paste a custom API key — this is persisted to `localStorage` under `t2board_api_key` and takes precedence over `config.json`.
 
 If the app encounters an API error (for example an authentication error), it will display a banner and automatically open the settings modal so you can paste a new API key immediately.
+
+## Selecting Railway Lines and Stations
+
+The app supports any train line available in the ODPT API:
+
+- Click the 🚃 button to select a railway line (persisted to localStorage)
+- Click the ⚙️ button to select a station on the current line (persisted to localStorage)
+- The app will automatically load direction names, train types, and station lists for the selected railway
 
 ## Scripts
 

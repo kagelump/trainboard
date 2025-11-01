@@ -151,7 +151,11 @@ async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promise<void>
   }
 }
 
-async function loadRailwayMetadata(railwayUri: string, apiKey: string, apiBaseUrl: string): Promise<void> {
+async function loadRailwayMetadata(
+  railwayUri: string,
+  apiKey: string,
+  apiBaseUrl: string,
+): Promise<void> {
   try {
     const railway = await fetchRailwayByUri(railwayUri, apiKey, apiBaseUrl);
     if (!railway) {
@@ -159,19 +163,22 @@ async function loadRailwayMetadata(railwayUri: string, apiKey: string, apiBaseUr
       return;
     }
     currentRailway = railway;
-    
+
     // Set direction URIs from railway metadata
     INBOUND_DIRECTION_URI = railway['odpt:ascendingRailDirection'] || 'odpt.RailDirection:Inbound';
-    OUTBOUND_DIRECTION_URI = railway['odpt:descendingRailDirection'] || 'odpt.RailDirection:Outbound';
-    
+    OUTBOUND_DIRECTION_URI =
+      railway['odpt:descendingRailDirection'] || 'odpt.RailDirection:Outbound';
+
     // Set friendly direction names
     if (INBOUND_DIRECTION_URI && directionNameCache.has(INBOUND_DIRECTION_URI)) {
-      INBOUND_FRIENDLY_NAME_JA = directionNameCache.get(INBOUND_DIRECTION_URI) || INBOUND_FRIENDLY_NAME_JA;
+      INBOUND_FRIENDLY_NAME_JA =
+        directionNameCache.get(INBOUND_DIRECTION_URI) || INBOUND_FRIENDLY_NAME_JA;
     }
     if (OUTBOUND_DIRECTION_URI && directionNameCache.has(OUTBOUND_DIRECTION_URI)) {
-      OUTBOUND_FRIENDLY_NAME_JA = directionNameCache.get(OUTBOUND_DIRECTION_URI) || OUTBOUND_FRIENDLY_NAME_JA;
+      OUTBOUND_FRIENDLY_NAME_JA =
+        directionNameCache.get(OUTBOUND_DIRECTION_URI) || OUTBOUND_FRIENDLY_NAME_JA;
     }
-    
+
     // Update page title
     const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
     uiSetPageTitle(`${railwayName} 発車案内板`);
@@ -434,11 +441,16 @@ async function initializeBoard(): Promise<void> {
     await loadStationsForRailway(newUri);
     // Reset station selection
     const selected = chooseInitialStation(STATION_CONFIGS, DEFAULT_STATION_NAME);
-    if (selected) currentConfig = { ...currentConfig, stationUri: selected.uri, stationName: selected.name };
+    if (selected)
+      currentConfig = { ...currentConfig, stationUri: selected.uri, stationName: selected.name };
     // Update station modal with new stations
     uiSetupStationModal(STATION_CONFIGS, currentConfig.stationUri, (newStationUri) => {
       const found = STATION_CONFIGS.find((c) => c.uri === newStationUri);
-      currentConfig = { ...currentConfig, stationUri: newStationUri, stationName: found ? found.name : null };
+      currentConfig = {
+        ...currentConfig,
+        stationUri: newStationUri,
+        stationName: found ? found.name : null,
+      };
       renderBoard();
     });
     renderBoard();
@@ -451,7 +463,8 @@ async function initializeBoard(): Promise<void> {
 
   // choose initial station (read from localStorage if present)
   const selected = chooseInitialStation(STATION_CONFIGS, DEFAULT_STATION_NAME);
-  if (selected) currentConfig = { ...currentConfig, stationUri: selected.uri, stationName: selected.name };
+  if (selected)
+    currentConfig = { ...currentConfig, stationUri: selected.uri, stationName: selected.name };
 
   // wire modal UI; onSave will update currentConfig and optionally replace the API key
   // setup the API key modal so users can change the key at any time
@@ -464,7 +477,11 @@ async function initializeBoard(): Promise<void> {
   // setup the station-selection modal
   uiSetupStationModal(STATION_CONFIGS, currentConfig.stationUri, (newUri) => {
     const found = STATION_CONFIGS.find((c) => c.uri === newUri);
-    currentConfig = { ...currentConfig, stationUri: newUri, stationName: found ? found.name : null };
+    currentConfig = {
+      ...currentConfig,
+      stationUri: newUri,
+      stationName: found ? found.name : null,
+    };
     renderBoard();
   });
 
