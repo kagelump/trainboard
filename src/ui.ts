@@ -6,6 +6,11 @@ import { timeToMinutes } from './utils';
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
 
+// LocalStorage keys
+const STORAGE_KEY_RAILWAY_URI = 't2board_railway_uri';
+const STORAGE_KEY_STATION_URI = 't2board_station_uri';
+const STORAGE_KEY_API_KEY = 't2board_api_key';
+
 export function setPageTitle(title: string): void {
   document.title = title;
 }
@@ -134,7 +139,7 @@ export function chooseInitialStation(
   stationConfigs: StationCfg[],
   defaultStationName: string,
 ): StationCfg | undefined {
-  const savedUri = localStorage.getItem('t2board_station_uri');
+  const savedUri = localStorage.getItem(STORAGE_KEY_STATION_URI);
   const defaultStation =
     stationConfigs.find((c) => c.name === defaultStationName) || stationConfigs[0];
   let selectedStation = defaultStation;
@@ -151,7 +156,7 @@ export function chooseInitialRailway(
   railwayConfigs: RailwayCfg[],
   defaultRailway: string,
 ): RailwayCfg | undefined {
-  const savedUri = localStorage.getItem('t2board_railway_uri');
+  const savedUri = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
   const defaultRailwayConfig =
     railwayConfigs.find((c) => c.uri === defaultRailway) || railwayConfigs[0];
   let selectedRailway = defaultRailwayConfig;
@@ -197,7 +202,7 @@ export function setupStationModal(
   const saveBtn = document.getElementById('save-settings');
   saveBtn?.addEventListener('click', () => {
     const newUri = stationSelect.value;
-    localStorage.setItem('t2board_station_uri', newUri);
+    localStorage.setItem(STORAGE_KEY_STATION_URI, newUri);
     onSave(newUri);
     closeStationModal();
   });
@@ -241,7 +246,7 @@ export function setupRailwayModal(
   const saveBtn = document.getElementById('save-railway');
   saveBtn?.addEventListener('click', () => {
     const newUri = railwaySelect.value;
-    localStorage.setItem('t2board_railway_uri', newUri);
+    localStorage.setItem(STORAGE_KEY_RAILWAY_URI, newUri);
     onSave(newUri);
     closeRailwayModal();
   });
@@ -269,8 +274,8 @@ export function setupApiKeyModal(
 
   saveBtn?.addEventListener('click', () => {
     const newKey = apiKeyInput.value ? apiKeyInput.value.trim() : null;
-    if (newKey) localStorage.setItem('t2board_api_key', newKey);
-    else localStorage.removeItem('t2board_api_key');
+    if (newKey) localStorage.setItem(STORAGE_KEY_API_KEY, newKey);
+    else localStorage.removeItem(STORAGE_KEY_API_KEY);
     onSave(newKey);
     closeApiModal();
   });

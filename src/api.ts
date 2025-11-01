@@ -61,7 +61,7 @@ export async function fetchStatus(
   apiKey: string,
   apiBaseUrl: string,
   railwayUri: string,
-): Promise<any[]> {
+): Promise<OdptTrainInformation[]> {
   const params = new URLSearchParams({
     'acl:consumerKey': String(apiKey),
     'odpt:railway': railwayUri,

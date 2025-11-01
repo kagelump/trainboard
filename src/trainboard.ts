@@ -297,8 +297,10 @@ async function renderBoard(): Promise<void> {
     // ignore
   }
   try {
-    await fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri);
-    uiClearStatus();
+    if (currentConfig.railwayUri) {
+      await fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri);
+      uiClearStatus();
+    }
   } catch (err) {
     console.warn('Failed to fetch status:', err);
     uiShowStatus('運行情報取得でエラーが発生しました。API キーを確認してください。', 'warn');
@@ -341,10 +343,11 @@ async function renderBoard(): Promise<void> {
     uiStartMinutesUpdater();
   }, 150_000);
 
-  statusIntervalId = window.setInterval(
-    () => fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri!),
-    300_000,
-  );
+  statusIntervalId = window.setInterval(() => {
+    if (currentConfig.railwayUri) {
+      fetchStatus(String(ODPT_API_KEY), API_BASE_URL, currentConfig.railwayUri);
+    }
+  }, 300_000);
 
   window.setInterval(uiUpdateClock, 1000);
   uiUpdateClock();
