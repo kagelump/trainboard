@@ -31,8 +31,7 @@ export class SimpleCache<V> {
           }
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.warn(`Failed to restore cache from localStorage key "${persistKeyName}":`, message);
+        console.warn(`Failed to restore cache from localStorage key "${persistKeyName}":`, error);
       }
     }
   }
@@ -89,10 +88,9 @@ export class SimpleCache<V> {
       for (const [k, v] of this.map.entries()) obj[k] = v;
       localStorage.setItem(this.persistKeyName, JSON.stringify(obj));
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
       console.warn(
         `Failed to persist cache to localStorage key "${this.persistKeyName}":`,
-        message,
+        error,
       );
     }
   }

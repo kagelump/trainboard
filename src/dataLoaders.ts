@@ -112,8 +112,7 @@ export async function loadDirectionNames(apiKey: string, apiBaseUrl: string): Pr
       }
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn('Failed to load direction names:', message);
+    console.warn('Failed to load direction names:', error);
   }
 }
 
@@ -145,8 +144,7 @@ export async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promis
 
     console.log(`Loaded ${Object.keys(TRAIN_TYPE_MAP).length} train types`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn('Failed to load train types:', message);
+    console.warn('Failed to load train types:', error);
   }
 }
 
@@ -188,8 +186,7 @@ export async function loadRailwayMetadata(
     const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
     setPageTitle(`${railwayName} 発車案内板`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn('Failed to load railway metadata:', message);
+    console.warn('Failed to load railway metadata:', error);
   }
 }
 
@@ -217,7 +214,6 @@ export async function loadStationsForRailway(
       .filter((station) => station.uri)
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   } catch (error) {
-    // Log the error object directly so callers/console can see stack and structure
     console.error('Error fetching station list:', error);
   }
 }
@@ -248,7 +244,6 @@ export async function ensureStationNamesForDepartures(
       if (!stationNameCache.has(u)) stationNameCache.set(u, u);
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn('Failed to fetch station names for destinations:', message);
+    console.warn('Failed to fetch station names for destinations:', error);
   }
 }
