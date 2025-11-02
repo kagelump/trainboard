@@ -20,7 +20,10 @@ export type StationConfig = {
   name: string;
   uri: string;
   code?: string;
+  /** Derived sort key used for ordering stations. Zero-padded numeric part or fallback to code. */
+  sortKey?: string;
 };
+import { extractStationSortKey } from './utils';
 
 export type TrainTypeMapEntry = {
   name: string;
@@ -199,22 +202,28 @@ export async function loadStationsForRailway(
   apiBaseUrl: string,
 ): Promise<void> {
   try {
-    const data = await fetchStationsList(apiKey, apiBaseUrl, railwayUri);
-    STATION_CONFIGS = data
+    const stations = await fetchStationsList(apiKey, apiBaseUrl, railwayUri);
+    STATION_CONFIGS = stations
       .map((station) => {
         const stationNameJa = getJapaneseText(station['dc:title'] || station['odpt:stationTitle']);
         const stationCode = station['odpt:stationCode'] || '';
+        const sortKey = extractStationSortKey(stationCode);
         return {
           name: stationCode ? `${stationNameJa} (${stationCode})` : stationNameJa,
           uri: station['owl:sameAs'] || '',
           code: stationCode,
+          sortKey,
         } as StationConfig;
       })
-      .filter((s) => s.uri)
+      .filter((station) => station.uri)
       .sort((a, b) => {
-        // Sort by station code if both have codes
+        // Prefer the derived sortKey when present (zero-padded numeric part or fallback to code)
+        if (a.sortKey && b.sortKey) {
+          const cmp = a.sortKey.localeCompare(b.sortKey);
+          if (cmp !== 0) return cmp;
+        }
+        // Fallback: if both have station codes, try numeric comparison as before
         if (a.code && b.code) {
-          // Extract numeric part from codes like "TY11" -> 11
           const aMatch = a.code.match(/\d+/);
           const bMatch = b.code.match(/\d+/);
           if (aMatch && bMatch) {
@@ -222,10 +231,9 @@ export async function loadStationsForRailway(
             const bNum = parseInt(bMatch[0], 10);
             if (aNum !== bNum) return aNum - bNum;
           }
-          // If numeric parts are equal or don't exist, sort by full code
           return a.code.localeCompare(b.code);
         }
-        // If codes don't exist, sort by name
+        // Final fallback: compare by name
         return a.name.localeCompare(b.name, 'ja');
       });
   } catch (error) {

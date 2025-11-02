@@ -100,3 +100,17 @@ export function getTodayCalendarURI(): string {
 export function safeGetElement(id: string): HTMLElement | null {
   return document.getElementById(id);
 }
+
+/**
+ * Extracts a sortable key from a station code.
+ * If the code contains a numeric portion (e.g. "TY11"), returns the
+ * zero-padded numeric part (pad width defaults to 3 -> "011").
+ * If no numeric portion exists, returns the original code string.
+ * If code is falsy, returns an empty string.
+ */
+export function extractStationSortKey(code?: string, pad = 3): string {
+  if (!code) return '';
+  const m = code.match(/\d+/);
+  if (m) return m[0].padStart(pad, '0');
+  return code;
+}
