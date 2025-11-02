@@ -5,6 +5,8 @@ import './TrainRow.js';
 import type { StationTimetableEntry } from '../types';
 import type { SimpleCache } from '../cache';
 
+import { DISPLAYED_TRAINS_LIMIT } from '../constants';
+
 /**
  * DeparturesList component - displays a list of train departures
  */
@@ -55,6 +57,106 @@ export class DeparturesList extends LitElement {
 
   @property({ type: Boolean })
   loading = false;
+
+  @property({ type: Boolean })
+  autoUpdateMinutes = false;
+
+  @property({ type: Array })
+  trainCache: StationTimetableEntry[] = [];
+
+  @property({ type: Number })
+  displayLimit = DISPLAYED_TRAINS_LIMIT;
+
+  private minutesUpdaterId: number | undefined;
+  private parseTimeToSeconds(timeStr: string): number {
+    const [hStr, mStr] = (timeStr || '').split(':');
+    const h = Number(hStr || 0);
+    const m = Number(mStr || 0);
+    return h * 3600 + m * 60;
+  }
+
+  private updateMinutesOnce = (): void => {
+    const now = new Date();
+    const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+    const trainRows = Array.from(this.shadowRoot?.querySelectorAll('train-row') || []);
+    if (trainRows.length === 0) return;
+
+    const departedIndices: number[] = [];
+    trainRows.forEach((trainRow, index) => {
+      const dep = trainRow.getAttribute('departuretime') || '';
+      const depSecs = this.parseTimeToSeconds(dep);
+      const diff = depSecs - nowSeconds;
+
+      if (diff <= 0) {
+        departedIndices.push(index);
+      } else if (diff <= 60) {
+        (trainRow as any).minutesText = '到着';
+      } else {
+        const mins = Math.ceil(diff / 60);
+        (trainRow as any).minutesText = `${mins}分`;
+      }
+    });
+
+    if (departedIndices.length > 0) {
+      // Remove departed from displayed departures
+      const updatedDepartures = this.departures.filter((_, i) => !departedIndices.includes(i));
+
+      // Pull replacements from trainCache
+      const nextTrains = this.trainCache.slice(0, departedIndices.length);
+      updatedDepartures.push(...nextTrains);
+      // Drop used trains from cache
+      this.trainCache = this.trainCache.slice(nextTrains.length);
+
+      this.departures = updatedDepartures;
+      this.dispatchEvent(
+        new CustomEvent('departures-list-departed', {
+          detail: { departedCount: departedIndices.length },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
+  };
+
+  private startMinutesUpdater() {
+    if (this.minutesUpdaterId) return;
+    this.minutesUpdaterId = window.setInterval(this.updateMinutesOnce, 15_000) as unknown as number;
+  }
+
+  private stopMinutesUpdater() {
+    if (!this.minutesUpdaterId) return;
+    clearInterval(this.minutesUpdaterId);
+    this.minutesUpdaterId = undefined;
+  }
+
+  // Mark when the component has completed its first render. Tests and
+  // the minutes-updater can listen for the 'departures-list-rendered'
+  // event to know it's safe to query the element's shadow DOM.
+  private __rendered = false;
+
+  firstUpdated() {
+    this.__rendered = true;
+    this.dispatchEvent(
+      new CustomEvent('departures-list-rendered', { bubbles: true, composed: true }),
+    );
+    if (this.autoUpdateMinutes) this.startMinutesUpdater();
+  }
+
+  updated(changedProps: Map<string, any>) {
+    if (changedProps.has('autoUpdateMinutes')) {
+      if (this.autoUpdateMinutes) this.startMinutesUpdater();
+      else this.stopMinutesUpdater();
+    }
+    // When departures change, ensure minutes are calculated for the newly rendered rows.
+    if (changedProps.has('departures')) {
+      // Only update if there are departures to show.
+      if (this.departures && this.departures.length > 0) {
+        // Wait for the update cycle to complete and the shadow DOM to be ready.
+        this.updateComplete.then(() => this.updateMinutesOnce());
+      }
+    }
+  }
 
   /**
    * Extract destination station title from train object

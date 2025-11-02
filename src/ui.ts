@@ -82,6 +82,7 @@ export function renderDirection(
   departures: StationTimetableEntry[],
   stationNameCache: SimpleCache<string>,
   trainTypeMap: Record<string, { name: string; class: string }>,
+  options?: { trainCache?: StationTimetableEntry[]; autoUpdate?: boolean; displayLimit?: number },
 ): void {
   const container = document.getElementById(`departures-${directionId}`) as HTMLElement;
   if (!container) return;
@@ -100,170 +101,15 @@ export function renderDirection(
   departuresList.stationNameCache = stationNameCache;
   departuresList.trainTypeMap = trainTypeMap;
   departuresList.loading = false;
+
+  if (options?.trainCache) departuresList.trainCache = options.trainCache;
+  if (typeof options?.autoUpdate !== 'undefined')
+    departuresList.autoUpdateMinutes = !!options.autoUpdate;
+  if (typeof options?.displayLimit === 'number') departuresList.displayLimit = options.displayLimit;
 }
 
-// --- Minutes-away updater ---
-let minutesUpdaterId: number | undefined;
-
-// Track which trains are currently displayed (by departure time)
-let displayedTrainsInbound: string[] = [];
-let displayedTrainsOutbound: string[] = [];
-
-// Track the highest cache index we've shown for each direction
-let highestShownIndexInbound = DISPLAYED_TRAINS_LIMIT - 1;
-let highestShownIndexOutbound = DISPLAYED_TRAINS_LIMIT - 1;
-
-function parseTimeToSeconds(timeStr: string): number {
-  const [hStr, mStr] = (timeStr || '').split(':');
-  const h = Number(hStr || 0);
-  const m = Number(mStr || 0);
-  return h * 3600 + m * 60;
-}
-
-function updateMinutesOnce(
-  trainCacheInbound?: StationTimetableEntry[],
-  trainCacheOutbound?: StationTimetableEntry[],
-  stationNameCache?: SimpleCache<string>,
-  trainTypeMap?: Record<string, { name: string; class: string }>,
-): void {
-  const now = new Date();
-  const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-  // Helper function to update a single direction
-  const updateDirection = (
-    directionId: 'inbound' | 'outbound',
-    trainCache?: StationTimetableEntry[],
-  ) => {
-    const container = document.getElementById(`departures-${directionId}`);
-    if (!container || !trainCache || !stationNameCache || !trainTypeMap) {
-      console.warn(`updateMinutesOnce: Missing required parameters for ${directionId}`, {
-        container: !!container,
-        trainCache: !!trainCache,
-        stationNameCache: !!stationNameCache,
-        trainTypeMap: !!trainTypeMap,
-      });
-      return;
-    }
-
-    const departuresList = container.querySelector('departures-list') as DeparturesList;
-    if (!departuresList) return;
-
-    // Get all train-row elements from the shadow DOM
-    const trainRows = Array.from(
-      departuresList.shadowRoot?.querySelectorAll('train-row') || [],
-    );
-    if (trainRows.length === 0) return;
-
-    const displayedTimes =
-      directionId === 'inbound' ? displayedTrainsInbound : displayedTrainsOutbound;
-    const highestShownIndex =
-      directionId === 'inbound' ? highestShownIndexInbound : highestShownIndexOutbound;
-
-    // Track which trains have departed
-    const departedIndices: number[] = [];
-
-    trainRows.forEach((trainRow, index) => {
-      const dep = trainRow.getAttribute('departuretime') || '';
-      const depSecs = parseTimeToSeconds(dep);
-      const diff = depSecs - nowSeconds;
-
-      if (diff <= 0) {
-        // Train has departed
-        departedIndices.push(index);
-      } else if (diff <= 60) {
-        (trainRow as any).minutesText = '到着';
-      } else {
-        const mins = Math.ceil(diff / 60);
-        (trainRow as any).minutesText = `${mins}分`;
-      }
-    });
-
-    // Remove departed trains and add new ones from cache
-    if (departedIndices.length > 0) {
-      // Get next trains from cache
-      const nextStartIndex = highestShownIndex + 1;
-      const nextTrains = trainCache.slice(nextStartIndex, nextStartIndex + departedIndices.length);
-
-      // Update the highest shown index
-      if (nextTrains.length > 0) {
-        if (directionId === 'inbound') {
-          highestShownIndexInbound = nextStartIndex + nextTrains.length - 1;
-        } else {
-          highestShownIndexOutbound = nextStartIndex + nextTrains.length - 1;
-        }
-      }
-
-      // Remove departed trains from tracking and collect their times
-      const departedTimes = departedIndices.map((index) => displayedTimes[index]).filter(Boolean);
-
-      // Remove times from displayedTimes array
-      departedTimes.forEach((time) => {
-        const timeIndex = displayedTimes.indexOf(time);
-        if (timeIndex > -1) {
-          displayedTimes.splice(timeIndex, 1);
-        }
-      });
-
-      // Add new trains
-      nextTrains.forEach((train) => {
-        const departureTime = (train as any)['odpt:departureTime'];
-        if (departureTime && !displayedTimes.includes(departureTime)) {
-          displayedTimes.push(departureTime);
-        }
-      });
-
-      // Get current departures, remove departed, add new ones
-      const currentDepartures = [...departuresList.departures];
-      const updatedDepartures = currentDepartures.filter((_, index) => !departedIndices.includes(index));
-      updatedDepartures.push(...nextTrains);
-
-      // Update the component
-      departuresList.departures = updatedDepartures;
-    }
-  };
-
-  // Update both directions
-  updateDirection('inbound', trainCacheInbound);
-  updateDirection('outbound', trainCacheOutbound);
-}
-
-export function startMinutesUpdater(
-  trainCacheInbound?: StationTimetableEntry[],
-  trainCacheOutbound?: StationTimetableEntry[],
-  stationNameCache?: SimpleCache<string>,
-  trainTypeMap?: Record<string, { name: string; class: string }>,
-  intervalMs = MINUTES_UPDATE_INTERVAL_MS,
-): void {
-  // Reset displayed trains tracking when starting a new updater
-  if (trainCacheInbound) {
-    displayedTrainsInbound = trainCacheInbound
-      .slice(0, DISPLAYED_TRAINS_LIMIT)
-      .map((t) => (t as any)['odpt:departureTime'])
-      .filter(Boolean);
-    highestShownIndexInbound = DISPLAYED_TRAINS_LIMIT - 1;
-  }
-  if (trainCacheOutbound) {
-    displayedTrainsOutbound = trainCacheOutbound
-      .slice(0, DISPLAYED_TRAINS_LIMIT)
-      .map((t) => (t as any)['odpt:departureTime'])
-      .filter(Boolean);
-    highestShownIndexOutbound = DISPLAYED_TRAINS_LIMIT - 1;
-  }
-
-  updateMinutesOnce(trainCacheInbound, trainCacheOutbound, stationNameCache, trainTypeMap);
-  if (typeof minutesUpdaterId !== 'undefined') clearInterval(minutesUpdaterId);
-  minutesUpdaterId = window.setInterval(
-    () => updateMinutesOnce(trainCacheInbound, trainCacheOutbound, stationNameCache, trainTypeMap),
-    intervalMs,
-  ) as unknown as number;
-}
-
-export function stopMinutesUpdater(): void {
-  if (typeof minutesUpdaterId !== 'undefined') {
-    clearInterval(minutesUpdaterId);
-    minutesUpdaterId = undefined;
-  }
-}
+// (App-level minutes-updater removed — individual `departures-list` components
+// manage their own minute-updating when `autoUpdateMinutes` is enabled.)
 
 export function updateClock(): void {
   const el = document.getElementById('time-header');
