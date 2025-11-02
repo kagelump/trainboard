@@ -2,12 +2,7 @@
 // URL routing for railway and station selection
 
 import type { StationConfig } from './types';
-
-export type RailwayConfig = {
-  uri: string;
-  name: string;
-  operator: string;
-};
+import type { RailwayConfig } from './dataLoaders';
 
 export interface RouteParams {
   railwayName: string | null;

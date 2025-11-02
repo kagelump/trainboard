@@ -116,6 +116,7 @@ async function initializeBoard(): Promise<void> {
   const routeParams = parseRouteFromUrl();
   let selectedRailway: RailwayConfig | undefined;
   let selectedStation;
+  let currentConfig = getCurrentConfig();
   
   // First, try to load from URL parameters
   if (routeParams.railwayName && routeParams.stationName) {
