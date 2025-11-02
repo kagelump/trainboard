@@ -1,5 +1,4 @@
 {
-  "ODPT_API_KEY": "YOUR_KEY_HERE",
   "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
   "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)",
   "API_BASE_URL": "https://api-challenge.odpt.org/api/v4/"

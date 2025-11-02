@@ -39,24 +39,28 @@ This will:
 - Build the trainboard application
 - Configure systemd services
 
-### 2. Configure Your API Key
+### 2. Configure API base URL and defaults
 
-Edit the configuration file:
+Edit the configuration file to adjust non-secret values such as `API_BASE_URL` or default railway/station:
 
 ```bash
 nano ~/trainboard/config.json
 ```
 
-Add your ODPT API key:
+Example (do NOT store secret API keys in this file):
 
 ```json
 {
-  "ODPT_API_KEY": "your_actual_api_key_here",
   "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
   "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)",
   "API_BASE_URL": "https://api-challenge.odpt.org/api/v4/"
 }
 ```
+
+If you need to supply an ODPT API key for development, either:
+
+- Use the in-browser settings modal (⚙️) to paste a key which will be stored in `localStorage` for the current device; or
+- Deploy the Cloudflare API proxy (recommended for production) so no key is stored in the browser.
 
 ### 3. Test the Display
 

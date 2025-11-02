@@ -127,20 +127,13 @@ The app reads a `config.json` at runtime if present (useful for local testing or
 
 How to supply an API key:
 
-1. Copy `config.example.json` to `config.json` and set `ODPT_API_KEY` for a static, server-side config.
+Recommended: use the Cloudflare API proxy in production so you never expose an API key to the browser (see the Cloudflare section above).
 
-```json
-{
-  "ODPT_API_KEY": "YOUR_KEY_HERE",
-  "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
-  "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)",
-  "API_BASE_URL": "https://api-challenge.odpt.org/api/v4/"
-}
-```
+For development or one-off testing you can supply an API key in the browser using the settings modal (⚙️) — paste your ODPT API key there and it will be persisted to `localStorage` under `t2board_api_key`.
 
-2. Or: open the settings modal in the UI and paste a custom API key — this is persisted to `localStorage` under `t2board_api_key` and takes precedence over `config.json`.
-
-If the app encounters an API error (for example an authentication error), it will display a banner and automatically open the settings modal so you can paste a new API key immediately.
+Notes:
+- Do NOT store secret API keys in `config.json` — `config.json` is read at runtime only for non-secret values like `API_BASE_URL` and default selections.
+- If the app encounters an API error (for example an authentication error), it will display a banner and automatically open the settings modal so you can paste a new API key immediately.
 
 ## Selecting Railway Lines and Stations
 

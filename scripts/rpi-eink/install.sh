@@ -198,8 +198,8 @@ configure_trainboard() {
     log_info "Creating config.json from example..."
     cp "$APP_DIR/config.example.json" "$APP_DIR/config.json"
     
-    log_warn "Please edit $APP_DIR/config.json to add your ODPT API key"
-    log_warn "Visit https://developer.odpt.org/ to get an API key"
+    log_warn "Please edit $APP_DIR/config.json to adjust API_BASE_URL or defaults as needed"
+    log_warn "Do NOT add secret API keys to config.json; use the settings modal in the browser or deploy the Cloudflare proxy instead"
 }
 
 # Setup systemd services

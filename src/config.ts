@@ -37,19 +37,21 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Loads configuration from the ./config.json file.
+ * Loads configuration from the optional ./config.json file.
+ * NOTE: config.json is used only for non-secret configuration values
+ * such as API_BASE_URL, DEFAULT_RAILWAY, and DEFAULT_STATION_NAME.
+ * Do NOT store secret API keys in config.json; use the Cloudflare proxy
+ * or the in-browser settings modal which persists keys to localStorage.
  */
 async function loadFromLocalConfig(): Promise<void> {
   try {
     const resp = await fetch('./config.json', { cache: 'no-store' });
     if (!resp.ok) return;
     const cfg = (await resp.json()) as {
-      ODPT_API_KEY?: string;
       DEFAULT_RAILWAY?: string;
       DEFAULT_STATION_NAME?: string;
       API_BASE_URL?: string;
     };
-    if (cfg?.ODPT_API_KEY) ODPT_API_KEY = cfg.ODPT_API_KEY;
     if (cfg?.DEFAULT_RAILWAY) DEFAULT_RAILWAY = cfg.DEFAULT_RAILWAY;
     if (cfg?.DEFAULT_STATION_NAME) DEFAULT_STATION_NAME = cfg.DEFAULT_STATION_NAME;
     if (cfg?.API_BASE_URL) API_BASE_URL = cfg.API_BASE_URL;
@@ -61,11 +63,12 @@ async function loadFromLocalConfig(): Promise<void> {
 
 /**
  * Loads configuration from file and localStorage.
- * LocalStorage API key takes precedence over config.json.
+ * Note: API keys are NOT read from config.json. If present, localStorage
+ * will supply an API key via the settings modal (preferred for development).
  */
 export async function loadLocalConfig(): Promise<void> {
   await loadFromLocalConfig();
-  // Allow user-supplied API key in localStorage to override config.json
+  // Allow user-supplied API key in localStorage (set via settings modal)
   try {
     const userKey = localStorage.getItem(STORAGE_KEY_API_KEY);
     if (userKey) {
