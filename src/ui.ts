@@ -660,12 +660,6 @@ export function setLocationStatus(message: string): void {
   el.textContent = message;
 }
 
-export function setLocationStationsList(html: string): void {
-  const el = document.getElementById('nearby-stations-list');
-  if (!el) return;
-  el.innerHTML = html;
-}
-
 /**
  * Setup the location modal and handle finding nearby stations
  */
@@ -675,8 +669,9 @@ export function setupLocationModal(
   const modal = document.getElementById('location-modal');
   const locationButton = document.getElementById('location-button');
   const closeButton = document.getElementById('close-location-modal');
+  const stationsList = document.getElementById('nearby-stations-list');
 
-  if (!modal || !locationButton || !closeButton) return;
+  if (!modal || !locationButton || !closeButton || !stationsList) return;
 
   // Only add event listeners once
   if (!locationModalInitialized) {
@@ -688,10 +683,26 @@ export function setupLocationModal(
       if (e.target === modal) closeLocationModal();
     });
 
+    // Use event delegation for station buttons to avoid memory leaks
+    stationsList.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const button = target.closest('[data-station-uri]') as HTMLElement;
+      if (button) {
+        const stationUri = button.getAttribute('data-station-uri');
+        const railwayUri = button.getAttribute('data-railway-uri');
+        if (stationUri && railwayUri) {
+          onStationSelect(stationUri, railwayUri);
+          closeLocationModal();
+        }
+      }
+    });
+
     locationButton.addEventListener('click', async () => {
       openLocationModal();
       setLocationStatus('現在地を取得中...');
-      setLocationStationsList('');
+
+      // Clear previous results
+      stationsList.innerHTML = '';
 
       try {
         // Dynamically import location module to avoid bundling issues
@@ -708,49 +719,43 @@ export function setupLocationModal(
         const nearbyStations = findNearbyStations(latitude, longitude, 5);
 
         if (nearbyStations.length === 0) {
-          setLocationStationsList(
-            '<p class="text-center text-lg">近くに駅が見つかりませんでした</p>',
-          );
+          const noResultsP = document.createElement('p');
+          noResultsP.className = 'text-center text-lg';
+          noResultsP.textContent = '近くに駅が見つかりませんでした';
+          stationsList.appendChild(noResultsP);
           return;
         }
 
-        // Generate HTML for station list
-        const stationsHtml = nearbyStations
-          .map(
-            (station) => `
-            <button
-              class="w-full text-left p-4 mb-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition border-2 border-white"
-              data-station-uri="${station.uri}"
-              data-railway-uri="${station.railway}"
-            >
-              <div class="font-bold text-xl">${station.name}</div>
-              <div class="text-sm text-gray-300 mt-1">距離: ${formatDistance(station.distance)}</div>
-            </button>
-          `,
-          )
-          .join('');
+        // Create station buttons using DOM API (safer than innerHTML)
+        nearbyStations.forEach((station) => {
+          const button = document.createElement('button');
+          button.className =
+            'w-full text-left p-4 mb-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition border-2 border-white';
+          button.setAttribute('data-station-uri', station.uri);
+          button.setAttribute('data-railway-uri', station.railway);
 
-        setLocationStationsList(stationsHtml);
+          const nameDiv = document.createElement('div');
+          nameDiv.className = 'font-bold text-xl';
+          nameDiv.textContent = station.name;
 
-        // Add click handlers to station buttons
-        const stationButtons = modal.querySelectorAll('[data-station-uri]');
-        stationButtons.forEach((button) => {
-          button.addEventListener('click', () => {
-            const stationUri = button.getAttribute('data-station-uri');
-            const railwayUri = button.getAttribute('data-railway-uri');
-            if (stationUri && railwayUri) {
-              onStationSelect(stationUri, railwayUri);
-              closeLocationModal();
-            }
-          });
+          const distanceDiv = document.createElement('div');
+          distanceDiv.className = 'text-sm text-gray-300 mt-1';
+          distanceDiv.textContent = `距離: ${formatDistance(station.distance)}`;
+
+          button.appendChild(nameDiv);
+          button.appendChild(distanceDiv);
+          stationsList.appendChild(button);
         });
       } catch (error) {
         const e = error instanceof Error ? error : new Error(String(error));
         console.error('Location error:', e);
         setLocationStatus('エラー: ' + e.message);
-        setLocationStationsList(
-          '<p class="text-center text-lg text-red-400">位置情報の取得に失敗しました。ブラウザの設定で位置情報の使用を許可してください。</p>',
-        );
+
+        const errorP = document.createElement('p');
+        errorP.className = 'text-center text-lg text-red-400';
+        errorP.textContent =
+          '位置情報の取得に失敗しました。ブラウザの設定で位置情報の使用を許可してください。';
+        stationsList.appendChild(errorP);
       }
     });
 

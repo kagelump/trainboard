@@ -23,5 +23,4 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
   },
-  assetsInclude: ['**/*.geojson'],
 });
