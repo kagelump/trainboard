@@ -42,10 +42,10 @@ This will:
 
 ### 2. Configure API base URL and defaults
 
-Edit the configuration file to adjust non-secret values such as `API_BASE_URL` or default railway/station:
+Edit the configuration file to adjust non-secret values such as `API_BASE_URL` or default railway/station (compile-time defaults live in `defaults.json`):
 
 ```bash
-nano ~/trainboard/config.json
+nano ~/trainboard/defaults.json
 ```
 
 Example (do NOT store secret API keys in this file):

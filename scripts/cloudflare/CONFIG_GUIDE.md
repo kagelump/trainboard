@@ -6,19 +6,21 @@ This directory contains an example configuration file for using the Cloudflare W
 
 After deploying the Cloudflare Worker (see [README.md](README.md)):
 
-1. Copy `config.example.json` to the project root as `config.json`:
-   ```bash
-   cp scripts/cloudflare/config.example.json config.json
-   ```
+1. Copy `scripts/cloudflare/config.example.json` to the project root as `defaults.json` (compile-time defaults):
 
-2. Edit `config.json` and replace `YOUR-SUBDOMAIN` with your actual Cloudflare Workers subdomain:
-   ```json
-   {
-     "API_BASE_URL": "https://odpt-api-proxy.mysubdomain.workers.dev/",
-     "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
-     "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)"
-   }
-   ```
+```bash
+cp scripts/cloudflare/config.example.json defaults.json
+```
+
+2. Edit `defaults.json` and replace `YOUR-SUBDOMAIN` with your actual Cloudflare Workers subdomain:
+
+```json
+{
+  "API_BASE_URL": "https://odpt-api-proxy.mysubdomain.workers.dev/",
+  "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
+  "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)"
+}
+```
 
 3. **Important**: Do NOT include `ODPT_API_KEY` in the config - the proxy handles authentication securely
 
@@ -44,10 +46,12 @@ https://<worker-name>.<subdomain>.workers.dev
 ```
 
 Where:
+
 - `<worker-name>` is from `wrangler.toml` (default: `odpt-api-proxy`)
 - `<subdomain>` is your Cloudflare account subdomain
 
 You can also find it in your Cloudflare dashboard:
+
 1. Go to https://dash.cloudflare.com/
 2. Navigate to Workers & Pages
 3. Click on your worker
@@ -56,6 +60,7 @@ You can also find it in your Cloudflare dashboard:
 ## Switching Between Direct API and Proxy
 
 ### Using Proxy (Recommended for Production)
+
 ```json
 {
   "API_BASE_URL": "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/"
@@ -63,6 +68,7 @@ You can also find it in your Cloudflare dashboard:
 ```
 
 ### Using Direct API (Development Only)
+
 ```json
 {
   "ODPT_API_KEY": "your-api-key-here",
@@ -75,6 +81,7 @@ You can also find it in your Cloudflare dashboard:
 ### "Failed to fetch" errors
 
 Check that:
+
 1. Worker is deployed and running: `curl https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/health`
 2. API_BASE_URL ends with `/`
 3. CORS is properly configured in the worker
@@ -82,6 +89,7 @@ Check that:
 ### "401 Unauthorized" errors from ODPT API
 
 The worker's ODPT_API_KEY secret may not be set correctly:
+
 ```bash
 cd scripts/cloudflare
 wrangler secret put ODPT_API_KEY

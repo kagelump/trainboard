@@ -12,6 +12,7 @@ This directory contains Python scripts for fetching data from the ODPT API.
 ### fetch_stations.py
 
 Fetches all stations from the ODPT API by:
+
 1. Fetching all operators from `odpt:Operator` endpoint
 2. For each operator, fetching all railways from `odpt:Railway` endpoint
 3. For each railway, fetching all stations from `odpt:Station` endpoint
@@ -19,27 +20,32 @@ Fetches all stations from the ODPT API by:
 #### Usage
 
 With API key as argument:
+
 ```bash
 python fetch_stations.py YOUR_API_KEY
 ```
 
-With API key from config.json:
+With API key from defaults.json (compile-time defaults):
+
 ```bash
-# First create config.json in the repository root (see config.example.json)
+# First create defaults.json in the repository root (see config.example.json)
 python fetch_stations.py
 ```
 
 Save output to file:
+
 ```bash
 python fetch_stations.py YOUR_API_KEY --output stations.json
 ```
 
 Pretty-print JSON output:
+
 ```bash
 python fetch_stations.py YOUR_API_KEY --pretty
 ```
 
 Custom API base URL:
+
 ```bash
 python fetch_stations.py YOUR_API_KEY --base-url https://api.odpt.org/api/v4/
 ```
@@ -85,7 +91,7 @@ The script outputs JSON with the following structure:
 You can provide the API key in two ways:
 
 1. As a command-line argument: `python fetch_stations.py YOUR_API_KEY`
-2. In a `config.json` file in the repository root:
+2. In a `defaults.json` file in the repository root:
 
 ```json
 {

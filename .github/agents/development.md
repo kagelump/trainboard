@@ -3,12 +3,14 @@
 ## When Making Code Changes
 
 ### Pre-Change Checklist
+
 1. Run `npm install` to ensure dependencies are installed
 2. Run `npm test` to check current test status
 3. Run `npm run typecheck` to verify type correctness
 4. Run `npm run build` to ensure the project builds successfully
 
 ### During Development
+
 1. Use `npm run dev` for live development with HMR
 2. Make minimal, focused changes
 3. Follow existing code patterns and style
@@ -16,6 +18,7 @@
 5. Add or update tests as needed
 
 ### Post-Change Checklist
+
 1. Run `npm test` to verify tests pass
 2. Run `npm run typecheck` to check types
 3. Run `npm run format` to format code
@@ -25,12 +28,14 @@
 ## TypeScript Development
 
 ### Type Safety
+
 - Always define proper types for function parameters and return values
 - Use the types defined in `src/types.ts` for consistency
 - Avoid using `any` - use `unknown` and type guards if needed
 - Leverage TypeScript's inference when appropriate
 
 ### Module Organization
+
 - Keep API calls in `api.ts`
 - Keep DOM manipulation in `ui.ts`
 - Keep caching logic in `cache.ts`
@@ -42,6 +47,7 @@
 - Keep rendering logic in `boardRenderer.ts`
 
 ### Imports
+
 - Use ES module syntax: `import { foo } from './bar'`
 - Import types with type-only imports when possible: `import type { Foo } from './types'`
 - Organize imports: external packages first, then local modules
@@ -49,6 +55,7 @@
 ## Testing Guidelines
 
 ### Writing Tests
+
 - Place tests in `src/__tests__/` directory
 - Name test files: `<module>.test.ts`
 - Use Vitest's `describe`, `test`/`it`, `expect` API
@@ -56,6 +63,7 @@
 - Mock external dependencies when appropriate
 
 ### Running Tests
+
 ```bash
 npm test              # Run all tests
 npm test -- --watch   # Watch mode
@@ -64,12 +72,14 @@ npm test -- --watch   # Watch mode
 ## Vite Development
 
 ### Dev Server
+
 - Default port: 5173
 - Supports HMR for instant updates
 - Serves `index.html` as entry point
 - TypeScript files are transpiled on-the-fly
 
 ### Build Configuration
+
 - Output: `dist/` directory
 - Base path: `'./'` (relative paths)
 - Minification: enabled in production
@@ -78,17 +88,20 @@ npm test -- --watch   # Watch mode
 ## Code Style
 
 ### Formatting
+
 - Run Prettier before committing: `npm run format`
 - Configuration: `.prettierrc`
 - Applies to TypeScript files in `src/`
 
 ### Naming Conventions
+
 - Variables/functions: camelCase
 - Types/interfaces: PascalCase
 - Constants: UPPER_SNAKE_CASE (for config values)
 - Files: lowercase with hyphens or single words
 
 ### Comments
+
 - Use JSDoc for public API functions
 - Add inline comments for complex logic
 - Avoid obvious comments
@@ -97,6 +110,7 @@ npm test -- --watch   # Watch mode
 ## Common Patterns
 
 ### API Calls
+
 ```typescript
 // Use the API client from api.ts
 import { fetchTrainData } from './api';
@@ -105,6 +119,7 @@ const data = await fetchTrainData(apiKey, station);
 ```
 
 ### Caching
+
 ```typescript
 // Use SimpleCache from cache.ts
 import { SimpleCache } from './cache';
@@ -115,6 +130,7 @@ const value = cache.get(key);
 ```
 
 ### UI Updates
+
 ```typescript
 // Use UI functions from ui.ts
 import { renderDepartures, showError } from './ui';
@@ -124,6 +140,7 @@ showError(message);
 ```
 
 ### URL Routing
+
 ```typescript
 // Use routing functions from routing.ts
 import { parseRouteFromUrl, updateUrl, findRailwayByName, findStationByName } from './routing';
@@ -138,6 +155,7 @@ updateUrl(railwayName, stationName);
 ```
 
 ### Geolocation
+
 ```typescript
 // Use location functions from location.ts
 import { getCurrentPosition, findNearbyStations, formatDistance } from './location';
@@ -150,12 +168,14 @@ const nearby = findNearbyStations(position.coords.latitude, position.coords.long
 ## Error Handling
 
 ### API Errors
+
 - Display user-friendly error messages
 - Log errors to console for debugging
 - Show settings modal on authentication errors
 - Handle network failures gracefully
 
 ### Type Errors
+
 - Validate API responses
 - Use type guards for runtime checks
 - Handle missing or malformed data
@@ -164,12 +184,14 @@ const nearby = findNearbyStations(position.coords.latitude, position.coords.long
 ## Performance
 
 ### Optimization
+
 - Use caching to reduce API calls
 - Batch station metadata lookups
 - Minimize DOM updates
 - Use Vite's code splitting when appropriate
 
 ### Build Size
+
 - Keep bundle size small
 - Avoid unnecessary dependencies
 - Use tree-shaking friendly imports
@@ -178,13 +200,15 @@ const nearby = findNearbyStations(position.coords.latitude, position.coords.long
 ## Debugging
 
 ### Browser DevTools
+
 - Check console for errors
 - Use Network tab for API debugging
 - Inspect localStorage for cached data
 - Use Source maps for debugging
 
 ### Common Issues
-- API key not set: Check config.json or localStorage
+
+- API key not set: Check `defaults.json` or localStorage
 - CORS errors: Use proper ODPT endpoint
 - Build failures: Check TypeScript errors
 - Test failures: Verify test data and mocks
@@ -192,15 +216,17 @@ const nearby = findNearbyStations(position.coords.latitude, position.coords.long
 ## Git Workflow
 
 ### Commits
+
 - Make small, focused commits
 - Write clear commit messages
 - Don't commit `dist/` (it's built by CI)
 - Don't commit `node_modules/`
-- Don't commit `config.json` (use config.example.json)
+- Defaults: `defaults.json` is committed and contains non-secret defaults. Do NOT commit private API keys there.
 
 ### Files to Ignore
+
 - `dist/` (generated by build)
 - `node_modules/` (installed by npm)
-- `config.json` (contains API keys)
+- `defaults.json` (contains non-secret defaults; do not store private API keys)
 - `.DS_Store` (macOS)
 - IDE-specific files (unless in .gitignore)

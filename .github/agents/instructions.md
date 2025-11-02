@@ -1,9 +1,11 @@
 # GitHub Agent Instructions for Trainboard
 
 ## Project Overview
+
 Trainboard is a compact static departure board for ODPT train lines. It's a TypeScript-powered static web application that queries ODPT endpoints and displays upcoming departures for any train line supported by the ODPT API.
 
 ## Tech Stack
+
 - **Language**: TypeScript
 - **Build Tool**: Vite 7.x
 - **Testing**: Vitest
@@ -12,6 +14,7 @@ Trainboard is a compact static departure board for ODPT train lines. It's a Type
 - **Package Manager**: npm
 
 ## Project Structure
+
 ```
 trainboard/
 ├── src/
@@ -49,59 +52,69 @@ trainboard/
 ## Development Workflow
 
 ### Setup
+
 ```bash
 npm install
 ```
 
 ### Development Server
+
 ```bash
 npm run dev
 # Opens Vite dev server at http://localhost:5173 with HMR
 ```
 
 ### Build
+
 ```bash
 npm run build
 # Outputs to dist/ directory with relative paths for GitHub Pages
 ```
 
 ### Testing
+
 ```bash
 npm test           # Run tests with Vitest
 npm run typecheck  # Run TypeScript type checking
 ```
 
 ### Formatting
+
 ```bash
 npm run format
 # Formats TypeScript files in src/ using Prettier
 ```
 
 ### Deployment
+
 - **Local**: `npm run deploy` (uses gh-pages package)
 - **CI**: Automatic deployment via `.github/workflows/deploy.yml` on push to `main`
 
 ## Code Guidelines
 
 ### TypeScript
+
 - Use strict type checking (enabled in tsconfig.json)
 - Define types in `types.ts` for shared interfaces
 - Use ES modules (`import`/`export`)
 - Avoid `any` types when possible
 
 ### Code Style
+
 - Use Prettier for formatting (configured in `.prettierrc`)
 - Follow existing code patterns in the repository
 - Use meaningful variable and function names
 - Add JSDoc comments for complex functions
 
 ### Testing
+
 - Write tests using Vitest
 - Place tests in `src/__tests__/` directory
 - Test file naming: `*.test.ts`
 - Focus on testing utility functions and parsing logic
 
 ### Modules
+
 - `api.ts`: Keep API-related functions isolated
 - `cache.ts`: Caching logic (SimpleCache)
 - `ui.ts`: DOM manipulation and rendering
@@ -117,11 +130,14 @@ npm run format
 ## Configuration
 
 ### API Key
+
 The app requires an ODPT API key:
-1. Static: Create `config.json` (see `config.example.json`)
+
+1. Static defaults: Edit `defaults.json` (see `scripts/cloudflare/config.example.json` for an example)
 2. Dynamic: Use the settings modal in the UI (stored in localStorage)
 
 ### Vite Configuration
+
 - Base path: `'./'` (relative paths for GitHub Pages)
 - Build output: `dist/`
 - Entry point: `index.html`
@@ -129,6 +145,7 @@ The app requires an ODPT API key:
 ## CI/CD
 
 ### GitHub Actions Workflow
+
 - Triggers: Push to `main` branch
 - Jobs: Install dependencies → Build → Deploy to GitHub Pages
 - Uses: Node.js 22, peaceiris/actions-gh-pages@v3
@@ -137,6 +154,7 @@ The app requires an ODPT API key:
 ## Common Tasks
 
 ### Adding New Features
+
 1. Create/modify TypeScript files in `src/`
 2. Update types in `types.ts` if needed
 3. Add tests in `src/__tests__/`
@@ -146,6 +164,7 @@ The app requires an ODPT API key:
 7. Build with `npm run build` before committing
 
 ### Fixing Bugs
+
 1. Identify the affected module
 2. Add a test case that reproduces the bug
 3. Fix the bug
@@ -153,12 +172,14 @@ The app requires an ODPT API key:
 5. Ensure types are correct with `npm run typecheck`
 
 ### Updating Dependencies
+
 1. Update `package.json`
 2. Run `npm install`
 3. Test thoroughly with `npm test` and `npm run build`
 4. Update documentation if the API changes
 
 ## Important Notes
+
 - The app is designed for GitHub Pages deployment
 - All paths in the build are relative (Vite `base: './'`)
 - API key is required for ODPT endpoints
@@ -167,11 +188,13 @@ The app requires an ODPT API key:
 - No backend required - fully static frontend
 
 ## External Dependencies
+
 - ODPT API: https://developer.odpt.org/
 - Requires developer account for API access
 - Challenge 2025 endpoint: https://api-challenge.odpt.org/api/v4/
 
 ## Making Changes
+
 - Always run tests before committing: `npm test`
 - Always run type checking: `npm run typecheck`
 - Format code before committing: `npm run format`

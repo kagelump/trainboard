@@ -263,7 +263,7 @@ async function getStationTodayTimetable(stationUri: string, consumerKey: string)
 ## Best practices
 
 - Cache static vocabularies (TrainType, Station metadata, Railway) locally and refresh infrequently.
-- Keep the API key off source control (use `config.json` ignored by git for dev; use server-side proxy in production).
+- Keep the API key off source control (use the settings modal or a server-side proxy for production; `defaults.json` is for non-secret defaults only).
 - Use server-side proxies when your API key must remain secret: the browser should not hold a production key.
 - Normalize time handling: convert HH:MM to minutes since midnight for comparisons; be explicit about JST.
 - Provide fallbacks in the UI for missing fields and avoid hard crashes when parsing JSON-LD.

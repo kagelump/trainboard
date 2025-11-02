@@ -65,6 +65,7 @@ cd scripts/cloudflare
 ```
 
 This will:
+
 1. Check for Node.js and install Wrangler CLI if needed
 2. Authenticate with Cloudflare
 3. Create `wrangler.toml` from template
@@ -100,6 +101,7 @@ cp wrangler.toml.example wrangler.toml
 4. **Edit `wrangler.toml`**
 
 Update the following fields:
+
 - `account_id` - Your Cloudflare Account ID (find at https://dash.cloudflare.com/)
 - `name` - Worker name (optional, defaults to "odpt-api-proxy")
 
@@ -174,6 +176,7 @@ curl https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/health
 ```
 
 Response:
+
 ```json
 {
   "status": "healthy",
@@ -204,9 +207,9 @@ curl "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/odpt:StationTimetable?od
 curl "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/odpt:Train?odpt:railway=odpt.Railway:Tokyu.Toyoko"
 ```
 
-### Integrating with Trainboard
+Integrating with Trainboard
 
-Update your `config.json` to use the proxy:
+Edit your project's `defaults.json` (compile-time defaults) to use the proxy:
 
 ```json
 {
@@ -216,7 +219,7 @@ Update your `config.json` to use the proxy:
 }
 ```
 
-**Important**: Remove `ODPT_API_KEY` from `config.json` - the proxy handles authentication now!
+**Important**: Remove `ODPT_API_KEY` from `defaults.json` (do NOT commit private keys) — the proxy handles authentication now!
 
 ## Local Development
 
@@ -246,6 +249,7 @@ After deploying, use the test script to verify the worker is functioning correct
 ```
 
 This will:
+
 - Test the health endpoint
 - Verify error handling
 - Make a real ODPT API request through the proxy
@@ -328,6 +332,7 @@ wrangler deployments list
 ### Analytics
 
 View analytics in the Cloudflare dashboard:
+
 1. Go to https://dash.cloudflare.com/
 2. Navigate to Workers & Pages
 3. Click on your worker
@@ -338,11 +343,13 @@ View analytics in the Cloudflare dashboard:
 ### Secrets Management
 
 ✅ **DO:**
+
 - Store API keys using `wrangler secret put`
 - Keep `wrangler.toml` in version control
 - Use different API keys for different environments
 
 ❌ **DON'T:**
+
 - Put API keys directly in `wrangler.toml`
 - Commit `wrangler.toml` with actual account IDs to public repos
 - Share secrets in plain text
@@ -414,6 +421,7 @@ ALLOWED_ORIGINS = "*"
 #### "Rate limit exceeded"
 
 Cloudflare free tier limits:
+
 - 100,000 requests per day
 - 1,000 requests per minute
 
@@ -448,6 +456,7 @@ This is more than sufficient for personal trainboard deployments.
 ### Paid Plans
 
 If you need more:
+
 - **$5/month**: 10 million requests
 - Additional requests: $0.50 per million
 
@@ -502,9 +511,9 @@ Customize cache behavior in `worker.js`:
 ```javascript
 // Cache for different durations based on endpoint
 const CACHE_TTL_MAP = {
-  'odpt:Station': 3600,        // 1 hour (rarely changes)
+  'odpt:Station': 3600, // 1 hour (rarely changes)
   'odpt:StationTimetable': 3600, // 1 hour
-  'odpt:Train': 30,            // 30 seconds (real-time)
+  'odpt:Train': 30, // 30 seconds (real-time)
   'odpt:TrainInformation': 60, // 1 minute
 };
 ```
@@ -533,12 +542,12 @@ id = "your_kv_namespace_id"
 async function checkRateLimit(request) {
   const ip = request.headers.get('CF-Connecting-IP');
   const key = `ratelimit:${ip}`;
-  const count = await RATE_LIMIT.get(key) || 0;
-  
+  const count = (await RATE_LIMIT.get(key)) || 0;
+
   if (count > MAX_REQUESTS_PER_MINUTE) {
     return new Response('Rate limit exceeded', { status: 429 });
   }
-  
+
   await RATE_LIMIT.put(key, count + 1, { expirationTtl: 60 });
   return null;
 }
@@ -572,6 +581,7 @@ wrangler delete
 ```
 
 Or from the dashboard:
+
 1. Go to Workers & Pages
 2. Click on the worker
 3. Settings → Delete

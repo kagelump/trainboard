@@ -108,7 +108,7 @@ cd scripts/cloudflare
 ./deploy.sh   # Deploy to Cloudflare
 ```
 
-Then update your `config.json` to use the proxy:
+Then edit `defaults.json` (compile-time defaults) to use the proxy:
 
 ```json
 {
@@ -124,7 +124,7 @@ When `API_BASE_URL` contains the word `proxy` the application treats this as a p
 
 ### Option 2: Direct API Access (For Development)
 
-The app reads a `config.json` at runtime if present (useful for local testing or static hosting). Example `config.example.json` is provided. Additionally, the settings modal (⚙️ button) lets you paste a custom ODPT API key which will be persisted to `localStorage` and used in preference to `config.json`.
+The app loads compile-time defaults from `defaults.json` (committed). This replaces the previous runtime `config.json` behavior — defaults are now embedded at build time. Additionally, the settings modal (⚙️ button) lets you paste a custom ODPT API key which will be persisted to `localStorage` and used in preference to any compiled defaults.
 
 How to supply an API key:
 
@@ -134,7 +134,7 @@ For development or one-off testing you can supply an API key in the browser usin
 
 Notes:
 
-- Do NOT store secret API keys in `config.json` — `config.json` is read at runtime only for non-secret values like `API_BASE_URL` and default selections.
+- Do NOT store secret API keys in `defaults.json` in your public repository if you want them to remain secret — defaults are compiled into the app. For runtime overrides, use the settings modal which stores keys in `localStorage` instead.
 - If the app encounters an API error (for example an authentication error), it will display a banner and automatically open the settings modal so you can paste a new API key immediately.
 
 ## Selecting Railway Lines and Stations
@@ -219,6 +219,6 @@ chmod +x install.sh
 
 Notes & next steps
 
-- Consider moving more settings (like API base URL) to `config.json` and adding validation.
+- Consider moving more settings (like API base URL) to `defaults.json` and adding validation.
 - Add more unit tests for UI and caching behavior.
 - Add ESLint and a GitHub Actions linting step if desired.

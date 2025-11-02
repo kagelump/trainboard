@@ -8,7 +8,7 @@ and finally all stations for each railway.
 Usage:
     python fetch_stations.py [API_KEY]
 
-If API_KEY is not provided, the script will try to read it from config.json
+If API_KEY is not provided, the script will try to read it from defaults.json
 in the repository root.
 """
 
@@ -23,7 +23,7 @@ from urllib.error import HTTPError, URLError
 
 
 # Constants
-MAX_PARENT_DIRS = 5  # Maximum number of parent directories to search for config.json
+MAX_PARENT_DIRS = 5  # Maximum number of parent directories to search for defaults.json
 REQUEST_TIMEOUT = 30  # Timeout in seconds for API requests
 
 
@@ -130,17 +130,17 @@ class OdptClient:
 
 def find_config_file() -> Optional[Path]:
     """
-    Find config.json in repository root.
+    Find defaults.json in repository root.
 
     Returns:
-        Path to config.json if found, None otherwise
+        Path to defaults.json if found, None otherwise
     """
-    # Start from script directory and go up to find config.json
+    # Start from script directory and go up to find defaults.json
     current_dir = Path(__file__).resolve().parent
 
-    # Go up directories to find config.json
+    # Go up directories to find defaults.json
     for _ in range(MAX_PARENT_DIRS):
-        config_path = current_dir / 'config.json'
+        config_path = current_dir / 'defaults.json'
         if config_path.exists():
             return config_path
         current_dir = current_dir.parent
@@ -150,7 +150,7 @@ def find_config_file() -> Optional[Path]:
 
 def read_api_key_from_config() -> Optional[str]:
     """
-    Read API key from config.json.
+    Read API key from defaults.json.
 
     Returns:
         API key if found, None otherwise
@@ -205,7 +205,7 @@ def main():
     parser.add_argument(
         'api_key',
         nargs='?',
-        help='ODPT API key (optional if config.json exists)'
+        help='ODPT API key (optional if defaults.json exists)'
     )
     parser.add_argument(
         '--base-url',
@@ -236,7 +236,7 @@ def main():
         api_key = read_api_key_from_config()
 
     if not api_key:
-        print("Error: No API key provided and config.json not found", file=sys.stderr)
+        print("Error: No API key provided and defaults.json not found", file=sys.stderr)
         print("Usage: python fetch_stations.py [API_KEY]", file=sys.stderr)
         sys.exit(1)
 

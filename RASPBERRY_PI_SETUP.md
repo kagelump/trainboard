@@ -13,6 +13,7 @@ This guide provides instructions for setting up the Trainboard application on a 
 ## Overview
 
 The setup consists of:
+
 1. Installing and configuring Raspberry Pi OS
 2. Installing required software (Chromium, Xvfb, Python libraries)
 3. Configuring the trainboard application
@@ -28,7 +29,9 @@ The setup consists of:
 3. **Before ejecting the SD card**, enable SSH and configure WiFi:
 
 #### Enable SSH
+
 Create an empty file named `ssh` in the boot partition:
+
 ```bash
 # On Linux/Mac:
 touch /Volumes/bootfs/ssh
@@ -36,7 +39,9 @@ touch /Volumes/bootfs/ssh
 ```
 
 #### Configure WiFi
+
 Create a file named `wpa_supplicant.conf` in the boot partition:
+
 ```
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
@@ -144,23 +149,22 @@ git clone https://github.com/kagelump/trainboard.git .
 npm install
 npm run build
 
-# Create configuration file
-cp config.example.json config.json
+# Create compile-time defaults file
+cp config.example.json defaults.json
 ```
 
 ### 3.2 Configure the Application
 
-Edit `config.json` with your settings:
+Edit `defaults.json` with your settings (do NOT commit private API keys):
 
 ```bash
-nano config.json
+nano defaults.json
 ```
 
-Update the file with your ODPT API key and preferred station:
+Update the file with preferred defaults:
 
 ```json
 {
-  "ODPT_API_KEY": "YOUR_ODPT_API_KEY_HERE",
   "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
   "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)",
   "API_BASE_URL": "https://api-challenge.odpt.org/api/v4/"
@@ -168,6 +172,7 @@ Update the file with your ODPT API key and preferred station:
 ```
 
 **Getting an ODPT API Key:**
+
 1. Visit [ODPT Developer Portal](https://developer.odpt.org/)
 2. Sign up for a developer account
 3. For Tokyu lines, register for the [Challenge 2025](https://developer.odpt.org/challengeinfo) to get access
@@ -194,6 +199,7 @@ python3 epd_10in2_G_test.py
 ```
 
 You should see test patterns on the display. If not, check:
+
 - SPI is enabled (`sudo raspi-config`)
 - Display is properly connected to GPIO pins
 - Display power is on
@@ -201,6 +207,7 @@ You should see test patterns on the display. If not, check:
 ### 4.2 Configure Display Refresh
 
 The trainboard uses a two-step process:
+
 1. Capture a screenshot of the web app using Chromium in headless mode
 2. Convert and display the image on the e-ink screen
 
@@ -264,6 +271,7 @@ Or run the script directly:
 ### 6.1 E-Ink Display Characteristics
 
 E-ink displays have unique characteristics:
+
 - **Slow refresh**: Full refresh takes ~20 seconds
 - **Limited lifespan**: Each pixel has a finite number of refresh cycles
 - **Ghosting**: Previous images may leave traces without full refresh
@@ -273,6 +281,7 @@ E-ink displays have unique characteristics:
 ### 6.2 Recommended Refresh Schedule
 
 The default configuration refreshes every 2 minutes with:
+
 - Partial refresh for most updates (faster, less wear)
 - Full refresh every 10th update (clears ghosting)
 
@@ -283,6 +292,7 @@ sudo systemctl edit trainboard-display.timer
 ```
 
 Add:
+
 ```ini
 [Timer]
 OnBootSec=1min
@@ -296,6 +306,7 @@ This changes the refresh to every 5 minutes.
 To save power and extend display life, you can disable updates during certain hours:
 
 Edit the timer to add time conditions:
+
 ```bash
 sudo systemctl edit trainboard-display.timer
 ```
@@ -305,12 +316,14 @@ sudo systemctl edit trainboard-display.timer
 ### Display Not Updating
 
 1. Check if the service is running:
+
    ```bash
    sudo systemctl status trainboard-display.service
    sudo journalctl -u trainboard-display.service -f
    ```
 
 2. Check if Chromium can access the site:
+
    ```bash
    chromium-browser --headless --disable-gpu --screenshot=/tmp/test.png http://localhost:8080
    ls -lh /tmp/test.png
@@ -337,6 +350,7 @@ sudo usermod -a -G spi,gpio pi
 ### API/Network Issues
 
 1. Check internet connectivity:
+
    ```bash
    ping -c 3 google.com
    ```
@@ -349,6 +363,7 @@ sudo usermod -a -G spi,gpio pi
 ### Display Shows Garbled/Wrong Content
 
 1. Clear the display completely:
+
    ```bash
    cd ~/e-Paper/RaspberryPi_JetsonNano/python/examples
    python3 epd_10in2_G_clear.py
@@ -367,6 +382,7 @@ sudo usermod -a -G spi,gpio pi
 The Pi Zero 2 W has limited RAM. To optimize:
 
 1. Disable swap if not needed:
+
    ```bash
    sudo dphys-swapfile swapoff
    sudo dphys-swapfile uninstall
@@ -380,6 +396,7 @@ The Pi Zero 2 W has limited RAM. To optimize:
 ### Faster Boot Time
 
 Edit `/boot/cmdline.txt` and add `quiet` to reduce boot messages:
+
 ```bash
 sudo nano /boot/cmdline.txt
 ```
@@ -425,6 +442,6 @@ Set up a web interface or SSH access to change station settings without physical
 
 ## References
 
-- [Waveshare 10.2inch e-Paper HAT (G) Wiki](https://www.waveshare.com/wiki/10.2inch_e-Paper_HAT_(G))
+- [Waveshare 10.2inch e-Paper HAT (G) Wiki](<https://www.waveshare.com/wiki/10.2inch_e-Paper_HAT_(G)>)
 - [ODPT Developer Documentation](https://developer.odpt.org/)
 - [Raspberry Pi Documentation](https://www.raspberrypi.com/documentation/)

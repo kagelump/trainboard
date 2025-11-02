@@ -133,10 +133,10 @@ if [ $DEPLOY_EXIT_CODE -eq 0 ]; then
     echo -e "1. Test the health endpoint:"
     echo -e "   ${BLUE}curl https://odpt-api-proxy.<your-subdomain>.workers.dev/health${NC}"
     echo ""
-    echo -e "2. Update your trainboard config.json to use the proxy:"
+    echo -e "2. Update your trainboard defaults.json to use the proxy (compile-time defaults):"
     echo -e "   ${BLUE}API_BASE_URL: https://odpt-api-proxy.<your-subdomain>.workers.dev/${NC}"
     echo ""
-    echo -e "3. Remove the ODPT_API_KEY from config.json (proxy handles it now)"
+    echo -e "3. Remove the ODPT_API_KEY from defaults.json (proxy handles it now); do NOT commit private keys"
     echo ""
 else
     echo ""

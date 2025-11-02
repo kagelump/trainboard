@@ -1,5 +1,5 @@
 # Local config containing secrets
-config.json
+# (defaults.json is intentionally committed as compile-time defaults; do not add private keys here)
 
 # Node modules (if using npm)
 node_modules/

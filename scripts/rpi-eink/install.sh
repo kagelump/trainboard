@@ -190,16 +190,16 @@ setup_trainboard() {
 
 # Configure trainboard
 configure_trainboard() {
-    if [ -f "$APP_DIR/config.json" ]; then
-        log_info "config.json already exists"
+    if [ -f "$APP_DIR/defaults.json" ]; then
+        log_info "defaults.json already exists"
         return 0
     fi
 
-    log_info "Creating config.json from example..."
-    cp "$APP_DIR/config.example.json" "$APP_DIR/config.json"
+    log_info "Creating defaults.json from example..."
+    cp "$APP_DIR/config.example.json" "$APP_DIR/defaults.json"
 
-    log_warn "Please edit $APP_DIR/config.json to adjust API_BASE_URL or defaults as needed"
-    log_warn "Do NOT add secret API keys to config.json; use the settings modal in the browser or deploy the Cloudflare proxy instead"
+    log_warn "Please edit $APP_DIR/defaults.json to adjust API_BASE_URL or defaults as needed"
+    log_warn "Do NOT add secret API keys to defaults.json if you want them private; use the settings modal in the browser or deploy the Cloudflare proxy instead"
 }
 
 # Setup systemd services
@@ -294,7 +294,7 @@ main() {
     echo "======================================"
     echo
     log_info "Next steps:"
-    echo "  1. Edit $APP_DIR/config.json with your ODPT API key"
+    echo "  1. Edit $APP_DIR/defaults.json to change defaults (do NOT add private API keys)"
     echo "  2. Test the display: $APP_DIR/scripts/rpi-eink/update-display.sh"
     echo "  3. Enable auto-start: sudo systemctl enable trainboard-display.timer"
     echo "  4. Start the timer: sudo systemctl start trainboard-display.timer"

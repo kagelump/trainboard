@@ -96,7 +96,7 @@ if [ "$HTTP_CODE" = "200" ]; then
         STATION_COUNT=$(echo "$RESPONSE_BODY" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
         echo -e "${GREEN}✓ Station request successful${NC}"
         echo -e "${BLUE}  Found $STATION_COUNT stations${NC}"
-        
+
         # Show first station as example
         if [ "$STATION_COUNT" -gt "0" ]; then
             echo ""
@@ -136,10 +136,10 @@ echo ""
 echo -e "${GREEN}Worker is operational!${NC}"
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
-echo -e "1. Update your trainboard config.json:"
+echo -e "1. Update your trainboard defaults.json (compile-time defaults):"
 echo -e "   ${BLUE}API_BASE_URL: ${WORKER_URL}/${NC}"
 echo ""
-echo -e "2. Remove ODPT_API_KEY from config.json"
+echo -e "2. Remove ODPT_API_KEY from defaults.json (do NOT commit private keys)"
 echo ""
 echo -e "3. Test the trainboard app in your browser"
 echo ""

@@ -5,9 +5,18 @@ import { STORAGE_KEY_API_KEY } from './ui';
 
 // --- Configuration State ---
 export let ODPT_API_KEY: string | null = null;
-export let API_BASE_URL = 'https://odpt-api-proxy.trainboard-odpt-proxy.workers.dev/';
-export let DEFAULT_RAILWAY = 'odpt.Railway:Tokyu.Toyoko';
-export let DEFAULT_STATION_NAME = '武蔵小杉 (TY11)';
+// Load compile-time defaults from defaults.json (committed). This file contains
+// non-secret defaults such as API_BASE_URL and default selections. Secrets
+// (API keys) should not be committed and are handled via the settings modal.
+import defaults from '../defaults.json';
+
+export let API_BASE_URL: string =
+  (defaults && defaults.API_BASE_URL) ||
+  'https://odpt-api-proxy.trainboard-odpt-proxy.workers.dev/';
+export let DEFAULT_RAILWAY: string =
+  (defaults && defaults.DEFAULT_RAILWAY) || 'odpt.Railway:Tokyu.Toyoko';
+export let DEFAULT_STATION_NAME: string =
+  (defaults && defaults.DEFAULT_STATION_NAME) || '武蔵小杉 (TY11)';
 
 // Polling intervals (milliseconds)
 export const TIMETABLE_REFRESH_INTERVAL_MS = 300_000; // 5 minutes
@@ -37,34 +46,29 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Loads configuration from the optional ./config.json file.
- * NOTE: config.json is used only for non-secret configuration values
- * such as API_BASE_URL, DEFAULT_RAILWAY, and DEFAULT_STATION_NAME.
- * Do NOT store secret API keys in config.json; use the Cloudflare proxy
- * or the in-browser settings modal which persists keys to localStorage.
+ * Compile-time defaults are loaded from `defaults.json` (imported at build
+ * time). This file is intended to contain non-secret defaults such as
+ * `API_BASE_URL`, `DEFAULT_RAILWAY`, and `DEFAULT_STATION_NAME`.
+ *
+ * Do NOT store secret API keys in `defaults.json` if you want them to remain
+ * private; use the Cloudflare proxy or the in-browser settings modal which
+ * persists keys to `localStorage` instead.
  */
-async function loadFromLocalConfig(): Promise<void> {
-  try {
-    const resp = await fetch('./config.json', { cache: 'no-store' });
-    if (!resp.ok) return;
-    const cfg = (await resp.json()) as {
-      DEFAULT_RAILWAY?: string;
-      DEFAULT_STATION_NAME?: string;
-      API_BASE_URL?: string;
-    };
-    if (cfg?.DEFAULT_RAILWAY) DEFAULT_RAILWAY = cfg.DEFAULT_RAILWAY;
-    if (cfg?.DEFAULT_STATION_NAME) DEFAULT_STATION_NAME = cfg.DEFAULT_STATION_NAME;
-    if (cfg?.API_BASE_URL) API_BASE_URL = cfg.API_BASE_URL;
-  } catch (error) {
-    const e = error instanceof Error ? error : new Error(String(error));
-    console.warn('Failed to load ./config.json:', e.message);
-  }
+// Runtime fetching of config.json is removed. Defaults are compiled in via
+// `defaults.json` (imported above). This keeps runtime logic deterministic and
+// avoids needing a separate file to be served at the app root. Any user
+// overrides should be made via the settings modal (localStorage) or via build
+// time changes to `defaults.json`.
+function loadFromLocalConfig(): Promise<void> {
+  // No-op: defaults are provided at compile time.
+  return Promise.resolve();
 }
 
 /**
  * Loads configuration from file and localStorage.
- * Note: API keys are NOT read from config.json. If present, localStorage
- * will supply an API key via the settings modal (preferred for development).
+ * Note: API keys are NOT read from `defaults.json` (defaults are compile-time).
+ * If present, localStorage will supply an API key via the settings modal
+ * (preferred for development).
  */
 export async function loadLocalConfig(): Promise<void> {
   await loadFromLocalConfig();
