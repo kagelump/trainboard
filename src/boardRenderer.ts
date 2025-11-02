@@ -35,6 +35,7 @@ import {
   STATUS_REFRESH_INTERVAL_MS,
   CLOCK_UPDATE_INTERVAL_MS,
 } from './config';
+import { visibilityManager } from './visibilityManager';
 
 // --- State ---
 export let currentConfig: {
@@ -49,6 +50,8 @@ export let currentConfig: {
 
 let timetableIntervalId: number | undefined;
 let statusIntervalId: number | undefined;
+let clockIntervalId: number | undefined;
+let isPaused = false;
 
 // --- Getters/Setters ---
 export function getCurrentConfig() {
@@ -208,8 +211,50 @@ function setupPeriodicRefreshIntervals(stationUri: string): void {
   }, STATUS_REFRESH_INTERVAL_MS);
 
   // Clock update interval
-  window.setInterval(uiUpdateClock, CLOCK_UPDATE_INTERVAL_MS);
+  clockIntervalId = window.setInterval(uiUpdateClock, CLOCK_UPDATE_INTERVAL_MS);
   uiUpdateClock();
+}
+
+/**
+ * Pauses all periodic refresh intervals to save CPU when page is hidden.
+ */
+function pausePeriodicRefreshIntervals(): void {
+  if (isPaused) return;
+  
+  console.info('Pausing periodic refresh intervals (page hidden)');
+  
+  if (typeof timetableIntervalId !== 'undefined') {
+    clearInterval(timetableIntervalId);
+    timetableIntervalId = undefined;
+  }
+  if (typeof statusIntervalId !== 'undefined') {
+    clearInterval(statusIntervalId);
+    statusIntervalId = undefined;
+  }
+  if (typeof clockIntervalId !== 'undefined') {
+    clearInterval(clockIntervalId);
+    clockIntervalId = undefined;
+  }
+  
+  isPaused = true;
+}
+
+/**
+ * Resumes all periodic refresh intervals when page becomes visible.
+ * @param stationUri The station URI to refresh timetable for
+ */
+function resumePeriodicRefreshIntervals(stationUri: string): void {
+  if (!isPaused) return;
+  
+  console.info('Resuming periodic refresh intervals (page visible)');
+  isPaused = false;
+  
+  // Re-establish the intervals by calling the setup function
+  setupPeriodicRefreshIntervals(stationUri);
+  
+  // Immediately fetch fresh data when resuming
+  fetchAndRenderTimetableData(stationUri).catch(console.error);
+  updateRailwayStatus().catch(console.error);
 }
 
 /**
@@ -256,4 +301,14 @@ export async function renderBoard(): Promise<void> {
 
   // Step 5: Set up periodic refresh intervals
   setupPeriodicRefreshIntervals(stationConfig.uri);
+  
+  // Step 6: Initialize visibility manager to pause/resume when tab is hidden/visible
+  visibilityManager.initialize();
+  visibilityManager.onVisibilityChange((isVisible) => {
+    if (isVisible) {
+      resumePeriodicRefreshIntervals(stationConfig.uri);
+    } else {
+      pausePeriodicRefreshIntervals();
+    }
+  });
 }

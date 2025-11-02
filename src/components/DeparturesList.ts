@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import './TrainRow.js';
 import type { StationTimetableEntry } from '../types';
 import type { SimpleCache } from '../cache';
+import { visibilityManager } from '../visibilityManager';
 
 import { DISPLAYED_TRAINS_LIMIT } from '../constants';
 
@@ -121,6 +122,8 @@ export class DeparturesList extends LitElement {
 
   private startMinutesUpdater() {
     if (this.minutesUpdaterId) return;
+    // Only start if page is visible
+    if (!visibilityManager.getIsVisible()) return;
     this.minutesUpdaterId = window.setInterval(this.updateMinutesOnce, 15_000) as unknown as number;
   }
 
@@ -130,10 +133,35 @@ export class DeparturesList extends LitElement {
     this.minutesUpdaterId = undefined;
   }
 
+  private onVisibilityChange = (isVisible: boolean) => {
+    if (isVisible && this.autoUpdateMinutes) {
+      // Resume the updater when page becomes visible
+      this.startMinutesUpdater();
+      // Update immediately when resuming
+      this.updateMinutesOnce();
+    } else {
+      // Pause the updater when page is hidden
+      this.stopMinutesUpdater();
+    }
+  };
+
   // Mark when the component has completed its first render. Tests and
   // the minutes-updater can listen for the 'departures-list-rendered'
   // event to know it's safe to query the element's shadow DOM.
   private __rendered = false;
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Register visibility change handler
+    visibilityManager.onVisibilityChange(this.onVisibilityChange);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    // Clean up
+    this.stopMinutesUpdater();
+    visibilityManager.offVisibilityChange(this.onVisibilityChange);
+  }
 
   firstUpdated() {
     this.__rendered = true;
