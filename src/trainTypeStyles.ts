@@ -3,6 +3,9 @@
 
 import trainColorData from './train_colors.json';
 
+// Store the dynamically created stylesheet so it can be adopted by shadow roots
+let trainTypeStyleSheet: CSSStyleSheet | null = null;
+
 /**
  * Generates and injects CSS styles for train types based on the color data.
  * This creates a unique CSS class for each train type URI.
@@ -35,6 +38,24 @@ export function injectTrainTypeStyles(): void {
 
   styleElement.textContent = cssRules;
   document.head.appendChild(styleElement);
+
+  // Also create a constructable stylesheet for use in shadow roots
+  if ('CSSStyleSheet' in window && typeof CSSStyleSheet.prototype.replaceSync === 'function') {
+    try {
+      trainTypeStyleSheet = new CSSStyleSheet();
+      trainTypeStyleSheet.replaceSync(cssRules);
+    } catch (e) {
+      console.warn('Failed to create constructable stylesheet:', e);
+    }
+  }
+}
+
+/**
+ * Gets the train type stylesheet for adoption into shadow roots.
+ * Returns null if constructable stylesheets are not supported.
+ */
+export function getTrainTypeStyleSheet(): CSSStyleSheet | null {
+  return trainTypeStyleSheet;
 }
 
 /**
