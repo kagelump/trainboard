@@ -6,15 +6,22 @@
     <title>発車案内板</title>
     <!-- Load Tailwind CSS via CDN for utility classes -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" crossorigin src="./assets/index-CLm1tHsr.js"></script>
+    <script type="module" crossorigin src="./assets/index-DszEQBpd.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-Ckluc6kt.css">
   </head>
   <body class="p-4">
     <!-- Main Header -->
     <header class="flex justify-between items-center mb-4 border-b-4 border-white pb-2">
       <h1 id="station-header" class="text-3xl sm:text-5xl tracking-tight">読込中...</h1>
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2 sm:space-x-4">
         <span id="time-header" class="text-2xl sm:text-4xl font-mono">--:--</span>
+        <button
+          id="location-button"
+          class="rounded-md sm:rounded-lg shadow-xl hover:bg-white hover:text-black transition duration-150"
+          title="現在地から最寄り駅を探す"
+        >
+          📍
+        </button>
         <button
           id="settings-button"
           class="rounded-md sm:rounded-lg shadow-xl hover:bg-white hover:text-black transition duration-150"
@@ -93,6 +100,28 @@
         <button
           id="close-modal"
           class="w-full mt-3 bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
+
+    <!-- Location Selection Modal -->
+    <div
+      id="location-modal"
+      class="fixed inset-0 hidden items-center justify-center z-50 transition-opacity duration-300"
+    >
+      <div class="bg-black border-4 border-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
+        <h2 class="text-4xl font-extrabold mb-6 text-center">最寄り駅を選択</h2>
+        <div id="location-status" class="mb-4 text-center text-lg">
+          現在地を取得中...
+        </div>
+        <div id="nearby-stations-list" class="mb-6 max-h-96 overflow-y-auto">
+          <!-- Nearby stations will be populated here -->
+        </div>
+        <button
+          id="close-location-modal"
+          class="w-full bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition"
         >
           閉じる
         </button>
