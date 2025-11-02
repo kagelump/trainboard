@@ -33,6 +33,7 @@ chmod +x install.sh
 ```
 
 This will:
+
 - Install all required system packages
 - Install Node.js and npm
 - Set up the e-Paper display library
@@ -114,11 +115,13 @@ The update script performs these steps:
 ### clear-display.sh
 
 Clears the e-ink display completely. Useful when:
+
 - Troubleshooting display issues
 - Display shows corrupted/garbled content
 - You want to blank the screen
 
 Usage:
+
 ```bash
 ~/trainboard/scripts/rpi-eink/clear-display.sh
 ```
@@ -276,6 +279,7 @@ Environment="HOME=/home/youruser"
 ### Reduce Memory Usage
 
 The update script uses these Chromium flags to minimize memory:
+
 - `--single-process` - Run in a single process
 - `--disable-dev-shm-usage` - Don't use /dev/shm
 - `--disable-gpu` - Disable GPU acceleration

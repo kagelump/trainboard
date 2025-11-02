@@ -40,7 +40,7 @@ check_platform() {
         log_warn "Cannot detect Raspberry Pi model. Proceeding anyway..."
         return
     fi
-    
+
     model=$(cat /proc/device-tree/model)
     log_info "Detected: $model"
 }
@@ -62,7 +62,7 @@ check_spi() {
 install_system_deps() {
     log_info "Updating system packages..."
     sudo apt update
-    
+
     log_info "Installing system dependencies..."
     sudo apt install -y \
         chromium-browser \
@@ -76,7 +76,7 @@ install_system_deps() {
             log_error "Failed to install system dependencies"
             exit 1
         }
-    
+
     log_info "System dependencies installed successfully"
 }
 
@@ -86,14 +86,14 @@ install_nodejs() {
         log_info "Node.js is already installed: $(node --version)"
         return 0
     fi
-    
+
     log_info "Installing Node.js 20.x..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
     sudo apt install -y nodejs || {
         log_error "Failed to install Node.js"
         exit 1
     }
-    
+
     log_info "Node.js installed: $(node --version)"
     log_info "npm installed: $(npm --version)"
 }
@@ -104,7 +104,7 @@ install_bcm2835() {
         log_info "BCM2835 library is already installed"
         return 0
     fi
-    
+
     log_info "Installing BCM2835 library..."
     cd /tmp
     # Note: The BCM2835 library website only offers HTTP, not HTTPS
@@ -118,7 +118,7 @@ install_bcm2835() {
     }
     cd ~
     rm -rf /tmp/bcm2835-1.71*
-    
+
     log_info "BCM2835 library installed successfully"
 }
 
@@ -129,13 +129,13 @@ setup_epaper_library() {
         log_warn "Skipping clone. To reinstall, remove the directory first."
         return 0
     fi
-    
+
     log_info "Cloning Waveshare e-Paper library..."
     git clone https://github.com/waveshare/e-Paper.git "$EPAPER_DIR" || {
         log_error "Failed to clone e-Paper library"
         exit 1
     }
-    
+
     log_info "Installing Python dependencies for e-Paper..."
     cd "$EPAPER_DIR/RaspberryPi_JetsonNano/python"
     # Note: --break-system-packages is needed for Raspberry Pi OS bookworm and later
@@ -145,7 +145,7 @@ setup_epaper_library() {
         log_error "Failed to install Python dependencies"
         exit 1
     }
-    
+
     log_info "E-Paper library setup complete"
 }
 
@@ -153,7 +153,7 @@ setup_epaper_library() {
 setup_trainboard() {
     # Allow customization of repository URL for forks
     REPO_URL="${TRAINBOARD_REPO:-https://github.com/kagelump/trainboard.git}"
-    
+
     if [ -d "$APP_DIR" ]; then
         log_warn "Trainboard directory already exists: $APP_DIR"
         read -p "Remove and reinstall? (y/N): " -n 1 -r
@@ -165,26 +165,26 @@ setup_trainboard() {
             return 0
         fi
     fi
-    
+
     log_info "Cloning trainboard repository from $REPO_URL..."
     git clone "$REPO_URL" "$APP_DIR" || {
         log_error "Failed to clone trainboard repository"
         exit 1
     }
-    
+
     log_info "Installing trainboard dependencies..."
     cd "$APP_DIR"
     npm install || {
         log_error "Failed to install npm dependencies"
         exit 1
     }
-    
+
     log_info "Building trainboard..."
     npm run build || {
         log_error "Failed to build trainboard"
         exit 1
     }
-    
+
     log_info "Trainboard setup complete"
 }
 
@@ -194,10 +194,10 @@ configure_trainboard() {
         log_info "config.json already exists"
         return 0
     fi
-    
+
     log_info "Creating config.json from example..."
     cp "$APP_DIR/config.example.json" "$APP_DIR/config.json"
-    
+
     log_warn "Please edit $APP_DIR/config.json to adjust API_BASE_URL or defaults as needed"
     log_warn "Do NOT add secret API keys to config.json; use the settings modal in the browser or deploy the Cloudflare proxy instead"
 }
@@ -205,17 +205,17 @@ configure_trainboard() {
 # Setup systemd services
 setup_services() {
     log_info "Installing systemd service and timer..."
-    
+
     # Make scripts executable
     chmod +x "$APP_DIR/scripts/rpi-eink/"*.sh
-    
+
     # Copy service files
     sudo cp "$APP_DIR/scripts/rpi-eink/trainboard-display.service" /etc/systemd/system/
     sudo cp "$APP_DIR/scripts/rpi-eink/trainboard-display.timer" /etc/systemd/system/
-    
+
     # Reload systemd
     sudo systemctl daemon-reload
-    
+
     log_info "Systemd services installed"
     log_info "To enable auto-start: sudo systemctl enable trainboard-display.timer"
     log_info "To start now: sudo systemctl start trainboard-display.timer"
@@ -232,22 +232,22 @@ setup_logging() {
 # Test the installation
 test_installation() {
     log_info "Testing installation..."
-    
+
     # Test web server
     log_info "Testing web server..."
     cd "$APP_DIR/dist"
     npx http-server -p 8080 > /tmp/test-server.log 2>&1 &
     SERVER_PID=$!
     sleep 3
-    
+
     if curl -s -f http://localhost:8080 > /dev/null; then
         log_info "✓ Web server test passed"
     else
         log_error "✗ Web server test failed"
     fi
-    
+
     kill $SERVER_PID 2>/dev/null || true
-    
+
     # Test e-Paper library
     log_info "Testing e-Paper library..."
     if python3 -c "import sys; sys.path.append('$EPAPER_DIR/RaspberryPi_JetsonNano/python/lib'); from waveshare_epd import epd10in2_G" 2>/dev/null; then
@@ -263,18 +263,18 @@ main() {
     echo "Trainboard E-Ink Display Installation"
     echo "======================================"
     echo
-    
+
     log_info "Starting installation process..."
-    
+
     check_platform
-    
+
     # Check SPI
     if ! check_spi; then
         log_error "Installation cannot continue without SPI enabled"
         log_error "Please enable SPI and run this script again"
         exit 1
     fi
-    
+
     # Install components
     install_system_deps
     install_nodejs
@@ -284,10 +284,10 @@ main() {
     configure_trainboard
     setup_services
     setup_logging
-    
+
     # Test
     test_installation
-    
+
     echo
     echo "======================================"
     log_info "Installation complete!"

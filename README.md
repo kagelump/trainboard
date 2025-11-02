@@ -51,6 +51,7 @@ npm run build
 The app supports client-side URL routing with paths like `/railway/{name}/station/{name}`. When deployed to GitHub Pages at a repository path (e.g., `https://username.github.io/trainboard/`), the routing automatically detects the base path and handles URLs correctly.
 
 **How it works:**
+
 - The app auto-detects the base path from the URL structure
 - When on GitHub Pages at `/trainboard/`, URLs will be `/trainboard/railway/.../station/...`
 - When running locally or at the domain root, URLs will be `/railway/.../station/...`
@@ -132,6 +133,7 @@ Recommended: use the Cloudflare API proxy in production so you never expose an A
 For development or one-off testing you can supply an API key in the browser using the settings modal (⚙️) — paste your ODPT API key there and it will be persisted to `localStorage` under `t2board_api_key`.
 
 Notes:
+
 - Do NOT store secret API keys in `config.json` — `config.json` is read at runtime only for non-secret values like `API_BASE_URL` and default selections.
 - If the app encounters an API error (for example an authentication error), it will display a banner and automatically open the settings modal so you can paste a new API key immediately.
 
@@ -152,6 +154,7 @@ https://kagelump.github.io/trainboard/railway/Tokyu.Toyoko/station/武蔵小杉
 ```
 
 The URL routing supports flexible matching:
+
 - Full Japanese names: `武蔵小杉` or `武蔵小杉 (TY11)`
 - Latin ODPT names: `Tokyu.Toyoko` or `JR-East.Yamanote.Tokyo`
 - Partial names: `Toyoko` (matches `Tokyu.Toyoko`) or `MusashiKosugi` (matches station name)
