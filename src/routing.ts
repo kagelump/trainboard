@@ -13,37 +13,47 @@ export interface RouteParams {
  * Get the base path for the application.
  * For GitHub Pages, this will be the repository name (e.g., '/trainboard/')
  * For local development, this will be '/'
- * 
+ *
  * The base path can be set via VITE_BASE_PATH environment variable,
  * otherwise it's auto-detected from the URL structure.
  */
 export function getBasePath(): string {
   // Check if a base path was configured at build time
+  // If a build-time base path was injected, use it — but only when it's a
+  // real base (not the default '/'). When Vite doesn't set a custom base the
+  // define may be '/' which means "no base" and we should fall back to
+  // auto-detection below.
   if (typeof __APP_BASE_PATH__ !== 'undefined' && __APP_BASE_PATH__) {
-    return __APP_BASE_PATH__;
+    const raw = String(__APP_BASE_PATH__);
+    if (raw === '/' || raw === '') {
+      // treat as not-configured; fall through to auto-detect
+    } else {
+      // Normalize: remove any trailing slash
+      return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+    }
   }
-  
+
   // Auto-detect: Check if we're on GitHub Pages by looking at the URL pattern
   // GitHub Pages URLs look like: /repo-name/railway/... or /repo-name/
   const path = window.location.pathname;
-  const segments = path.split('/').filter(s => s);
-  
+  const segments = path.split('/').filter((s) => s);
+
   // No segments means we're at root
   if (segments.length === 0) {
     return '';
   }
-  
+
   // If the path starts with /railway, there's no base path
   if (segments[0] === 'railway') {
     return '';
   }
-  
+
   // If the second segment is 'railway', the first is the base path
   // e.g., /trainboard/railway/... -> base is /trainboard
   if (segments.length >= 2 && segments[1] === 'railway') {
     return '/' + segments[0];
   }
-  
+
   // If we only have one segment, treat it as the base path (repo root)
   // e.g., /trainboard/ or /trainboard
   // Note: This app only has two route types: / and /railway/.../station/...
@@ -52,7 +62,7 @@ export function getBasePath(): string {
   if (segments.length === 1) {
     return '/' + segments[0];
   }
-  
+
   // For other paths, don't assume a base path
   // This prevents false positives like /some/random/path
   return '';
@@ -89,7 +99,7 @@ export function parseRouteFromUrl(): RouteParams {
   const basePath = getBasePath();
   const fullPath = window.location.pathname;
   const path = removeBasePath(fullPath, basePath);
-  
+
   const params: RouteParams = {
     railwayName: null,
     stationName: null,
@@ -128,29 +138,29 @@ export function findRailwayByName(
   railwayName: string,
 ): RailwayConfig | null {
   if (!railwayName) return null;
-  
+
   // Try exact match first
   const exactMatch = railways.find((r) => r.name === railwayName);
   if (exactMatch) return exactMatch;
-  
+
   // Try case-insensitive match on Japanese name
   const lowerName = railwayName.toLowerCase();
   const nameMatch = railways.find((r) => r.name.toLowerCase() === lowerName);
   if (nameMatch) return nameMatch;
-  
+
   // Try matching against Latin ODPT name (from URI)
   const uriMatch = railways.find((r) => {
     const latinName = extractLatinNameFromUri(r.uri);
     if (!latinName) return false;
-    
+
     // Match full Latin name (case-insensitive)
     if (latinName.toLowerCase() === lowerName) return true;
-    
+
     // Match partial Latin name (e.g., "Toyoko" matches "Tokyu.Toyoko")
     const parts = latinName.split('.');
     return parts.some((part) => part.toLowerCase() === lowerName);
   });
-  
+
   return uriMatch || null;
 }
 
@@ -167,39 +177,37 @@ export function findStationByName(
   stationName: string,
 ): StationConfig | null {
   if (!stationName) return null;
-  
+
   // Try exact match first
   const exactMatch = stations.find((s) => s.name === stationName);
   if (exactMatch) return exactMatch;
-  
+
   // Try case-insensitive match on full name
   const lowerName = stationName.toLowerCase();
   const nameMatch = stations.find((s) => s.name.toLowerCase() === lowerName);
   if (nameMatch) return nameMatch;
-  
+
   // Try substring match on Japanese name (e.g., "横浜" matches "横浜 (TY21)")
   const substringMatch = stations.find((s) => s.name.includes(stationName));
   if (substringMatch) return substringMatch;
-  
+
   // Try case-insensitive substring match
-  const lowerSubstringMatch = stations.find((s) =>
-    s.name.toLowerCase().includes(lowerName),
-  );
+  const lowerSubstringMatch = stations.find((s) => s.name.toLowerCase().includes(lowerName));
   if (lowerSubstringMatch) return lowerSubstringMatch;
-  
+
   // Try matching against Latin ODPT name (from URI)
   const uriMatch = stations.find((s) => {
     const latinName = extractLatinNameFromUri(s.uri);
     if (!latinName) return false;
-    
+
     // Match full Latin name (case-insensitive)
     if (latinName.toLowerCase() === lowerName) return true;
-    
+
     // Match partial Latin name (e.g., "Tokyo" matches "JR-East.Yamanote.Tokyo")
     const parts = latinName.split('.');
     return parts.some((part) => part.toLowerCase() === lowerName);
   });
-  
+
   return uriMatch || null;
 }
 
@@ -209,7 +217,7 @@ export function findStationByName(
  */
 export function updateUrl(railwayName: string | null, stationName: string | null): void {
   const basePath = getBasePath();
-  
+
   if (!railwayName || !stationName) {
     // If either is missing, navigate to root (with base path)
     const rootPath = basePath || '/';

@@ -8,6 +8,8 @@ import { resolve } from 'path';
 // - awaitWriteFinish: wait until the file write stabilizes before triggering reload
 // This makes the dev server react on actual saves (and avoids intermediate temp-file events).
 export default defineConfig({
+  // Top-level base used by Vite to generate absolute/relative asset URLs.
+  base: process.env.VITE_BASE_PATH || '/',
   server: {
     watch: {
       ignored: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/.vscode/**'],
@@ -23,8 +25,7 @@ export default defineConfig({
   },
   define: {
     // Make the base path available at runtime
-    // In production (GitHub Pages), this will be determined from the URL
-    __APP_BASE_PATH__: JSON.stringify(process.env.VITE_BASE_PATH || ''),
+    __APP_BASE_PATH__: JSON.stringify(process.env.VITE_BASE_PATH || '/'),
   },
   plugins: [
     {
