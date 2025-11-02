@@ -10,10 +10,10 @@ export let DEFAULT_RAILWAY = 'odpt.Railway:Tokyu.Toyoko';
 export let DEFAULT_STATION_NAME = '武蔵小杉 (TY11)';
 
 // Polling intervals (milliseconds)
-export const TIMETABLE_REFRESH_INTERVAL_MS = 150_000; // 2.5 minutes
+export const TIMETABLE_REFRESH_INTERVAL_MS = 300_000; // 5 minutes
 export const STATUS_REFRESH_INTERVAL_MS = 300_000; // 5 minutes
 export const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
-export const CLOCK_UPDATE_INTERVAL_MS = 1_000; // 1 second
+export const CLOCK_UPDATE_INTERVAL_MS = 10_000; // 10 seconds
 
 /**
  * Sets the ODPT API key.

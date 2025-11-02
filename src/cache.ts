@@ -88,10 +88,7 @@ export class SimpleCache<V> {
       for (const [k, v] of this.map.entries()) obj[k] = v;
       localStorage.setItem(this.persistKeyName, JSON.stringify(obj));
     } catch (error) {
-      console.warn(
-        `Failed to persist cache to localStorage key "${this.persistKeyName}":`,
-        error,
-      );
+      console.warn(`Failed to persist cache to localStorage key "${this.persistKeyName}":`, error);
     }
   }
 

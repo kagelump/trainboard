@@ -25,7 +25,6 @@ import {
   loadDirectionNames,
   loadTrainTypes,
   loadRailwayMetadata,
-  loadStationsForRailway,
   setRailwayConfigs,
   getRailwayConfigs,
   getStationConfigs,
@@ -98,12 +97,8 @@ async function initializeBoard(): Promise<void> {
   if (selectedRailway) {
     currentConfig.railwayUri = selectedRailway.uri;
     setCurrentConfig(currentConfig);
+    // loadRailwayMetadata now also loads stations from stationOrder
     await loadRailwayMetadata(selectedRailway.uri, apiKey, apiBaseUrl);
-  }
-
-  // Load stations for the selected railway
-  if (currentConfig.railwayUri) {
-    await loadStationsForRailway(currentConfig.railwayUri, apiKey, apiBaseUrl);
   }
 
   // Choose initial station (read from localStorage if present)
@@ -129,13 +124,12 @@ async function initializeBoard(): Promise<void> {
     getCurrentConfig().railwayUri,
     getCurrentConfig().stationUri,
     async (newRailwayUri) => {
-      // Railway changed - reload metadata and stations
+      // Railway changed - reload metadata (includes stations from stationOrder)
       let config = getCurrentConfig();
       config.railwayUri = newRailwayUri;
       setCurrentConfig(config);
 
       await loadRailwayMetadata(newRailwayUri, apiKey, apiBaseUrl);
-      await loadStationsForRailway(newRailwayUri, apiKey, apiBaseUrl);
 
       // Reset station selection to first station of new railway
       const selected = chooseInitialStation(getStationConfigs(), DEFAULT_STATION_NAME);
@@ -158,8 +152,8 @@ async function initializeBoard(): Promise<void> {
       renderBoard();
     },
     async (newRailwayUri) => {
-      // Railway selection changed in modal - load stations for the new railway
-      await loadStationsForRailway(newRailwayUri, apiKey, apiBaseUrl);
+      // Railway selection changed in modal - load railway metadata (includes stations)
+      await loadRailwayMetadata(newRailwayUri, apiKey, apiBaseUrl);
     },
   );
 

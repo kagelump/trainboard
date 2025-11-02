@@ -6,7 +6,6 @@ import {
   fetchTrainTypes,
   fetchRailwayByUri,
   fetchStationsByUris,
-  fetchStationsList,
 } from './api';
 import type { OdptRailway, StationTimetableEntry } from './types';
 import { getJapaneseText, collectDestinationUris } from './utils';
@@ -19,11 +18,9 @@ import terminusData from './terminus.json';
 export type StationConfig = {
   name: string;
   uri: string;
-  code?: string;
-  /** Derived sort key used for ordering stations. Zero-padded numeric part or fallback to code. */
+  /** Index from railway stationOrder, zero-padded to 3 digits for sorting */
   sortKey: string;
 };
-import { extractStationSortKey } from './utils';
 
 export type TrainTypeMapEntry = {
   name: string;
@@ -150,6 +147,7 @@ export async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promis
 
 /**
  * Loads railway metadata and updates direction URIs and friendly names.
+ * Also extracts station list from railway stationOrder.
  */
 export async function loadRailwayMetadata(
   railwayUri: string,
@@ -182,39 +180,30 @@ export async function loadRailwayMetadata(
         directionNameCache.get(OUTBOUND_DIRECTION_URI) || OUTBOUND_FRIENDLY_NAME_JA;
     }
 
+    // Extract stations from stationOrder
+    const stationOrder = railway['odpt:stationOrder'] || [];
+    STATION_CONFIGS = stationOrder
+      .map((entry) => {
+        const stationUri = entry['odpt:station'] || '';
+        const stationTitle = entry['odpt:stationTitle'];
+        const stationName = getJapaneseText(stationTitle);
+        const index = entry['odpt:index'] || 0;
+        // Zero-pad index to 3 digits for sortKey
+        const sortKey = String(index).padStart(3, '0');
+        return {
+          name: stationName,
+          uri: stationUri,
+          sortKey,
+        } as StationConfig;
+      })
+      .filter((station) => station.uri && station.name !== 'N/A')
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
     // Update page title
     const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
     setPageTitle(`${railwayName} 発車案内板`);
   } catch (error) {
     console.warn('Failed to load railway metadata:', error);
-  }
-}
-
-/**
- * Loads station list for a specific railway.
- */
-export async function loadStationsForRailway(
-  railwayUri: string,
-  apiKey: string,
-  apiBaseUrl: string,
-): Promise<void> {
-  try {
-    const stations = await fetchStationsList(apiKey, apiBaseUrl, railwayUri);
-    STATION_CONFIGS = stations
-      .map((station) => {
-        const stationNameJa = getJapaneseText(station['dc:title'] || station['odpt:stationTitle']);
-        const stationCode = station['odpt:stationCode'] || '';
-        return {
-          name: stationCode ? `${stationNameJa} (${stationCode})` : stationNameJa,
-          uri: station['owl:sameAs'] || '',
-          code: stationCode,
-          sortKey: extractStationSortKey(stationCode),
-        } as StationConfig;
-      })
-      .filter((station) => station.uri)
-      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-  } catch (error) {
-    console.error('Error fetching station list:', error);
   }
 }
 
@@ -232,8 +221,8 @@ export async function ensureStationNamesForDepartures(
   if (missing.length === 0) return;
 
   try {
-    const data = await fetchStationsByUris(missing, apiKey, apiBaseUrl);
-    for (const station of data) {
+    const stations = await fetchStationsByUris(missing, apiKey, apiBaseUrl);
+    for (const station of stations) {
       const uri = station['owl:sameAs'] || station['@id'] || station['id'];
       const name = getJapaneseText(
         station['dc:title'] || station['odpt:stationTitle'] || station['title'],
