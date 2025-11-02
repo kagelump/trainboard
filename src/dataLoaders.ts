@@ -21,7 +21,7 @@ export type StationConfig = {
   uri: string;
   code?: string;
   /** Derived sort key used for ordering stations. Zero-padded numeric part or fallback to code. */
-  sortKey?: string;
+  sortKey: string;
 };
 import { extractStationSortKey } from './utils';
 
@@ -207,38 +207,18 @@ export async function loadStationsForRailway(
       .map((station) => {
         const stationNameJa = getJapaneseText(station['dc:title'] || station['odpt:stationTitle']);
         const stationCode = station['odpt:stationCode'] || '';
-        const sortKey = extractStationSortKey(stationCode);
         return {
           name: stationCode ? `${stationNameJa} (${stationCode})` : stationNameJa,
           uri: station['owl:sameAs'] || '',
           code: stationCode,
-          sortKey,
+          sortKey: extractStationSortKey(stationCode),
         } as StationConfig;
       })
       .filter((station) => station.uri)
-      .sort((a, b) => {
-        // Prefer the derived sortKey when present (zero-padded numeric part or fallback to code)
-        if (a.sortKey && b.sortKey) {
-          const cmp = a.sortKey.localeCompare(b.sortKey);
-          if (cmp !== 0) return cmp;
-        }
-        // Fallback: if both have station codes, try numeric comparison as before
-        if (a.code && b.code) {
-          const aMatch = a.code.match(/\d+/);
-          const bMatch = b.code.match(/\d+/);
-          if (aMatch && bMatch) {
-            const aNum = parseInt(aMatch[0], 10);
-            const bNum = parseInt(bMatch[0], 10);
-            if (aNum !== bNum) return aNum - bNum;
-          }
-          return a.code.localeCompare(b.code);
-        }
-        // Final fallback: compare by name
-        return a.name.localeCompare(b.name, 'ja');
-      });
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('Error fetching station list:', message);
+    // Log the error object directly so callers/console can see stack and structure
+    console.error('Error fetching station list:', error);
   }
 }
 
