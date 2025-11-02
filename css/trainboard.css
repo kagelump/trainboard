@@ -13,76 +13,6 @@ body {
   overflow-y: auto; /* Allow scrolling if content overflows */
 }
 
-/* Make the departures lists grid containers so column sizing applies at the list level
-   Each train row's column cells are direct children of the departures container via
-   the generated markup; `.train-row` will be rendered as `display: contents` so
-   the four column elements flow into the grid. Using row-gap provides spacing
-   between rows while keeping the grid definition on the parent. */
-#departures-inbound,
-#departures-outbound {
-  /* display: grid; */
-  /* Columns: minutes | time | train-type | destination */
-  /* grid-template-columns: 1fr 1fr 1fr 1.5fr; */
-  gap: 0.5rem;
-  row-gap: 0.5rem;
-  align-items: center;
-}
-
-.train-row {
-  /* allow the child cells (minutes-col, time-col, etc.) to participate in
-     the parent grid. This flattens the wrapper visually but keeps the markup
-     semantics intact. */
-  display: contents;
-}
-
-/* Time column - large and prominent */
-.time-col {
-  font-size: 3rem; /* Very large for visibility */
-  font-weight: 700;
-  line-height: 1;
-  align-self: center;
-}
-
-/* Minutes column - small numeric column aligned to the left of time */
-.minutes-col {
-  font-size: 1.5rem;
-  font-weight: 700;
-  text-align: center;
-  color: #fff;
-}
-
-/* Train Type badge - adapted for B/W/R/Y palette */
-.train-type-badge {
-  font-size: 1.5rem;
-  font-weight: 800;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-  text-align: center;
-  line-height: 1.2;
-  align-self: center;
-  max-width: fit-content;
-  margin: auto;
-  white-space: nowrap;
-}
-
-/* Destination Text */
-.destination-text {
-  font-size: 1.75rem;
-  font-weight: 600;
-  line-height: 1.2;
-  align-self: center;
-  text-align: center;
-  word-break: break-word;
-}
-
-/* Default style for unknown/local train types */
-/* Specific train type colors are dynamically generated from train_colors.json */
-.type-LOC {
-  background-color: #333;
-  color: #fff;
-  border: 2px solid #333;
-}
-
 /* Delay Status Banner (Red) */
 #status-banner.active {
   background-color: #f00;
@@ -147,47 +77,5 @@ body {
   #railway-button {
     font-size: 1.5rem;
     padding: 0.2rem;
-  }
-
-  /* On small screens, use slightly different column proportions */
-  #departures-inbound,
-  #departures-outbound {
-    grid-template-columns: 1fr 1fr 1fr 2fr;
-    gap: 0.25rem;
-    row-gap: 0.25rem;
-  }
-
-  .minutes-col {
-    font-size: 1rem;
-  }
-
-  .time-col {
-    font-size: 1rem;
-    text-align: left;
-  }
-
-  /* the train-type wrapper is the third column; target the elements directly */
-  #departures-inbound > .train-row > .train-type-badge,
-  #departures-outbound > .train-row > .train-type-badge,
-  #departures-inbound > .train-type-badge,
-  #departures-outbound > .train-type-badge {
-    align-items: center;
-    justify-content: flex-start;
-  }
-
-  .destination-text {
-    font-size: 1rem;
-    text-align: center;
-    word-break: break-word;
-  }
-
-  /* Reduce heavy fonts slightly to fit small screens */
-  .train-type-badge {
-    font-size: 1rem;
-    padding: 0.2rem 0.45rem;
-  }
-
-  .time-col {
-    line-height: 1;
   }
 }
