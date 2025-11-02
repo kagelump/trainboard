@@ -83,6 +83,24 @@ describe('URL Routing', () => {
       expect(railway).toBeDefined();
     });
 
+    it('should find railway by full Latin ODPT name', () => {
+      const railway = findRailwayByName(mockRailways, 'Tokyu.Toyoko');
+      expect(railway).toBeDefined();
+      expect(railway?.uri).toBe('odpt.Railway:Tokyu.Toyoko');
+    });
+
+    it('should find railway by partial Latin name', () => {
+      const railway = findRailwayByName(mockRailways, 'Toyoko');
+      expect(railway).toBeDefined();
+      expect(railway?.uri).toBe('odpt.Railway:Tokyu.Toyoko');
+    });
+
+    it('should find railway by Latin name case-insensitive', () => {
+      const railway = findRailwayByName(mockRailways, 'yamanote');
+      expect(railway).toBeDefined();
+      expect(railway?.uri).toBe('odpt.Railway:JR-East.Yamanote');
+    });
+
     it('should return null for non-existent railway', () => {
       const railway = findRailwayByName(mockRailways, '存在しない路線');
       expect(railway).toBeNull();
@@ -104,6 +122,30 @@ describe('URL Routing', () => {
       const station = findStationByName(mockStations, '武蔵小杉 (TY11)');
       expect(station).toBeDefined();
       expect(station?.uri).toBe('odpt.Station:Tokyu.Toyoko.MusashiKosugi');
+    });
+
+    it('should find station by substring (without station code)', () => {
+      const station = findStationByName(mockStations, '横浜');
+      expect(station).toBeDefined();
+      expect(station?.uri).toBe('odpt.Station:Tokyu.Toyoko.Yokohama');
+    });
+
+    it('should find station by full Latin ODPT name', () => {
+      const station = findStationByName(mockStations, 'Tokyu.Toyoko.MusashiKosugi');
+      expect(station).toBeDefined();
+      expect(station?.uri).toBe('odpt.Station:Tokyu.Toyoko.MusashiKosugi');
+    });
+
+    it('should find station by partial Latin name', () => {
+      const station = findStationByName(mockStations, 'MusashiKosugi');
+      expect(station).toBeDefined();
+      expect(station?.uri).toBe('odpt.Station:Tokyu.Toyoko.MusashiKosugi');
+    });
+
+    it('should find station by Latin name case-insensitive', () => {
+      const station = findStationByName(mockStations, 'yokohama');
+      expect(station).toBeDefined();
+      expect(station?.uri).toBe('odpt.Station:Tokyu.Toyoko.Yokohama');
     });
 
     it('should return null for non-existent station', () => {

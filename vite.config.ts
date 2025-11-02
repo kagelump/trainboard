@@ -1,4 +1,6 @@
 import { defineConfig } from 'vite';
+import { readFileSync, writeFileSync } from 'fs';
+import { resolve } from 'path';
 
 // Vite config tuned to reduce noisy reloads during editor temporary writes.
 // Key points:
@@ -23,4 +25,21 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
   },
+  plugins: [
+    {
+      name: 'generate-404',
+      closeBundle() {
+        // Generate 404.html from dist/index.html for GitHub Pages SPA routing
+        const indexPath = resolve(__dirname, 'dist/index.html');
+        const notFoundPath = resolve(__dirname, 'dist/404.html');
+        try {
+          const indexContent = readFileSync(indexPath, 'utf-8');
+          writeFileSync(notFoundPath, indexContent);
+          console.log('Generated 404.html from index.html for GitHub Pages SPA routing');
+        } catch (error) {
+          console.warn('Failed to generate 404.html:', error);
+        }
+      },
+    },
+  ],
 });
