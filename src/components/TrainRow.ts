@@ -99,9 +99,7 @@ export class TrainRow extends LitElement {
   render() {
     return html`
       <div class="train-row" data-departure="${this.departureTime}">
-        <div class="minutes-col" data-departure="${this.departureTime}">
-          ${this.minutesText}
-        </div>
+        <div class="minutes-col">${this.minutesText}</div>
         <div class="time-col">${this.departureTime || '--'}</div>
         <div style="display: flex; justify-content: center; align-items: center;">
           <span class="train-type-badge ${this.trainTypeClass}">${this.trainTypeName}</span>

@@ -193,14 +193,14 @@ function updateMinutesOnce(
         }
       }
 
-      // Remove departed trains from tracking
-      departedIndices.forEach((index) => {
-        const time = displayedTimes[index];
-        if (time) {
-          const timeIndex = displayedTimes.indexOf(time);
-          if (timeIndex > -1) {
-            displayedTimes.splice(timeIndex, 1);
-          }
+      // Remove departed trains from tracking and collect their times
+      const departedTimes = departedIndices.map((index) => displayedTimes[index]).filter(Boolean);
+
+      // Remove times from displayedTimes array
+      departedTimes.forEach((time) => {
+        const timeIndex = displayedTimes.indexOf(time);
+        if (timeIndex > -1) {
+          displayedTimes.splice(timeIndex, 1);
         }
       });
 

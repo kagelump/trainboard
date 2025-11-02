@@ -82,7 +82,7 @@ export class DeparturesList extends LitElement {
       <div class="space-y-1">
         ${repeat(
           this.departures,
-          (train) => (train as any)['odpt:departureTime'] || Math.random(),
+          (train, index) => (train as any)['odpt:departureTime'] || `train-${index}`,
           (train) => {
             const departureTime = (train as any)['odpt:departureTime'] || '';
             const trainTypeUri = (train as any)['odpt:trainType'] || '';
