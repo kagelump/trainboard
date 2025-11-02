@@ -164,4 +164,3 @@ async function initializeBoard(): Promise<void> {
 // Expose to window for bootstrapping
 (window as any).initializeBoard = initializeBoard;
 window.onload = initializeBoard;
-

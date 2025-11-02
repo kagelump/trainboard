@@ -1,10 +1,8 @@
-describe('Train caching behavior', () => {
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  getRecentRailways,
-  addRecentRailway,
-  STORAGE_KEY_RECENT_RAILWAYS,
-} from '../ui';
+
+// Tests for Recent Railways and train caching behavior
+// (combined during merge/rebase)
+import { getRecentRailways, addRecentRailway, STORAGE_KEY_RECENT_RAILWAYS } from '../ui';
 
 describe('Recent Railways', () => {
   beforeEach(() => {
@@ -29,10 +27,7 @@ describe('Recent Railways', () => {
     addRecentRailway('odpt.Railway:Tokyu.Toyoko');
 
     const recent = getRecentRailways();
-    expect(recent).toEqual([
-      'odpt.Railway:Tokyu.Toyoko',
-      'odpt.Railway:Tokyu.DenEnToshi',
-    ]);
+    expect(recent).toEqual(['odpt.Railway:Tokyu.Toyoko', 'odpt.Railway:Tokyu.DenEnToshi']);
   });
 
   it('should limit recent railways to 5 items', () => {
