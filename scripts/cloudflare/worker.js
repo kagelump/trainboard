@@ -8,8 +8,10 @@
  * - Securely stores ODPT API key as an environment variable
  * - Forwards requests from the trainboard app to ODPT API
  * - Adds CORS headers for browser compatibility
- * - Implements rate limiting to prevent abuse
  * - Caches responses to reduce API calls and improve performance
+ * 
+ * Note: Basic rate limiting is provided by Cloudflare's infrastructure.
+ * For advanced rate limiting, see the README for KV-based implementation examples.
  * 
  * Environment Variables Required:
  * - ODPT_API_KEY: Your ODPT API key
@@ -20,10 +22,6 @@
 // Configuration constants
 const DEFAULT_CACHE_TTL = 60; // 1 minute
 const DEFAULT_API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
-
-// Rate limiting configuration
-const RATE_LIMIT_MAX_REQUESTS = 100; // Max requests per window
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute in milliseconds
 
 /**
  * Main fetch event handler
@@ -90,12 +88,6 @@ async function handleRequest(event) {
           ...getCorsHeaders(request)
         }
       });
-    }
-
-    // Check rate limiting
-    const rateLimitResponse = await checkRateLimit(request);
-    if (rateLimitResponse) {
-      return rateLimitResponse;
     }
 
     // Build the ODPT API URL
@@ -220,19 +212,4 @@ function getAllowedOrigins() {
  */
 function getCacheTtl() {
   return typeof CACHE_TTL !== 'undefined' && CACHE_TTL ? parseInt(CACHE_TTL, 10) : DEFAULT_CACHE_TTL;
-}
-
-/**
- * Simple rate limiting using Cloudflare's Cache API
- * Returns a Response if rate limit is exceeded, null otherwise
- */
-async function checkRateLimit(request) {
-  // Get client IP (or a fingerprint)
-  const clientId = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const rateLimitKey = `ratelimit:${clientId}`;
-  
-  // For this simple implementation, we'll skip complex rate limiting
-  // In production, use Cloudflare Workers KV or Durable Objects for accurate rate limiting
-  
-  return null; // No rate limiting applied in this basic version
 }
