@@ -12,6 +12,24 @@ describe('DeparturesList Visibility Integration', () => {
   let departuresList: DeparturesList;
   let container: HTMLDivElement;
 
+  // Shared test utilities
+  const createMockStationNameCache = () => ({
+    get: (uri: string) => uri.split(':')[1] || uri,
+    set: () => {},
+    has: () => true,
+    clear: () => {},
+    keys: () => [],
+    enablePersistence: () => {},
+    map: new Map(),
+    maxEntries: 500,
+    persist: () => {},
+  }) as any;
+
+  const createMockTrainTypeMap = () => ({
+    'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },
+    'odpt.TrainType:Express': { name: '急行', class: 'type-EXP' },
+  });
+
   beforeEach(() => {
     // Reset visibility manager
     visibilityManager.destroy();
@@ -53,22 +71,8 @@ describe('DeparturesList Visibility Integration', () => {
     ];
 
     // Mock station name cache and train type map
-    const mockStationNameCache = {
-      get: (uri: string) => uri.split(':')[1] || uri,
-      set: () => {},
-      has: () => true,
-      clear: () => {},
-      keys: () => [],
-      enablePersistence: () => {},
-      map: new Map(),
-      maxEntries: 500,
-      persist: () => {},
-    } as any;
-
-    const mockTrainTypeMap = {
-      'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },
-      'odpt.TrainType:Express': { name: '急行', class: 'type-EXP' },
-    };
+    const mockStationNameCache = createMockStationNameCache();
+    const mockTrainTypeMap = createMockTrainTypeMap();
 
     // Set up the departures list with data
     departuresList.departures = mockDepartures;
@@ -122,21 +126,8 @@ describe('DeparturesList Visibility Integration', () => {
       } as any,
     ];
 
-    const mockStationNameCache = {
-      get: (uri: string) => uri.split(':')[1] || uri,
-      set: () => {},
-      has: () => true,
-      clear: () => {},
-      keys: () => [],
-      enablePersistence: () => {},
-      map: new Map(),
-      maxEntries: 500,
-      persist: () => {},
-    } as any;
-
-    const mockTrainTypeMap = {
-      'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },
-    };
+    const mockStationNameCache = createMockStationNameCache();
+    const mockTrainTypeMap = createMockTrainTypeMap();
 
     departuresList.departures = mockDepartures;
     departuresList.stationNameCache = mockStationNameCache;
@@ -192,22 +183,8 @@ describe('DeparturesList Visibility Integration', () => {
       } as any,
     ];
 
-    const mockStationNameCache = {
-      get: (uri: string) => uri.split(':')[1] || uri,
-      set: () => {},
-      has: () => true,
-      clear: () => {},
-      keys: () => [],
-      enablePersistence: () => {},
-      map: new Map(),
-      maxEntries: 500,
-      persist: () => {},
-    } as any;
-
-    const mockTrainTypeMap = {
-      'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },
-      'odpt.TrainType:Express': { name: '急行', class: 'type-EXP' },
-    };
+    const mockStationNameCache = createMockStationNameCache();
+    const mockTrainTypeMap = createMockTrainTypeMap();
 
     departuresList.departures = mockDepartures;
     departuresList.stationNameCache = mockStationNameCache;
