@@ -58,7 +58,12 @@ describe('DeparturesList Visibility Integration', () => {
       set: () => {},
       has: () => true,
       clear: () => {},
-    };
+      keys: () => [],
+      enablePersistence: () => {},
+      map: new Map(),
+      maxEntries: 500,
+      persist: () => {},
+    } as any;
 
     const mockTrainTypeMap = {
       'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },
@@ -122,7 +127,12 @@ describe('DeparturesList Visibility Integration', () => {
       set: () => {},
       has: () => true,
       clear: () => {},
-    };
+      keys: () => [],
+      enablePersistence: () => {},
+      map: new Map(),
+      maxEntries: 500,
+      persist: () => {},
+    } as any;
 
     const mockTrainTypeMap = {
       'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },
@@ -187,7 +197,12 @@ describe('DeparturesList Visibility Integration', () => {
       set: () => {},
       has: () => true,
       clear: () => {},
-    };
+      keys: () => [],
+      enablePersistence: () => {},
+      map: new Map(),
+      maxEntries: 500,
+      persist: () => {},
+    } as any;
 
     const mockTrainTypeMap = {
       'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },

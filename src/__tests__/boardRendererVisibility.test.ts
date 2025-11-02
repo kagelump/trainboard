@@ -94,7 +94,7 @@ describe('Board Renderer Visibility Bug', () => {
     visibilityManager.initialize();
 
     let fetchCount = 0;
-    const mockFetchAndRender = vi.fn(() => {
+    const mockFetchAndRender = vi.fn((stationUri: string) => {
       fetchCount++;
       return Promise.resolve(true);
     });
