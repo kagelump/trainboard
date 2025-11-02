@@ -1,0 +1,70 @@
+# Wrangler Configuration Template for ODPT API Proxy
+# 
+# This is a template file. Copy this to `wrangler.toml` and update with your values.
+# Do NOT commit wrangler.toml with your actual API key to version control!
+
+# Worker name - will be used in the worker URL: https://<name>.<account>.workers.dev
+name = "odpt-api-proxy"
+
+# Main entry point for the worker
+main = "worker.js"
+
+# Compatibility settings - use the latest compatibility date
+compatibility_date = "2024-11-01"
+
+# Account ID - get this from your Cloudflare dashboard
+# https://dash.cloudflare.com/ -> Workers & Pages -> Account ID
+account_id = "YOUR_ACCOUNT_ID_HERE"
+
+# Environment variables
+# These will be available as global variables in your worker
+[vars]
+# Optional: Comma-separated list of allowed origins for CORS
+# Default: "*" (allow all origins)
+# Example: "https://yourdomain.com,https://www.yourdomain.com"
+# ALLOWED_ORIGINS = "*"
+
+# Optional: Cache TTL in seconds
+# Default: 60
+# CACHE_TTL = "60"
+
+# Secrets (sensitive data)
+# DO NOT put your actual API key here!
+# Use `wrangler secret put ODPT_API_KEY` to set it securely
+# 
+# To set the secret, run:
+#   wrangler secret put ODPT_API_KEY
+# Then paste your ODPT API key when prompted
+#
+# [secrets]
+# ODPT_API_KEY = "set using: wrangler secret put ODPT_API_KEY"
+
+# Workers.dev subdomain
+# Set to false if you want to use a custom domain instead
+workers_dev = true
+
+# Optional: Custom domains
+# Uncomment and configure if you want to use your own domain
+# [[routes]]
+# pattern = "api.yourdomain.com/*"
+# zone_name = "yourdomain.com"
+
+# Optional: KV namespace bindings (for advanced rate limiting)
+# Uncomment if you want to implement KV-based rate limiting
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "YOUR_KV_NAMESPACE_ID"
+
+# Usage model
+# Options: "bundled" (included in Workers plan) or "unbound" (pay-as-you-go)
+usage_model = "bundled"
+
+# Build configuration
+[build]
+# No build step needed for this simple worker
+command = ""
+
+# Limits and quotas
+# These are informational - actual limits depend on your Cloudflare plan
+# Free tier: 100,000 requests/day
+# Paid tier: 10 million requests/month minimum
