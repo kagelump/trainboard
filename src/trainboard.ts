@@ -33,6 +33,13 @@ import {
   getStationConfigs,
 } from './dataLoaders';
 import { renderBoard, getCurrentConfig, setCurrentConfig } from './boardRenderer';
+import {
+  parseRouteFromUrl,
+  findRailwayByName,
+  findStationByName,
+  updateUrl,
+  getNamesFromUris,
+} from './routing';
 
 /**
  * Main initialization function for the trainboard application.
@@ -104,24 +111,60 @@ async function initializeBoard(): Promise<void> {
     if (hdr) hdr.textContent = 'エラー: 路線リスト取得失敗';
   }
 
-  // Choose initial railway (read from localStorage if present)
-  const selectedRailway = chooseInitialRailway(getRailwayConfigs(), DEFAULT_RAILWAY);
-  let currentConfig = getCurrentConfig();
-
-  if (selectedRailway) {
-    currentConfig.railwayUri = selectedRailway.uri;
-    setCurrentConfig(currentConfig);
-    // loadRailwayMetadata now also loads stations from stationOrder
-    await loadRailwayMetadata(selectedRailway.uri, apiKey, apiBaseUrl);
+  // Choose initial railway and station
+  // Priority: 1. URL parameters, 2. localStorage, 3. defaults
+  const routeParams = parseRouteFromUrl();
+  let selectedRailway: RailwayConfig | undefined;
+  let selectedStation;
+  
+  // First, try to load from URL parameters
+  if (routeParams.railwayName && routeParams.stationName) {
+    const railwayFromUrl = findRailwayByName(getRailwayConfigs(), routeParams.railwayName);
+    if (railwayFromUrl) {
+      selectedRailway = railwayFromUrl;
+      currentConfig.railwayUri = railwayFromUrl.uri;
+      setCurrentConfig(currentConfig);
+      // Load railway metadata to get station list
+      await loadRailwayMetadata(railwayFromUrl.uri, apiKey, apiBaseUrl);
+      
+      // Now try to find the station
+      const stationFromUrl = findStationByName(getStationConfigs(), routeParams.stationName);
+      if (stationFromUrl) {
+        selectedStation = stationFromUrl;
+      }
+    }
+  }
+  
+  // If not found in URL, fall back to localStorage or defaults
+  if (!selectedRailway) {
+    selectedRailway = chooseInitialRailway(getRailwayConfigs(), DEFAULT_RAILWAY);
+    if (selectedRailway) {
+      currentConfig.railwayUri = selectedRailway.uri;
+      setCurrentConfig(currentConfig);
+      // loadRailwayMetadata now also loads stations from stationOrder
+      await loadRailwayMetadata(selectedRailway.uri, apiKey, apiBaseUrl);
+    }
   }
 
-  // Choose initial station (read from localStorage if present)
-  const selected = chooseInitialStation(getStationConfigs(), DEFAULT_STATION_NAME);
-  if (selected) {
+  // Choose initial station (read from URL, localStorage, or default)
+  if (!selectedStation) {
+    selectedStation = chooseInitialStation(getStationConfigs(), DEFAULT_STATION_NAME);
+  }
+  
+  if (selectedStation) {
     currentConfig = getCurrentConfig();
-    currentConfig.stationUri = selected.uri;
-    currentConfig.stationName = selected.name;
+    currentConfig.stationUri = selectedStation.uri;
+    currentConfig.stationName = selectedStation.name;
     setCurrentConfig(currentConfig);
+    
+    // Update URL to match current selection (without reload)
+    const names = getNamesFromUris(
+      currentConfig.railwayUri,
+      currentConfig.stationUri,
+      getRailwayConfigs(),
+      getStationConfigs()
+    );
+    updateUrl(names.railwayName, names.stationName);
   }
 
   // Setup the API key modal so users can change the key at any time
@@ -154,6 +197,15 @@ async function initializeBoard(): Promise<void> {
         setCurrentConfig(config);
       }
 
+      // Update URL to reflect new railway and station
+      const names = getNamesFromUris(
+        config.railwayUri,
+        config.stationUri,
+        getRailwayConfigs(),
+        getStationConfigs()
+      );
+      updateUrl(names.railwayName, names.stationName);
+
       renderBoard();
     },
     (newStationUri) => {
@@ -163,6 +215,16 @@ async function initializeBoard(): Promise<void> {
       config.stationUri = newStationUri;
       config.stationName = found ? found.name : null;
       setCurrentConfig(config);
+      
+      // Update URL to reflect new station
+      const names = getNamesFromUris(
+        config.railwayUri,
+        config.stationUri,
+        getRailwayConfigs(),
+        getStationConfigs()
+      );
+      updateUrl(names.railwayName, names.stationName);
+      
       renderBoard();
     },
     async (newRailwayUri) => {
@@ -193,6 +255,15 @@ async function initializeBoard(): Promise<void> {
     config.stationName = found ? found.name : null;
     setCurrentConfig(config);
     localStorage.setItem(STORAGE_KEY_STATION_URI, stationUri);
+
+    // Update URL to reflect new location
+    const names = getNamesFromUris(
+      config.railwayUri,
+      config.stationUri,
+      getRailwayConfigs(),
+      getStationConfigs()
+    );
+    updateUrl(names.railwayName, names.stationName);
 
     // Re-render the board
     renderBoard();
