@@ -50,18 +50,29 @@ async function initializeBoard(): Promise<void> {
   // Inject dynamic CSS styles for train types
   injectTrainTypeStyles();
 
-  // Check for API key
+  // Check for API key. If the configured API base URL looks like a proxy,
+  // it likely doesn't require a consumer key — bypass the modal by setting
+  // a harmless placeholder so the API client checks pass.
   if (!getApiKey()) {
-    // No API key: open the API-key modal so the user can paste one.
-    uiSetupApiKeyModal(getApiKey(), (newKey) => {
-      if (newKey) setApiKey(newKey);
-      initializeBoard();
-    });
-    uiOpenApiModal();
-    return;
+    const apiBaseUrl = getApiBaseUrl();
+    if (apiBaseUrl && apiBaseUrl.includes('proxy')) {
+      // Use a placeholder key so existing api client validation doesn't throw.
+      // The proxy is expected to ignore the consumerKey parameter.
+      console.info('API base URL contains "proxy"; bypassing API key modal and omitting API key.');
+      // Leave the API key null so the API client will omit the consumerKey param.
+      setApiKey(null);
+    } else {
+      // No API key and not using a proxy: open the API-key modal so the user can paste one.
+      uiSetupApiKeyModal(getApiKey(), (newKey) => {
+        if (newKey) setApiKey(newKey);
+        initializeBoard();
+      });
+      uiOpenApiModal();
+      return;
+    }
   }
 
-  const apiKey = String(getApiKey());
+  const apiKey = getApiKey();
   const apiBaseUrl = getApiBaseUrl();
 
   // Load static data (directions and train types)

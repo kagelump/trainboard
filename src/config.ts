@@ -5,7 +5,7 @@ import { STORAGE_KEY_API_KEY } from './ui';
 
 // --- Configuration State ---
 export let ODPT_API_KEY: string | null = null;
-export let API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
+export let API_BASE_URL = 'https://odpt-api-proxy.trainboard-odpt-proxy.workers.dev/';
 export let DEFAULT_RAILWAY = 'odpt.Railway:Tokyu.Toyoko';
 export let DEFAULT_STATION_NAME = '武蔵小杉 (TY11)';
 

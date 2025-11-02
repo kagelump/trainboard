@@ -94,7 +94,7 @@ export function getStationConfigs(): StationConfig[] {
 /**
  * Loads rail direction names from ODPT API and populates the cache.
  */
-export async function loadDirectionNames(apiKey: string, apiBaseUrl: string): Promise<void> {
+export async function loadDirectionNames(apiKey: string | null, apiBaseUrl: string): Promise<void> {
   try {
     const directions = await fetchRailDirections(apiKey, apiBaseUrl);
     for (const dir of directions) {
@@ -112,7 +112,7 @@ export async function loadDirectionNames(apiKey: string, apiBaseUrl: string): Pr
 /**
  * Loads train type information from ODPT API and populates the train type map.
  */
-export async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promise<void> {
+export async function loadTrainTypes(apiKey: string | null, apiBaseUrl: string): Promise<void> {
   try {
     const trainTypes = await fetchTrainTypes(apiKey, apiBaseUrl);
 
@@ -147,7 +147,7 @@ export async function loadTrainTypes(apiKey: string, apiBaseUrl: string): Promis
  */
 export async function loadRailwayMetadata(
   railwayUri: string,
-  apiKey: string,
+  apiKey: string | null,
   apiBaseUrl: string,
 ): Promise<void> {
   try {
@@ -206,7 +206,7 @@ export async function loadRailwayMetadata(
  * Fetches missing station names from ODPT API in a batch call.
  */
 export async function ensureStationNamesForDepartures(
-  apiKey: string,
+  apiKey: string | null,
   apiBaseUrl: string,
   ...departureLists: StationTimetableEntry[][]
 ): Promise<void> {

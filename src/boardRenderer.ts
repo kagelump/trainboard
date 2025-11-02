@@ -65,17 +65,6 @@ export function setCurrentConfig(config: typeof currentConfig): void {
  * @returns StationConfig if valid, null otherwise (with error UI shown)
  */
 function validateBoardPrerequisites(): StationConfig | null {
-  const apiKey = getApiKey();
-
-  if (!apiKey) {
-    const inbound = document.getElementById('departures-inbound');
-    const outbound = document.getElementById('departures-outbound');
-    const errorMsg = `<p class="text-center text-red-500 text-2xl pt-8">エラー: config.json に ODPT_API_KEY を設定してください。</p>`;
-    if (inbound) inbound.innerHTML = errorMsg;
-    if (outbound) outbound.innerHTML = errorMsg;
-    return null;
-  }
-
   const stationConfigs = getStationConfigs();
   const stationConfig = stationConfigs.find((c) => c.uri === currentConfig.stationUri);
   if (!stationConfig || !currentConfig.railwayUri) {
@@ -94,7 +83,6 @@ function validateBoardPrerequisites(): StationConfig | null {
  */
 async function fetchAndRenderTimetableData(stationUri: string): Promise<boolean> {
   const apiKey = getApiKey();
-  if (!apiKey) return false;
 
   let allDepartures: OdptStationTimetable[] = [];
   try {
@@ -106,8 +94,17 @@ async function fetchAndRenderTimetableData(stationUri: string): Promise<boolean>
     );
   } catch (error) {
     console.error('Failed to fetch timetable:', error);
-    uiShowStatus('API エラーが発生しました。API キーを確認してください。', 'error');
-    uiOpenApiModal();
+    // If we're using a proxy and intentionally have no API key, don't prompt
+    // the user to enter a key (the proxy is expected to handle requests).
+    const apiKey = getApiKey();
+    const apiBaseUrl = getApiBaseUrl();
+    const needsKeyMessage =
+      apiKey === null && apiBaseUrl.includes('proxy') ? '' : ' API キーを確認してください。';
+    uiShowStatus(`API エラーが発生しました。${needsKeyMessage}`.trim(), 'error');
+    // Open the API-key modal unless we're in proxy mode with no key
+    if (!(apiKey === null && apiBaseUrl.includes('proxy'))) {
+      uiOpenApiModal();
+    }
     return false;
   }
 
@@ -137,7 +134,6 @@ async function fetchAndRenderTimetableData(stationUri: string): Promise<boolean>
  */
 async function updateRailwayStatus(): Promise<void> {
   const apiKey = getApiKey();
-  if (!apiKey) return;
 
   try {
     if (currentConfig.railwayUri) {
@@ -180,7 +176,6 @@ function setupPeriodicRefreshIntervals(stationUri: string): void {
   // Status refresh interval - always read the current railway URI from config
   statusIntervalId = window.setInterval(async () => {
     const apiKey = getApiKey();
-    if (!apiKey) return;
 
     // Reload from localStorage to get the latest railway URI
     try {
