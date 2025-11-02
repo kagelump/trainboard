@@ -10,11 +10,86 @@ export interface RouteParams {
 }
 
 /**
+ * Get the base path for the application.
+ * For GitHub Pages, this will be the repository name (e.g., '/trainboard/')
+ * For local development, this will be '/'
+ * 
+ * The base path can be set via VITE_BASE_PATH environment variable,
+ * otherwise it's auto-detected from the URL structure.
+ */
+export function getBasePath(): string {
+  // Check if a base path was configured at build time
+  if (typeof __APP_BASE_PATH__ !== 'undefined' && __APP_BASE_PATH__) {
+    return __APP_BASE_PATH__;
+  }
+  
+  // Auto-detect: Check if we're on GitHub Pages by looking at the URL pattern
+  // GitHub Pages URLs look like: /repo-name/railway/... or /repo-name/
+  const path = window.location.pathname;
+  const segments = path.split('/').filter(s => s);
+  
+  // No segments means we're at root
+  if (segments.length === 0) {
+    return '';
+  }
+  
+  // If the path starts with /railway, there's no base path
+  if (segments[0] === 'railway') {
+    return '';
+  }
+  
+  // If the second segment is 'railway', the first is the base path
+  // e.g., /trainboard/railway/... -> base is /trainboard
+  if (segments.length >= 2 && segments[1] === 'railway') {
+    return '/' + segments[0];
+  }
+  
+  // If we only have one segment, treat it as the base path (repo root)
+  // e.g., /trainboard/ or /trainboard
+  // Note: This app only has two route types: / and /railway/.../station/...
+  // Any single-segment path is assumed to be a GitHub Pages repo root.
+  // If the app had other routes like /login or /about, this would need refinement.
+  if (segments.length === 1) {
+    return '/' + segments[0];
+  }
+  
+  // For other paths, don't assume a base path
+  // This prevents false positives like /some/random/path
+  return '';
+}
+
+/**
+ * Remove the base path from a pathname
+ */
+function removeBasePath(pathname: string, basePath: string): string {
+  if (!basePath || basePath === '/') return pathname;
+  if (pathname.startsWith(basePath)) {
+    return pathname.slice(basePath.length) || '/';
+  }
+  return pathname;
+}
+
+/**
+ * Add the base path to a pathname
+ */
+function addBasePath(pathname: string, basePath: string): string {
+  if (!basePath || basePath === '/') return pathname;
+  // Ensure no double slashes
+  if (pathname.startsWith('/')) {
+    return basePath + pathname;
+  }
+  return basePath + '/' + pathname;
+}
+
+/**
  * Parse the current URL path to extract railway and station names
- * Expected format: /railway/{railway name}/station/{station name}
+ * Expected format: [basePath]/railway/{railway name}/station/{station name}
  */
 export function parseRouteFromUrl(): RouteParams {
-  const path = window.location.pathname;
+  const basePath = getBasePath();
+  const fullPath = window.location.pathname;
+  const path = removeBasePath(fullPath, basePath);
+  
   const params: RouteParams = {
     railwayName: null,
     stationName: null,
@@ -130,13 +205,16 @@ export function findStationByName(
 
 /**
  * Update the browser URL without reloading the page
- * Format: /railway/{railway name}/station/{station name}
+ * Format: [basePath]/railway/{railway name}/station/{station name}
  */
 export function updateUrl(railwayName: string | null, stationName: string | null): void {
+  const basePath = getBasePath();
+  
   if (!railwayName || !stationName) {
-    // If either is missing, navigate to root
-    if (window.location.pathname !== '/') {
-      window.history.pushState({}, '', '/');
+    // If either is missing, navigate to root (with base path)
+    const rootPath = basePath || '/';
+    if (window.location.pathname !== rootPath) {
+      window.history.pushState({}, '', rootPath);
     }
     return;
   }
@@ -144,7 +222,8 @@ export function updateUrl(railwayName: string | null, stationName: string | null
   // Encode the names for URL safety
   const encodedRailway = encodeURIComponent(railwayName);
   const encodedStation = encodeURIComponent(stationName);
-  const newPath = `/railway/${encodedRailway}/station/${encodedStation}`;
+  const relativePath = `/railway/${encodedRailway}/station/${encodedStation}`;
+  const newPath = addBasePath(relativePath, basePath);
 
   // Only update if different from current path
   if (window.location.pathname !== newPath) {
