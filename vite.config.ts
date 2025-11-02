@@ -25,6 +25,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
   },
+  define: {
+    // Make the base path available at runtime
+    // In production (GitHub Pages), this will be determined from the URL
+    __APP_BASE_PATH__: JSON.stringify(process.env.VITE_BASE_PATH || ''),
+  },
   plugins: [
     {
       name: 'generate-404',

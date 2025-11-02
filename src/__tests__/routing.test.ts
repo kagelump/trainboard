@@ -5,6 +5,7 @@ import {
   findStationByName,
   updateUrl,
   getNamesFromUris,
+  getBasePath,
 } from '../routing';
 import type { RailwayConfig, StationConfig } from '../dataLoaders';
 
@@ -12,6 +13,7 @@ describe('URL Routing', () => {
   // Mock window.location and window.history
   const originalLocation = window.location;
   const originalHistory = window.history;
+  const originalDocument = document.querySelector;
 
   beforeEach(() => {
     // Reset location mock
@@ -26,11 +28,50 @@ describe('URL Routing', () => {
     (window as any).history = {
       pushState: vi.fn(),
     };
+    
+    // Reset document.querySelector mock
+    document.querySelector = vi.fn((selector: string) => {
+      if (selector === 'base') return null;
+      return originalDocument.call(document, selector);
+    });
   });
 
   afterEach(() => {
     (window as any).location = originalLocation;
     (window as any).history = originalHistory;
+    document.querySelector = originalDocument;
+  });
+
+  describe('getBasePath', () => {
+    it('should return empty string for root path', () => {
+      window.location.pathname = '/';
+      const basePath = getBasePath();
+      expect(basePath).toBe('');
+    });
+
+    it('should return empty string for direct railway path', () => {
+      window.location.pathname = '/railway/something/station/somewhere';
+      const basePath = getBasePath();
+      expect(basePath).toBe('');
+    });
+
+    it('should detect base path from GitHub Pages style URL', () => {
+      window.location.pathname = '/trainboard/railway/something/station/somewhere';
+      const basePath = getBasePath();
+      expect(basePath).toBe('/trainboard');
+    });
+
+    it('should detect base path from repo root', () => {
+      window.location.pathname = '/trainboard/';
+      const basePath = getBasePath();
+      expect(basePath).toBe('/trainboard');
+    });
+
+    it('should detect base path from repo name only', () => {
+      window.location.pathname = '/myrepo';
+      const basePath = getBasePath();
+      expect(basePath).toBe('/myrepo');
+    });
   });
 
   describe('parseRouteFromUrl', () => {
@@ -40,9 +81,23 @@ describe('URL Routing', () => {
       expect(params.railwayName).toBe('東急東横線');
       expect(params.stationName).toBe('武蔵小杉 (TY11)');
     });
+    
+    it('should parse railway and station from URL with base path', () => {
+      window.location.pathname = '/trainboard/railway/東急東横線/station/武蔵小杉 (TY11)';
+      const params = parseRouteFromUrl();
+      expect(params.railwayName).toBe('東急東横線');
+      expect(params.stationName).toBe('武蔵小杉 (TY11)');
+    });
 
     it('should return null values for root path', () => {
       window.location.pathname = '/';
+      const params = parseRouteFromUrl();
+      expect(params.railwayName).toBeNull();
+      expect(params.stationName).toBeNull();
+    });
+    
+    it('should return null values for base path root', () => {
+      window.location.pathname = '/trainboard/';
       const params = parseRouteFromUrl();
       expect(params.railwayName).toBeNull();
       expect(params.stationName).toBeNull();
@@ -57,6 +112,13 @@ describe('URL Routing', () => {
 
     it('should handle URL-encoded names', () => {
       window.location.pathname = '/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
+      const params = parseRouteFromUrl();
+      expect(params.railwayName).toBe('東急東横線');
+      expect(params.stationName).toBe('武蔵小杉 (TY11)');
+    });
+    
+    it('should handle URL-encoded names with base path', () => {
+      window.location.pathname = '/trainboard/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
       const params = parseRouteFromUrl();
       expect(params.railwayName).toBe('東急東横線');
       expect(params.stationName).toBe('武蔵小杉 (TY11)');
@@ -114,8 +176,8 @@ describe('URL Routing', () => {
 
   describe('findStationByName', () => {
     const mockStations: StationConfig[] = [
-      { uri: 'odpt.Station:Tokyu.Toyoko.MusashiKosugi', name: '武蔵小杉 (TY11)' },
-      { uri: 'odpt.Station:Tokyu.Toyoko.Yokohama', name: '横浜 (TY21)' },
+      { uri: 'odpt.Station:Tokyu.Toyoko.MusashiKosugi', name: '武蔵小杉 (TY11)', index: 0 },
+      { uri: 'odpt.Station:Tokyu.Toyoko.Yokohama', name: '横浜 (TY21)', index: 1 },
     ];
 
     it('should find station by exact name match', () => {
@@ -168,6 +230,16 @@ describe('URL Routing', () => {
         '/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)',
       );
     });
+    
+    it('should update URL with railway and station names with base path', () => {
+      window.location.pathname = '/trainboard/';
+      updateUrl('東急東横線', '武蔵小杉 (TY11)');
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        {},
+        '',
+        '/trainboard/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)',
+      );
+    });
 
     it('should navigate to root if railway is missing', () => {
       window.location.pathname = '/some/path';
@@ -186,6 +258,12 @@ describe('URL Routing', () => {
       updateUrl('東急東横線', '武蔵小杉 (TY11)');
       expect(window.history.pushState).not.toHaveBeenCalled();
     });
+    
+    it('should not update if URL is already correct with base path', () => {
+      window.location.pathname = '/trainboard/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
+      updateUrl('東急東横線', '武蔵小杉 (TY11)');
+      expect(window.history.pushState).not.toHaveBeenCalled();
+    });
   });
 
   describe('getNamesFromUris', () => {
@@ -194,7 +272,7 @@ describe('URL Routing', () => {
     ];
 
     const mockStations: StationConfig[] = [
-      { uri: 'odpt.Station:Tokyu.Toyoko.MusashiKosugi', name: '武蔵小杉 (TY11)' },
+      { uri: 'odpt.Station:Tokyu.Toyoko.MusashiKosugi', name: '武蔵小杉 (TY11)', index: 0 },
     ];
 
     it('should get names from valid URIs', () => {
