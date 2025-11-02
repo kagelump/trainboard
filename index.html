@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>発車案内板</title>
+    <base href="/" />
     <!-- Load Tailwind CSS via CDN for utility classes -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/trainboard.css" />
@@ -112,9 +113,7 @@
     >
       <div class="bg-black border-4 border-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
         <h2 class="text-4xl font-extrabold mb-6 text-center">最寄り駅を選択</h2>
-        <div id="location-status" class="mb-4 text-center text-lg">
-          現在地を取得中...
-        </div>
+        <div id="location-status" class="mb-4 text-center text-lg">現在地を取得中...</div>
         <div id="nearby-stations-list" class="mb-6 max-h-96 overflow-y-auto">
           <!-- Nearby stations will be populated here -->
         </div>
