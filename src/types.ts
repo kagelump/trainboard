@@ -50,11 +50,14 @@ export interface OdptRailway {
   'odpt:lineCode'?: string;
   'odpt:ascendingRailDirection'?: string;
   'odpt:descendingRailDirection'?: string;
-  'odpt:stationOrder'?: Array<{
-    'odpt:index'?: number;
-    'odpt:station'?: string;
-    'odpt:stationTitle'?: { ja?: string; en?: string } | string;
-  }>;
+  'odpt:stationOrder'?: StationLite[];
+  [key: string]: unknown;
+}
+
+export interface StationLite {
+  'odpt:index'?: number;
+  'odpt:station'?: string;
+  'odpt:stationTitle'?: { ja?: string; en?: string } | string;
   [key: string]: unknown;
 }
 
