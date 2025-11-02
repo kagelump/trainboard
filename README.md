@@ -6,10 +6,12 @@ Highlights of changes in this repo
 
 - Rewrote app in TypeScript with modules: `src/api.ts`, `src/utils.ts`, `src/ui.ts`, `src/cache.ts`, `src/trainboard.ts`.
 - **Generalized to support any ODPT train line** with a railway line selector.
+- **URL-based routing** for sharing specific railway/station views with flexible name matching.
+- **Geolocation support** for finding nearby stations using the browser's location API.
 - Vite is used for development and fast HMR.
 - Support for a user-supplied API key via the settings modal (persisted to localStorage).
 - Destination station name caching (SimpleCache) and batch station metadata lookup.
-- Unit tests (Vitest) for parsing utilities are included.
+- Unit tests (Vitest) for parsing utilities, routing, and geolocation are included.
 - GitHub Pages deploy support and an Actions workflow that builds and publishes `dist/` on push to `main`.
 
 Files
@@ -130,6 +132,28 @@ The app supports any train line available in the ODPT API:
 - Click the 🚃 button to select a railway line (persisted to localStorage)
 - Click the ⚙️ button to select a station on the current line (persisted to localStorage)
 - The app will automatically load direction names, train types, and station lists for the selected railway
+
+### URL-Based Selection
+
+You can share specific railway/station views using URLs:
+
+```
+https://your-site.com/railway/Tokyu.Toyoko/station/武蔵小杉
+```
+
+The URL routing supports flexible matching:
+- Full Japanese names: `武蔵小杉` or `武蔵小杉 (TY11)`
+- Latin ODPT names: `Tokyu.Toyoko` or `JR-East.Yamanote.Tokyo`
+- Partial names: `Toyoko` (matches `Tokyu.Toyoko`) or `Tokyo` (matches station name)
+
+### Geolocation Support
+
+The app includes geolocation support to help users find nearby stations:
+
+- Uses browser's Geolocation API to detect current position
+- Finds and displays nearby stations sorted by distance
+- Calculates distances using Haversine formula for accuracy
+- Displays distances in meters or kilometers for easy reading
 
 ## Scripts
 

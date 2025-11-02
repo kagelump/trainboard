@@ -20,6 +20,24 @@ All tests are located in `src/__tests__/` directory and follow the naming patter
 ### src/__tests__/parsing.test.ts
 Tests for parsing utilities and data transformation functions.
 
+### src/__tests__/api.test.ts
+Tests for API client functionality.
+
+### src/__tests__/api_query.test.ts
+Tests for API query construction.
+
+### src/__tests__/routing.test.ts
+Tests for URL routing, railway/station name matching, and URL parameter parsing.
+
+### src/__tests__/location.test.ts
+Tests for geolocation utilities, distance calculation, and nearby station finding.
+
+### src/__tests__/rendering.test.ts
+Tests for departure board rendering logic.
+
+### src/__tests__/ui.test.ts
+Tests for UI components and DOM manipulation.
+
 ## Writing New Tests
 
 ### Test File Structure
@@ -83,6 +101,16 @@ describe('Module Name', () => {
    - Station name parsing
    - Train data formatting
    - Time calculations
+
+5. **URL Routing** (src/routing.ts)
+   - URL parameter parsing
+   - Railway/station name matching (exact, partial, case-insensitive)
+   - URL generation and updates
+
+6. **Geolocation** (src/location.ts)
+   - Distance calculation (Haversine formula)
+   - Nearby station finding
+   - Distance formatting
 
 ### What NOT to Test
 - Third-party libraries (Vite, etc.)

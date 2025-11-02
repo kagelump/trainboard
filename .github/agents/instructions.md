@@ -1,7 +1,7 @@
 # GitHub Agent Instructions for Trainboard
 
 ## Project Overview
-Trainboard is a compact static departure board for the Tokyu Toyoko Line. It's a TypeScript-powered static web application that queries ODPT endpoints and displays upcoming departures.
+Trainboard is a compact static departure board for ODPT train lines. It's a TypeScript-powered static web application that queries ODPT endpoints and displays upcoming departures for any train line supported by the ODPT API.
 
 ## Tech Stack
 - **Language**: TypeScript
@@ -15,13 +15,30 @@ Trainboard is a compact static departure board for the Tokyu Toyoko Line. It's a
 ```
 trainboard/
 ├── src/
-│   ├── api.ts          # ODPT API client
-│   ├── cache.ts        # SimpleCache implementation
-│   ├── trainboard.ts   # Main application logic
-│   ├── types.ts        # TypeScript type definitions
-│   ├── ui.ts           # UI rendering and DOM manipulation
-│   ├── utils.ts        # Utility functions
-│   └── __tests__/      # Vitest test files
+│   ├── api.ts              # ODPT API client
+│   ├── cache.ts            # SimpleCache implementation
+│   ├── trainboard.ts       # Main application logic
+│   ├── types.ts            # TypeScript type definitions
+│   ├── ui.ts               # UI rendering and DOM manipulation
+│   ├── utils.ts            # Utility functions
+│   ├── routing.ts          # URL routing for railway/station selection
+│   ├── location.ts         # Geolocation and nearby station finding
+│   ├── dataLoaders.ts      # Data loading and caching
+│   ├── boardRenderer.ts    # Departure board rendering
+│   ├── config.ts           # Configuration management
+│   ├── constants.ts        # Application constants
+│   ├── trainTypeStyles.ts  # Train type styling
+│   ├── components/         # UI components
+│   │   ├── DeparturesList.ts
+│   │   └── TrainRow.ts
+│   └── __tests__/          # Vitest test files
+│       ├── api.test.ts
+│       ├── api_query.test.ts
+│       ├── parsing.test.ts
+│       ├── rendering.test.ts
+│       ├── routing.test.ts
+│       ├── location.test.ts
+│       └── ui.test.ts
 ├── css/                # Stylesheets
 ├── dist/               # Production build output (generated)
 ├── index.html          # Main HTML entry point
@@ -90,6 +107,12 @@ npm run format
 - `ui.ts`: DOM manipulation and rendering
 - `utils.ts`: Pure utility functions
 - `trainboard.ts`: Main application orchestration
+- `routing.ts`: URL routing for railway/station selection with flexible name matching
+- `location.ts`: Geolocation utilities for finding nearby stations
+- `dataLoaders.ts`: Data loading, caching, and management
+- `boardRenderer.ts`: Departure board rendering logic
+- `config.ts`: Configuration management and API key handling
+- `components/`: Reusable UI components (DeparturesList, TrainRow)
 
 ## Configuration
 

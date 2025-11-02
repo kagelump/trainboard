@@ -36,6 +36,10 @@
 - Keep caching logic in `cache.ts`
 - Keep utilities in `utils.ts`
 - Keep main logic in `trainboard.ts`
+- Keep URL routing in `routing.ts`
+- Keep geolocation logic in `location.ts`
+- Keep data loading in `dataLoaders.ts`
+- Keep rendering logic in `boardRenderer.ts`
 
 ### Imports
 - Use ES module syntax: `import { foo } from './bar'`
@@ -117,6 +121,30 @@ import { renderDepartures, showError } from './ui';
 
 renderDepartures(container, departures);
 showError(message);
+```
+
+### URL Routing
+```typescript
+// Use routing functions from routing.ts
+import { parseRouteFromUrl, updateUrl, findRailwayByName, findStationByName } from './routing';
+
+// Parse URL parameters
+const params = parseRouteFromUrl();
+const railway = findRailwayByName(railways, params.railwayName);
+const station = findStationByName(stations, params.stationName);
+
+// Update URL when selection changes
+updateUrl(railwayName, stationName);
+```
+
+### Geolocation
+```typescript
+// Use location functions from location.ts
+import { getCurrentPosition, findNearbyStations, formatDistance } from './location';
+
+// Get user location and find nearby stations
+const position = await getCurrentPosition();
+const nearby = findNearbyStations(position.coords.latitude, position.coords.longitude);
 ```
 
 ## Error Handling
