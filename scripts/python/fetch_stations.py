@@ -67,8 +67,10 @@ class OdptClient:
                 data = response.read()
                 return json.loads(data.decode('utf-8'))
         except HTTPError as e:
+            # Redact API key from URL in error messages for security
+            safe_url = url.replace(self.api_key, '<API_KEY_REDACTED>')
             print(f"HTTP Error {e.code}: {e.reason}", file=sys.stderr)
-            print(f"URL: {url}", file=sys.stderr)
+            print(f"URL: {safe_url}", file=sys.stderr)
             raise
         except URLError as e:
             print(f"URL Error: {e.reason}", file=sys.stderr)
