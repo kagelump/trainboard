@@ -90,7 +90,7 @@ describe('Board Renderer Visibility Bug', () => {
   });
 
   it('should handle renderBoard being called multiple times without accumulating callbacks', async () => {
-    // This test will pass once we fix the issue
+    // Verify that properly cleaning up callbacks prevents accumulation
     visibilityManager.initialize();
 
     let fetchCount = 0;
