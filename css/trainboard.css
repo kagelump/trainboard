@@ -94,6 +94,7 @@ body {
 
 /* Settings button (clean, high contrast) */
 #settings-button,
+#location-button,
 #railway-button {
   border: 2px solid #fff;
   color: #fff;

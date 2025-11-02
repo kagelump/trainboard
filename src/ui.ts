@@ -2,7 +2,7 @@
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
 import { formatTimeHHMM } from './utils';
-import { getStationConfigs } from './dataLoaders';
+import { getStationConfigs, getRailwayConfigs } from './dataLoaders';
 import prefectures from './prefectures.json';
 import sortedPrefectures from './sorted_prefectures.json';
 import operators from './operators.json';
@@ -738,11 +738,21 @@ export function setupLocationModal(
           nameDiv.className = 'font-bold text-xl';
           nameDiv.textContent = station.name;
 
+          // Lookup railway and operator friendly names
+          const railwayCfg = getRailwayConfigs().find((r) => r.uri === station.railway);
+          const railwayName = railwayCfg ? railwayCfg.name : station.railway;
+          const operatorName = getOperatorName(railwayCfg ? railwayCfg.operator : station.operator);
+
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'text-sm text-gray-300 mt-1';
+          infoDiv.textContent = `${operatorName} / ${railwayName}`;
+
           const distanceDiv = document.createElement('div');
           distanceDiv.className = 'text-sm text-gray-300 mt-1';
           distanceDiv.textContent = `距離: ${formatDistance(station.distance)}`;
 
           button.appendChild(nameDiv);
+          button.appendChild(infoDiv);
           button.appendChild(distanceDiv);
           stationsList.appendChild(button);
         });
