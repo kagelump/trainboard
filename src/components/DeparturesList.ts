@@ -12,7 +12,8 @@ import type { SimpleCache } from '../cache';
 export class DeparturesList extends LitElement {
   static styles = css`
     :host {
-      display: block;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 2fr;
     }
 
     .empty-message {
@@ -79,30 +80,28 @@ export class DeparturesList extends LitElement {
     }
 
     return html`
-      <div class="space-y-1">
-        ${repeat(
-          this.departures,
-          (train, index) => (train as any)['odpt:departureTime'] || `train-${index}`,
-          (train) => {
-            const departureTime = (train as any)['odpt:departureTime'] || '';
-            const trainTypeUri = (train as any)['odpt:trainType'] || '';
-            const destinationTitle = this.getDestinationTitle(train);
-            const trainType = this.trainTypeMap[trainTypeUri] || {
-              name: '不明',
-              class: 'type-LOC',
-            };
+      ${repeat(
+        this.departures,
+        (train, index) => (train as any)['odpt:departureTime'] || `train-${index}`,
+        (train) => {
+          const departureTime = (train as any)['odpt:departureTime'] || '';
+          const trainTypeUri = (train as any)['odpt:trainType'] || '';
+          const destinationTitle = this.getDestinationTitle(train);
+          const trainType = this.trainTypeMap[trainTypeUri] || {
+            name: '不明',
+            class: 'type-LOC',
+          };
 
-            return html`
-              <train-row
-                departureTime="${departureTime}"
-                trainTypeName="${trainType.name}"
-                trainTypeClass="${trainType.class}"
-                destination="${destinationTitle}"
-              ></train-row>
-            `;
-          },
-        )}
-      </div>
+          return html`
+            <train-row
+              departureTime="${departureTime}"
+              trainTypeName="${trainType.name}"
+              trainTypeClass="${trainType.class}"
+              destination="${destinationTitle}"
+            ></train-row>
+          `;
+        },
+      )}
     `;
   }
 }

@@ -20,9 +20,9 @@ body {
    between rows while keeping the grid definition on the parent. */
 #departures-inbound,
 #departures-outbound {
-  display: grid;
+  /* display: grid; */
   /* Columns: minutes | time | train-type | destination */
-  grid-template-columns: 1fr 1fr 1fr 1.5fr;
+  /* grid-template-columns: 1fr 1fr 1fr 1.5fr; */
   gap: 0.5rem;
   row-gap: 0.5rem;
   align-items: center;
