@@ -10,6 +10,9 @@ import {
   setupSettingsModal as uiSetupSettingsModal,
   setupApiKeyModal as uiSetupApiKeyModal,
   openApiModal as uiOpenApiModal,
+  setupLocationModal as uiSetupLocationModal,
+  STORAGE_KEY_RAILWAY_URI,
+  STORAGE_KEY_STATION_URI,
 } from './ui';
 import { injectTrainTypeStyles } from './trainTypeStyles';
 import {
@@ -156,6 +159,33 @@ async function initializeBoard(): Promise<void> {
       await loadRailwayMetadata(newRailwayUri, apiKey, apiBaseUrl);
     },
   );
+
+  // Setup the location modal for finding nearby stations
+  uiSetupLocationModal(async (stationUri, railwayUri) => {
+    // User selected a station from location search
+    let config = getCurrentConfig();
+
+    // Check if we need to change railway
+    if (config.railwayUri !== railwayUri) {
+      config.railwayUri = railwayUri;
+      setCurrentConfig(config);
+      localStorage.setItem(STORAGE_KEY_RAILWAY_URI, railwayUri);
+
+      // Load metadata for the new railway
+      await loadRailwayMetadata(railwayUri, apiKey, apiBaseUrl);
+    }
+
+    // Set the station
+    const found = getStationConfigs().find((c) => c.uri === stationUri);
+    config = getCurrentConfig();
+    config.stationUri = stationUri;
+    config.stationName = found ? found.name : null;
+    setCurrentConfig(config);
+    localStorage.setItem(STORAGE_KEY_STATION_URI, stationUri);
+
+    // Re-render the board
+    renderBoard();
+  });
 
   // Initial board render
   renderBoard();
