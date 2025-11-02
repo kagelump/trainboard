@@ -50,8 +50,8 @@ export function setLoadingState(): void {
 export function setDirectionHeaders(inHeaderText: string, outHeaderText: string): void {
   const inHeader = document.getElementById('direction-inbound-header');
   const outHeader = document.getElementById('direction-outbound-header');
-  if (inHeader) inHeader.textContent = inHeaderText;
-  if (outHeader) outHeader.textContent = outHeaderText;
+  if (inHeader) inHeader.textContent = `${inHeaderText}行き`;
+  if (outHeader) outHeader.textContent = `${outHeaderText}行き`;
 }
 
 /**
