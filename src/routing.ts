@@ -9,9 +9,6 @@ export interface RouteParams {
   stationName: string | null;
 }
 
-// TypeScript will replace this at build time with the actual value
-declare const __APP_BASE_PATH__: string;
-
 /**
  * Get the base path for the application.
  * For GitHub Pages, this will be the repository name (e.g., '/trainboard/')
@@ -47,8 +44,11 @@ export function getBasePath(): string {
     return '/' + segments[0];
   }
   
-  // If we only have one segment, it's likely the base path (repo root)
+  // If we only have one segment, treat it as the base path (repo root)
   // e.g., /trainboard/ or /trainboard
+  // Note: This app only has two route types: / and /railway/.../station/...
+  // Any single-segment path is assumed to be a GitHub Pages repo root.
+  // If the app had other routes like /login or /about, this would need refinement.
   if (segments.length === 1) {
     return '/' + segments[0];
   }
