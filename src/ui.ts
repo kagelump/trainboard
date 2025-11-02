@@ -77,32 +77,6 @@ export function setDirectionHeaders(inHeaderText: string, outHeaderText: string)
   if (outHeader) outHeader.textContent = `${outHeaderText}行き`;
 }
 
-/**
- * Extract destination station title from train object
- */
-function getDestinationTitle(
-  train: StationTimetableEntry,
-  stationNameCache: SimpleCache<string>,
-): string {
-  let destinationTitle = 'N/A';
-  const dests = (train as any)['odpt:destinationStation'];
-  if (Array.isArray(dests) && dests.length > 0) {
-    const first = dests[0];
-    if (typeof first === 'string') {
-      destinationTitle = stationNameCache.get(first) || first;
-    } else if (first && typeof first === 'object') {
-      destinationTitle = (first as any)['dc:title'] || (first as any)['title'] || 'N/A';
-      if ((!destinationTitle || destinationTitle === 'N/A') && (first as any)['owl:sameAs']) {
-        const uri = (first as any)['owl:sameAs'];
-        if (typeof uri === 'string') destinationTitle = stationNameCache.get(uri) || uri;
-      }
-    }
-  } else if (typeof dests === 'string') {
-    destinationTitle = stationNameCache.get(dests) || dests;
-  }
-  return destinationTitle;
-}
-
 export function renderDirection(
   directionId: 'inbound' | 'outbound',
   departures: StationTimetableEntry[],
