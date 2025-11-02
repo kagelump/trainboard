@@ -29,18 +29,28 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute in milliseconds
  * Main fetch event handler
  */
 addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
+  event.respondWith(handleRequest(event));
 });
 
 /**
  * Handle incoming requests
  */
-async function handleRequest(request) {
+async function handleRequest(event) {
+  const request = event.request;
+  
+  // Handle OPTIONS requests for CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: getCorsHeaders(request)
+    });
+  }
+  
   // Only allow GET requests
   if (request.method !== 'GET') {
     return new Response('Method not allowed', { 
       status: 405,
-      headers: { 'Allow': 'GET' }
+      headers: { 'Allow': 'GET, OPTIONS' }
     });
   }
 
@@ -226,16 +236,3 @@ async function checkRateLimit(request) {
   
   return null; // No rate limiting applied in this basic version
 }
-
-/**
- * Handle OPTIONS requests for CORS preflight
- */
-addEventListener('fetch', event => {
-  const request = event.request;
-  if (request.method === 'OPTIONS') {
-    event.respondWith(new Response(null, {
-      status: 204,
-      headers: getCorsHeaders(request)
-    }));
-  }
-});
