@@ -1,0 +1,17 @@
+# Wrangler configuration with actual secrets
+wrangler.toml
+
+# Wrangler generated files
+.wrangler/
+.mf/
+
+# Node modules (if installing wrangler locally)
+node_modules/
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+.dev.vars

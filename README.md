@@ -70,6 +70,33 @@ You need to sign up for a developer account at [ODPT](https://developer.odpt.org
 In particular, the Tokyu system is only available using the
 [challenge 2025](https://developer.odpt.org/challengeinfo) API endpoint and token.
 
+### Option 1: Cloudflare API Proxy (Recommended for Production)
+
+For production deployments, use a Cloudflare Worker to proxy API requests and keep your API key secure. This approach:
+- Keeps your API key secret (never exposed to browsers)
+- Improves performance with edge caching
+- Runs on Cloudflare's free tier
+
+See [scripts/cloudflare/README.md](scripts/cloudflare/README.md) for detailed setup instructions.
+
+Quick start:
+```bash
+cd scripts/cloudflare
+./setup.sh    # Interactive setup
+./deploy.sh   # Deploy to Cloudflare
+```
+
+Then update your `config.json` to use the proxy:
+```json
+{
+  "API_BASE_URL": "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/",
+  "DEFAULT_RAILWAY": "odpt.Railway:Tokyu.Toyoko",
+  "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)"
+}
+```
+
+### Option 2: Direct API Access (For Development)
+
 The app reads a `config.json` at runtime if present (useful for local testing or static hosting). Example `config.example.json` is provided. Additionally, the settings modal (⚙️ button) lets you paste a custom ODPT API key which will be persisted to `localStorage` and used in preference to `config.json`.
 
 How to supply an API key:
@@ -99,11 +126,22 @@ The app supports any train line available in the ODPT API:
 
 ## Scripts
 
+### Development Scripts
+
 - `npm run dev` — start Vite dev server
 - `npm run build` — build for production (`dist/`)
 - `npm run deploy` — build and publish `dist/` to `gh-pages` using `gh-pages` (local push)
 - `npm run typecheck` — run `tsc --noEmit`
 - `npm test` — run Vitest tests
+
+### Utility Scripts
+
+- **Cloudflare API Proxy** (`scripts/cloudflare/`) — Deploy a secure API proxy on Cloudflare Workers
+  - See [scripts/cloudflare/README.md](scripts/cloudflare/README.md) for details
+- **Python Data Fetching** (`scripts/python/`) — Fetch ODPT station data
+  - See [scripts/python/README.md](scripts/python/README.md) for details
+- **Raspberry Pi E-Ink** (`scripts/rpi-eink/`) — Run trainboard on a Raspberry Pi with e-ink display
+  - See [scripts/rpi-eink/README.md](scripts/rpi-eink/README.md) and [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) for details
 
 ## Formatting
 
