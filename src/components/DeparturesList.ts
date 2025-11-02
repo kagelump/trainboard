@@ -13,23 +13,34 @@ export class DeparturesList extends LitElement {
   static styles = css`
     :host {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 2fr;
+      /* Columns: minutes | time | train-type | destination */
+      grid-template-columns: 1fr 1fr 1fr 1.5fr;
+      gap: 0.5rem;
+      row-gap: 0.5rem;
+      align-items: center;
     }
 
     .empty-message {
       text-align: center;
       font-size: 1.5rem;
       padding-top: 2rem;
+      grid-column: 1 / -1;
     }
 
     .loading-message {
       text-align: center;
       font-size: 1.5rem;
       padding-top: 2rem;
+      grid-column: 1 / -1;
     }
 
-    .space-y-1 > * + * {
-      margin-top: 0.25rem;
+    /* Responsive: mobile-friendly layout tweaks */
+    @media (max-width: 640px) {
+      :host {
+        grid-template-columns: 1fr 1fr 1fr 2fr;
+        gap: 0.25rem;
+        row-gap: 0.25rem;
+      }
     }
   `;
 

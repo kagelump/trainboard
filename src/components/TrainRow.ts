@@ -14,9 +14,21 @@ export class TrainRow extends LitElement {
       display: contents;
     }
 
-    .minutes-col,
-    .time-col {
+    /* Minutes column - small numeric column */
+    .minutes-col {
+      font-size: 1.5rem;
+      font-weight: 700;
       text-align: center;
+      color: #fff;
+    }
+
+    /* Time column - large and prominent */
+    .time-col {
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1;
+      text-align: center;
+      align-self: center;
     }
 
     .train-type-badge-wrapper {
@@ -25,31 +37,63 @@ export class TrainRow extends LitElement {
       align-items: center;
     }
 
+    /* Train Type badge */
     .train-type-badge {
-      display: inline-block;
+      font-size: 1.5rem;
+      font-weight: 800;
       padding: 0.25rem 0.5rem;
       border-radius: 0.5rem;
       text-align: center;
       line-height: 1.2;
-      white-space: nowrap;
-      font-size: 1.5rem;
-      font-weight: 800;
+      align-self: center;
       max-width: fit-content;
+      white-space: nowrap;
       /* Default colors for fallback */
       background-color: #333;
       color: #fff;
       border: 2px solid #333;
     }
 
+    /* Default style for unknown/local train types */
+    .type-LOC {
+      background-color: #333;
+      color: #fff;
+      border: 2px solid #333;
+    }
+
+    /* Destination Text */
     .destination-text {
+      font-size: 1.75rem;
+      font-weight: 600;
+      line-height: 1.2;
+      align-self: center;
       text-align: center;
       word-break: break-word;
     }
 
+    /* Responsive: mobile-friendly layout tweaks */
     @media (max-width: 640px) {
+      .minutes-col {
+        font-size: 1rem;
+      }
+
+      .time-col {
+        font-size: 1rem;
+        text-align: left;
+        line-height: 1;
+      }
+
       .train-type-badge {
         font-size: 1rem;
         padding: 0.2rem 0.45rem;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      .destination-text {
+        font-size: 1rem;
+        text-align: center;
+        word-break: break-word;
       }
     }
   `;
