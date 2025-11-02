@@ -7,7 +7,8 @@ import {
   fetchRailwayByUri,
   fetchStationsByUris,
 } from './api';
-import type { OdptRailway, StationTimetableEntry, StationLite } from './types';
+import type { OdptRailway, StationTimetableEntry, StationLite, StationConfig } from './types';
+export type { StationConfig } from './types';
 import { getJapaneseText, collectDestinationUris } from './utils';
 import { SimpleCache } from './cache';
 import { getTrainTypeCssClass } from './trainTypeStyles';
@@ -15,12 +16,7 @@ import { setPageTitle } from './ui';
 import terminusData from './terminus.json';
 
 // --- Types ---
-export type StationConfig = {
-  name: string;
-  uri: string;
-  /** Index from railway stationOrder, zero-padded to 3 digits for sorting */
-  sortKey: string;
-};
+// StationConfig is defined and exported from `src/types.ts`.
 
 export type TrainTypeMapEntry = {
   name: string;
@@ -181,23 +177,21 @@ export async function loadRailwayMetadata(
     }
 
     // Extract stations from stationOrder
-  const stationOrder = (railway['odpt:stationOrder'] || []) as StationLite[];
-  STATION_CONFIGS = stationOrder
+    const stationOrder = (railway['odpt:stationOrder'] || []) as StationLite[];
+    STATION_CONFIGS = stationOrder
       .map((entry) => {
         const stationUri = entry['odpt:station'] || '';
         const stationTitle = entry['odpt:stationTitle'];
         const stationName = getJapaneseText(stationTitle);
-        const index = entry['odpt:index'] || 0;
-        // Zero-pad index to 3 digits for sortKey
-        const sortKey = String(index).padStart(3, '0');
+        const index = entry['odpt:index'] || -1;
         return {
           name: stationName,
           uri: stationUri,
-          sortKey,
+          index: index,
         } as StationConfig;
       })
       .filter((station) => station.uri && station.name !== 'N/A')
-      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+      .sort((a, b) => a.index - b.index);
 
     // Update page title
     const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);

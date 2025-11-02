@@ -61,6 +61,15 @@ export interface StationLite {
   [key: string]: unknown;
 }
 
+export interface StationConfig {
+  /** Display name for the station (Japanese preferred) */
+  name: string;
+  /** Station owl:sameAs URI */
+  uri: string;
+  /** Index from railway stationOrder */
+  index: number;
+}
+
 export interface OdptRailDirection {
   '@id'?: string;
   '@type'?: string;

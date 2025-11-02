@@ -1,8 +1,8 @@
 // src/ui.ts
 import type { StationTimetableEntry } from './types';
 import type { SimpleCache } from './cache';
-import { timeToMinutes, formatTimeHHMM } from './utils';
-import { getStationConfigs, getRailwayConfigs } from './dataLoaders';
+import { formatTimeHHMM } from './utils';
+import { getStationConfigs } from './dataLoaders';
 import prefectures from './prefectures.json';
 import sortedPrefectures from './sorted_prefectures.json';
 import operators from './operators.json';
