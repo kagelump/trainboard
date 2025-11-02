@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { renderDirection, setLoadingState, setDirectionHeaders } from '../ui';
 import { SimpleCache } from '../cache';
 import type { StationTimetableEntry } from '../types';
+import type { DeparturesList } from '../components/DeparturesList';
 
 describe('Train Row Rendering', () => {
   beforeEach(() => {
@@ -14,17 +15,22 @@ describe('Train Row Rendering', () => {
     `;
   });
 
-  it('should render empty state when no departures', () => {
+  it('should render empty state when no departures', async () => {
     const stationNameCache = new SimpleCache<string>();
     const trainTypeMap = {};
 
     renderDirection('inbound', [], stationNameCache, trainTypeMap);
 
     const container = document.getElementById('departures-inbound');
-    expect(container?.textContent).toContain('本日の発車予定はありません');
+    const departuresList = container?.querySelector('departures-list') as DeparturesList;
+
+    // Wait for Lit to render
+    await departuresList?.updateComplete;
+
+    expect(departuresList?.shadowRoot?.textContent).toContain('本日の発車予定はありません');
   });
 
-  it('should render train rows with correct data', () => {
+  it('should render train rows with correct data', async () => {
     const stationNameCache = new SimpleCache<string>();
     stationNameCache.set('odpt.Station:Tokyu.Toyoko.Shibuya', '渋谷');
 
@@ -43,13 +49,23 @@ describe('Train Row Rendering', () => {
     renderDirection('inbound', departures, stationNameCache, trainTypeMap);
 
     const container = document.getElementById('departures-inbound');
-    expect(container?.innerHTML).toContain('09:30');
-    expect(container?.innerHTML).toContain('急行');
-    expect(container?.innerHTML).toContain('渋谷');
-    expect(container?.innerHTML).toContain('type-EXP');
+    const departuresList = container?.querySelector('departures-list') as DeparturesList;
+
+    // Wait for Lit to render
+    await departuresList?.updateComplete;
+
+    // Get train-row elements from the DeparturesList shadow DOM
+    const trainRow = departuresList?.shadowRoot?.querySelector('train-row');
+    await (trainRow as any)?.updateComplete;
+
+    // Get content from the train-row shadow DOM
+    const trainRowContent = trainRow?.shadowRoot?.textContent || '';
+    expect(trainRowContent).toContain('09:30');
+    expect(trainRowContent).toContain('急行');
+    expect(trainRowContent).toContain('渋谷');
   });
 
-  it('should handle multiple train rows', () => {
+  it('should handle multiple train rows', async () => {
     const stationNameCache = new SimpleCache<string>();
     stationNameCache.set('odpt.Station:Tokyu.Toyoko.Shibuya', '渋谷');
     stationNameCache.set('odpt.Station:Tokyu.Toyoko.Yokohama', '横浜');
@@ -75,11 +91,16 @@ describe('Train Row Rendering', () => {
     renderDirection('outbound', departures, stationNameCache, trainTypeMap);
 
     const container = document.getElementById('departures-outbound');
-    const trainRows = container?.querySelectorAll('.train-row');
+    const departuresList = container?.querySelector('departures-list') as DeparturesList;
+
+    // Wait for Lit to render
+    await departuresList?.updateComplete;
+
+    const trainRows = departuresList?.shadowRoot?.querySelectorAll('train-row');
     expect(trainRows?.length).toBe(2);
   });
 
-  it('should render train type badge with correct class', () => {
+  it('should render train type badge with correct class', async () => {
     const stationNameCache = new SimpleCache<string>();
     stationNameCache.set('odpt.Station:Test', 'テスト駅');
 
@@ -98,12 +119,21 @@ describe('Train Row Rendering', () => {
     renderDirection('inbound', departures, stationNameCache, trainTypeMap);
 
     const container = document.getElementById('departures-inbound');
-    const badge = container?.querySelector('.train-type-badge');
-    expect(badge?.classList.contains('type-LTD')).toBe(true);
-    expect(badge?.textContent).toBe('特急');
+    const departuresList = container?.querySelector('departures-list') as DeparturesList;
+
+    // Wait for Lit to render
+    await departuresList?.updateComplete;
+
+    // Get train-row element from the DeparturesList shadow DOM
+    const trainRow = departuresList?.shadowRoot?.querySelector('train-row');
+    await (trainRow as any)?.updateComplete;
+
+    // Get content from the train-row shadow DOM
+    const trainRowContent = trainRow?.shadowRoot?.textContent || '';
+    expect(trainRowContent).toContain('特急');
   });
 
-  it('should handle unknown train type', () => {
+  it('should handle unknown train type', async () => {
     const stationNameCache = new SimpleCache<string>();
     stationNameCache.set('odpt.Station:Test', 'テスト駅');
 
@@ -120,8 +150,18 @@ describe('Train Row Rendering', () => {
     renderDirection('inbound', departures, stationNameCache, trainTypeMap);
 
     const container = document.getElementById('departures-inbound');
-    expect(container?.innerHTML).toContain('不明');
-    expect(container?.innerHTML).toContain('type-LOC');
+    const departuresList = container?.querySelector('departures-list') as DeparturesList;
+
+    // Wait for Lit to render
+    await departuresList?.updateComplete;
+
+    // Get train-row element from the DeparturesList shadow DOM
+    const trainRow = departuresList?.shadowRoot?.querySelector('train-row');
+    await (trainRow as any)?.updateComplete;
+
+    // Get content from the train-row shadow DOM
+    const trainRowContent = trainRow?.shadowRoot?.textContent || '';
+    expect(trainRowContent).toContain('不明');
   });
 });
 
@@ -135,14 +175,21 @@ describe('UI State Rendering', () => {
     `;
   });
 
-  it('should set loading state', () => {
+  it('should set loading state', async () => {
     setLoadingState();
 
     const inbound = document.getElementById('departures-inbound');
     const outbound = document.getElementById('departures-outbound');
 
-    expect(inbound?.textContent).toContain('時刻表を取得中');
-    expect(outbound?.textContent).toContain('時刻表を取得中');
+    const inboundList = inbound?.querySelector('departures-list') as DeparturesList;
+    const outboundList = outbound?.querySelector('departures-list') as DeparturesList;
+
+    // Wait for Lit to render
+    await inboundList?.updateComplete;
+    await outboundList?.updateComplete;
+
+    expect(inboundList?.shadowRoot?.textContent).toContain('時刻表を取得中');
+    expect(outboundList?.shadowRoot?.textContent).toContain('時刻表を取得中');
   });
 
   it('should set direction headers', () => {

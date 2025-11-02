@@ -7,6 +7,8 @@ import prefectures from './prefectures.json';
 import sortedPrefectures from './sorted_prefectures.json';
 import operators from './operators.json';
 import { DISPLAYED_TRAINS_LIMIT } from './constants';
+import './components/DeparturesList.js';
+import type { DeparturesList } from './components/DeparturesList.js';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -41,11 +43,31 @@ export function setStationHeader(name: string | null): void {
 }
 
 export function setLoadingState(): void {
-  const inContainer = document.getElementById('departures-inbound');
-  const outContainer = document.getElementById('departures-outbound');
-  const loadingHtml = `<p class="text-center text-2xl pt-8">時刻表を取得中...</p>`;
-  if (inContainer) inContainer.innerHTML = loadingHtml;
-  if (outContainer) outContainer.innerHTML = loadingHtml;
+  const inContainer = document.getElementById('departures-inbound') as HTMLElement;
+  const outContainer = document.getElementById('departures-outbound') as HTMLElement;
+
+  // Create or get DeparturesList components
+  let inList = inContainer?.querySelector('departures-list') as DeparturesList;
+  let outList = outContainer?.querySelector('departures-list') as DeparturesList;
+
+  if (!inList) {
+    inList = document.createElement('departures-list') as DeparturesList;
+    if (inContainer) {
+      inContainer.innerHTML = '';
+      inContainer.appendChild(inList);
+    }
+  }
+
+  if (!outList) {
+    outList = document.createElement('departures-list') as DeparturesList;
+    if (outContainer) {
+      outContainer.innerHTML = '';
+      outContainer.appendChild(outList);
+    }
+  }
+
+  if (inList) inList.loading = true;
+  if (outList) outList.loading = true;
 }
 
 export function setDirectionHeaders(inHeaderText: string, outHeaderText: string): void {
@@ -87,30 +109,23 @@ export function renderDirection(
   stationNameCache: SimpleCache<string>,
   trainTypeMap: Record<string, { name: string; class: string }>,
 ): void {
-  const container = document.getElementById(`departures-${directionId}`);
+  const container = document.getElementById(`departures-${directionId}`) as HTMLElement;
   if (!container) return;
-  if (departures.length === 0) {
-    container.innerHTML = `<p class="text-center text-2xl pt-8">本日の発車予定はありません。</p>`;
-    return;
-  }
-  container.innerHTML = departures
-    .map((train) => {
-      const departureTime = (train as any)['odpt:departureTime'] || '';
-      const trainTypeUri = (train as any)['odpt:trainType'] || '';
-      const destinationTitle = getDestinationTitle(train, stationNameCache);
-      const trainType = trainTypeMap[trainTypeUri] || { name: '不明', class: 'type-LOC' };
 
-      return `
-        <div class="train-row items-center justify-between" data-departure="${departureTime}">
-          <div class="minutes-col text-center" data-departure="${departureTime}">--</div>
-          <div class="time-col text-center">${departureTime || '--'}</div>
-          <div class="flex justify-center items-center">
-            <span class="train-type-badge ${trainType.class}">${trainType.name}</span>
-          </div>
-          <div class="destination-text">${destinationTitle}</div>
-        </div>`;
-    })
-    .join('');
+  // Create or get DeparturesList component
+  let departuresList = container.querySelector('departures-list') as DeparturesList;
+
+  if (!departuresList) {
+    departuresList = document.createElement('departures-list') as DeparturesList;
+    container.innerHTML = '';
+    container.appendChild(departuresList);
+  }
+
+  // Update component properties
+  departuresList.departures = departures;
+  departuresList.stationNameCache = stationNameCache;
+  departuresList.trainTypeMap = trainTypeMap;
+  departuresList.loading = false;
 }
 
 // --- Minutes-away updater ---
@@ -156,41 +171,46 @@ function updateMinutesOnce(
       return;
     }
 
-    const els = Array.from(container.querySelectorAll<HTMLElement>('.train-row[data-departure]'));
+    const departuresList = container.querySelector('departures-list') as DeparturesList;
+    if (!departuresList) return;
+
+    // Get all train-row elements from the shadow DOM
+    const trainRows = Array.from(
+      departuresList.shadowRoot?.querySelectorAll('train-row') || [],
+    );
+    if (trainRows.length === 0) return;
+
     const displayedTimes =
       directionId === 'inbound' ? displayedTrainsInbound : displayedTrainsOutbound;
     const highestShownIndex =
       directionId === 'inbound' ? highestShownIndexInbound : highestShownIndexOutbound;
 
-    // Track which trains to remove
-    const trainsToRemove: HTMLElement[] = [];
+    // Track which trains have departed
+    const departedIndices: number[] = [];
 
-    for (const el of els) {
-      const dep = el.getAttribute('data-departure') || '';
+    trainRows.forEach((trainRow, index) => {
+      const dep = trainRow.getAttribute('departuretime') || '';
       const depSecs = parseTimeToSeconds(dep);
       const diff = depSecs - nowSeconds;
 
-      const minutesCol = el.querySelector('.minutes-col');
-      if (!minutesCol) continue;
-
       if (diff <= 0) {
-        // Train has departed - mark for removal
-        trainsToRemove.push(el);
+        // Train has departed
+        departedIndices.push(index);
       } else if (diff <= 60) {
-        minutesCol.textContent = '到着';
+        (trainRow as any).minutesText = '到着';
       } else {
         const mins = Math.ceil(diff / 60);
-        minutesCol.textContent = `${mins}分`;
+        (trainRow as any).minutesText = `${mins}分`;
       }
-    }
+    });
 
-    // Remove departed trains and replace with cached trains
-    if (trainsToRemove.length > 0) {
-      // Get next trains from cache starting from after the highest index we've shown
+    // Remove departed trains and add new ones from cache
+    if (departedIndices.length > 0) {
+      // Get next trains from cache
       const nextStartIndex = highestShownIndex + 1;
-      const nextTrains = trainCache.slice(nextStartIndex, nextStartIndex + trainsToRemove.length);
+      const nextTrains = trainCache.slice(nextStartIndex, nextStartIndex + departedIndices.length);
 
-      // Update the highest shown index (only if we actually got new trains)
+      // Update the highest shown index
       if (nextTrains.length > 0) {
         if (directionId === 'inbound') {
           highestShownIndexInbound = nextStartIndex + nextTrains.length - 1;
@@ -199,38 +219,32 @@ function updateMinutesOnce(
         }
       }
 
-      // Remove departed trains
-      trainsToRemove.forEach((el) => {
-        const dep = el.getAttribute('data-departure') || '';
-        const index = displayedTimes.indexOf(dep);
-        if (index > -1) {
-          displayedTimes.splice(index, 1);
+      // Remove departed trains from tracking
+      departedIndices.forEach((index) => {
+        const time = displayedTimes[index];
+        if (time) {
+          const timeIndex = displayedTimes.indexOf(time);
+          if (timeIndex > -1) {
+            displayedTimes.splice(timeIndex, 1);
+          }
         }
-        el.remove();
       });
 
-      // Add new trains from cache
+      // Add new trains
       nextTrains.forEach((train) => {
         const departureTime = (train as any)['odpt:departureTime'];
-        if (!departureTime || displayedTimes.includes(departureTime)) return;
-
-        const trainTypeUri = (train as any)['odpt:trainType'] || '';
-        const destinationTitle = getDestinationTitle(train, stationNameCache);
-        const trainType = trainTypeMap[trainTypeUri] || { name: '不明', class: 'type-LOC' };
-
-        const trainHtml = `
-          <div class="train-row items-center justify-between" data-departure="${departureTime}">
-            <div class="minutes-col text-center" data-departure="${departureTime}">--</div>
-            <div class="time-col text-center">${departureTime}</div>
-            <div class="flex justify-center items-center">
-              <span class="train-type-badge ${trainType.class}">${trainType.name}</span>
-            </div>
-            <div class="destination-text">${destinationTitle}</div>
-          </div>`;
-
-        container.insertAdjacentHTML('beforeend', trainHtml);
-        displayedTimes.push(departureTime);
+        if (departureTime && !displayedTimes.includes(departureTime)) {
+          displayedTimes.push(departureTime);
+        }
       });
+
+      // Get current departures, remove departed, add new ones
+      const currentDepartures = [...departuresList.departures];
+      const updatedDepartures = currentDepartures.filter((_, index) => !departedIndices.includes(index));
+      updatedDepartures.push(...nextTrains);
+
+      // Update the component
+      departuresList.departures = updatedDepartures;
     }
   };
 
