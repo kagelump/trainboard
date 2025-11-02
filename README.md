@@ -138,13 +138,13 @@ The app supports any train line available in the ODPT API:
 You can share specific railway/station views using URLs:
 
 ```
-https://your-site.com/railway/Tokyu.Toyoko/station/武蔵小杉
+https://kagelump.github.io/trainboard/railway/Tokyu.Toyoko/station/武蔵小杉
 ```
 
 The URL routing supports flexible matching:
 - Full Japanese names: `武蔵小杉` or `武蔵小杉 (TY11)`
 - Latin ODPT names: `Tokyu.Toyoko` or `JR-East.Yamanote.Tokyo`
-- Partial names: `Toyoko` (matches `Tokyu.Toyoko`) or `Tokyo` (matches station name)
+- Partial names: `Toyoko` (matches `Tokyu.Toyoko`) or `MusashiKosugi` (matches station name)
 
 ### Geolocation Support
 
