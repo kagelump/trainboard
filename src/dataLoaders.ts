@@ -7,7 +7,7 @@ import {
   fetchRailwayByUri,
   fetchStationsByUris,
 } from './api';
-import type { OdptRailway, StationTimetableEntry } from './types';
+import type { OdptRailway, StationTimetableEntry, StationLite } from './types';
 import { getJapaneseText, collectDestinationUris } from './utils';
 import { SimpleCache } from './cache';
 import { getTrainTypeCssClass } from './trainTypeStyles';
@@ -181,8 +181,8 @@ export async function loadRailwayMetadata(
     }
 
     // Extract stations from stationOrder
-    const stationOrder = railway['odpt:stationOrder'] || [];
-    STATION_CONFIGS = stationOrder
+  const stationOrder = (railway['odpt:stationOrder'] || []) as StationLite[];
+  STATION_CONFIGS = stationOrder
       .map((entry) => {
         const stationUri = entry['odpt:station'] || '';
         const stationTitle = entry['odpt:stationTitle'];
