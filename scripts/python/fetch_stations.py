@@ -14,13 +14,17 @@ in the repository root.
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+
+
+# Constants
+MAX_PARENT_DIRS = 5  # Maximum number of parent directories to search for config.json
+REQUEST_TIMEOUT = 30  # Timeout in seconds for API requests
 
 
 class OdptClient:
@@ -59,7 +63,7 @@ class OdptClient:
         
         try:
             req = Request(url)
-            with urlopen(req, timeout=30) as response:
+            with urlopen(req, timeout=REQUEST_TIMEOUT) as response:
                 data = response.read()
                 return json.loads(data.decode('utf-8'))
         except HTTPError as e:
@@ -132,7 +136,7 @@ def find_config_file() -> Optional[Path]:
     current_dir = Path(__file__).resolve().parent
     
     # Go up directories to find config.json
-    for _ in range(5):  # Check up to 5 levels up
+    for _ in range(MAX_PARENT_DIRS):
         config_path = current_dir / 'config.json'
         if config_path.exists():
             return config_path
