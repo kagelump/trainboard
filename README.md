@@ -44,6 +44,23 @@ npm run build
 
 `dist/` contains `index.html` and assets. The project is configured so built assets use relative paths (Vite `base: './'`) which makes the site suitable for GitHub Pages or serving from a subpath.
 
+### URL Routing for GitHub Pages
+
+The app supports client-side URL routing with paths like `/railway/{name}/station/{name}`. When deployed to GitHub Pages at a repository path (e.g., `https://username.github.io/trainboard/`), the routing automatically detects the base path and handles URLs correctly.
+
+**How it works:**
+- The app auto-detects the base path from the URL structure
+- When on GitHub Pages at `/trainboard/`, URLs will be `/trainboard/railway/.../station/...`
+- When running locally or at the domain root, URLs will be `/railway/.../station/...`
+- The 404.html file enables SPA routing on GitHub Pages
+
+**Custom base path (optional):**
+If you need to override the auto-detection, set the `VITE_BASE_PATH` environment variable during build:
+
+```bash
+VITE_BASE_PATH=/my-custom-path npm run build
+```
+
 ## Publish to GitHub Pages
 
 There are two supported ways to publish:
