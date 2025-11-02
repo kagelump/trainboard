@@ -33,7 +33,10 @@ The Cloudflare Worker acts as a secure proxy between your trainboard application
 - **`wrangler.toml.example`** - Template configuration for Wrangler CLI
 - **`setup.sh`** - Interactive setup script for initial configuration
 - **`deploy.sh`** - Deployment script for publishing the worker
+- **`test.sh`** - Test script to verify the deployed worker is working correctly
+- **`config.example.json`** - Example trainboard configuration for using the proxy
 - **`README.md`** - This documentation file
+- **`.gitignore`** - Prevents committing sensitive files like wrangler.toml
 
 ## Prerequisites
 
@@ -230,6 +233,37 @@ Test the local worker:
 ```bash
 curl "http://localhost:8787/health"
 curl "http://localhost:8787/odpt:Station?odpt:railway=odpt.Railway:Tokyu.Toyoko"
+```
+
+## Testing
+
+### Automated Testing
+
+After deploying, use the test script to verify the worker is functioning correctly:
+
+```bash
+./test.sh https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev
+```
+
+This will:
+- Test the health endpoint
+- Verify error handling
+- Make a real ODPT API request through the proxy
+- Check CORS headers
+
+### Manual Testing
+
+Test individual endpoints:
+
+```bash
+# Health check
+curl https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/health
+
+# Get stations
+curl "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/odpt:Station?odpt:railway=odpt.Railway:Tokyu.Toyoko"
+
+# Get station timetable
+curl "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/odpt:StationTimetable?odpt:station=odpt.Station:Tokyu.Toyoko.MusashiKosugi"
 ```
 
 ## Deployment
