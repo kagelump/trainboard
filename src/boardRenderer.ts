@@ -142,7 +142,13 @@ async function updateRailwayStatus(): Promise<void> {
     }
   } catch (error) {
     console.warn('Failed to fetch status:', error);
-    uiShowStatus('運行情報取得でエラーが発生しました。API キーを確認してください。', 'warn');
+    // If we're using a proxy and intentionally have no API key, don't prompt
+    // the user to enter a key (the proxy is expected to handle requests).
+    const apiKey = getApiKey();
+    const apiBaseUrl = getApiBaseUrl();
+    const needsKeyMessage =
+      apiKey === null && apiBaseUrl.includes('proxy') ? '' : ' API キーを確認してください。';
+    uiShowStatus(`運行情報取得でエラーが発生しました。${needsKeyMessage}`.trim(), 'warn');
   }
 }
 

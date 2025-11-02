@@ -73,6 +73,7 @@ In particular, the Tokyu system is only available using the
 ### Option 1: Cloudflare API Proxy (Recommended for Production)
 
 For production deployments, use a Cloudflare Worker to proxy API requests and keep your API key secure. This approach:
+
 - Keeps your API key secret (never exposed to browsers)
 - Improves performance with edge caching
 - Runs on Cloudflare's free tier
@@ -80,6 +81,7 @@ For production deployments, use a Cloudflare Worker to proxy API requests and ke
 See [scripts/cloudflare/README.md](scripts/cloudflare/README.md) for detailed setup instructions.
 
 Quick start:
+
 ```bash
 cd scripts/cloudflare
 ./setup.sh    # Interactive setup
@@ -87,6 +89,7 @@ cd scripts/cloudflare
 ```
 
 Then update your `config.json` to use the proxy:
+
 ```json
 {
   "API_BASE_URL": "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/",
@@ -94,6 +97,10 @@ Then update your `config.json` to use the proxy:
   "DEFAULT_STATION_NAME": "武蔵小杉 (TY11)"
 }
 ```
+
+## Note about proxy mode
+
+When `API_BASE_URL` contains the word `proxy` the application treats this as a proxy deployment and allows the ODPT API key to be omitted in the browser. In this mode the app will pass a null API key to the client and the client will omit the `acl:consumerKey` query parameter; the proxy is expected to handle authentication and/or to inject the necessary credentials on the server side. This keeps keys out of the browser and is the recommended production setup.
 
 ### Option 2: Direct API Access (For Development)
 
@@ -165,6 +172,7 @@ You can run this trainboard on a Raspberry Pi with an e-ink display for a physic
 - Troubleshooting and maintenance
 
 Quick start:
+
 ```bash
 # On your Raspberry Pi
 cd ~/trainboard/scripts/rpi-eink
