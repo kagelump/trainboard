@@ -126,7 +126,8 @@ async function fetchAndRenderTimetableData(stationUri: string): Promise<boolean>
 
   uiRenderDirection('inbound', inboundTrains, stationNameCache, TRAIN_TYPE_MAP);
   uiRenderDirection('outbound', outboundTrains, stationNameCache, TRAIN_TYPE_MAP);
-  uiStartMinutesUpdater();
+  // Start the minutes updater with the current train caches and lookup maps
+  uiStartMinutesUpdater(inboundTrains, outboundTrains, stationNameCache, TRAIN_TYPE_MAP);
 
   return true;
 }
