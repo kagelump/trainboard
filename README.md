@@ -8,6 +8,7 @@ Highlights of changes in this repo
 - **Generalized to support any ODPT train line** with a railway line selector.
 - **URL-based routing** for sharing specific railway/station views with flexible name matching.
 - **Geolocation support** for finding nearby stations using the browser's location API.
+- **Automatic CPU optimization** using Page Visibility API to pause updates when tab is inactive, saving resources for Raspberry Pi deployments.
 - Vite is used for development and fast HMR.
 - Support for a user-supplied API key via the settings modal (persisted to localStorage).
 - Destination station name caching (SimpleCache) and batch station metadata lookup.
@@ -194,6 +195,37 @@ This project uses Prettier. To format source files:
 ```bash
 npm run format
 ```
+
+## Performance and CPU Optimization
+
+The trainboard application includes automatic CPU optimization features designed to minimize resource usage, especially important for Raspberry Pi deployments with limited resources:
+
+### Page Visibility API
+
+When the browser tab containing the trainboard becomes inactive (e.g., switched to another tab or minimized), the application automatically:
+
+- Pauses all periodic refresh intervals (timetable, status, clock updates)
+- Stops the minutes countdown updater in departure lists
+- Reduces CPU usage to near-zero while inactive
+
+When the tab becomes active again, the application:
+
+- Resumes all refresh intervals
+- Immediately fetches fresh data to ensure up-to-date information
+- Updates the display to show current departure times
+
+This is implemented via the `visibilityManager` module which uses the browser's [Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API). The feature works automatically without any configuration needed.
+
+### Refresh Intervals
+
+The application uses the following refresh intervals (configured in `src/config.ts`):
+
+- **Timetable refresh**: 5 minutes (fetches departure data)
+- **Status refresh**: 5 minutes (fetches railway operation status)
+- **Minutes updater**: 15 seconds (updates countdown timers)
+- **Clock update**: 10 seconds (updates header clock)
+
+These intervals are paused when the page is not visible, saving CPU cycles and API calls.
 
 ## CI
 
