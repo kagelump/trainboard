@@ -28,6 +28,7 @@ export const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
 let apiKeyModalInitialized = false;
 let stationModalInitialized = false;
 let railwayModalInitialized = false;
+let locationModalInitialized = false;
 
 export function setPageTitle(title: string): void {
   document.title = title;
@@ -637,4 +638,122 @@ export function clearStatus(): void {
   if (!el) return;
   el.classList.add('hidden');
   el.textContent = '';
+}
+
+export function openLocationModal(): void {
+  const modal = document.getElementById('location-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex', 'opacity-100');
+}
+
+export function closeLocationModal(): void {
+  const modal = document.getElementById('location-modal');
+  if (!modal) return;
+  modal.classList.remove('flex', 'opacity-100');
+  modal.classList.add('hidden');
+}
+
+export function setLocationStatus(message: string): void {
+  const el = document.getElementById('location-status');
+  if (!el) return;
+  el.textContent = message;
+}
+
+export function setLocationStationsList(html: string): void {
+  const el = document.getElementById('nearby-stations-list');
+  if (!el) return;
+  el.innerHTML = html;
+}
+
+/**
+ * Setup the location modal and handle finding nearby stations
+ */
+export function setupLocationModal(
+  onStationSelect: (stationUri: string, railwayUri: string) => void,
+): void {
+  const modal = document.getElementById('location-modal');
+  const locationButton = document.getElementById('location-button');
+  const closeButton = document.getElementById('close-location-modal');
+
+  if (!modal || !locationButton || !closeButton) return;
+
+  // Only add event listeners once
+  if (!locationModalInitialized) {
+    closeButton.addEventListener('click', () => {
+      closeLocationModal();
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeLocationModal();
+    });
+
+    locationButton.addEventListener('click', async () => {
+      openLocationModal();
+      setLocationStatus('現在地を取得中...');
+      setLocationStationsList('');
+
+      try {
+        // Dynamically import location module to avoid bundling issues
+        const { getCurrentPosition, findNearbyStations, formatDistance } = await import(
+          './location'
+        );
+
+        const position = await getCurrentPosition();
+        const { latitude, longitude } = position.coords;
+
+        setLocationStatus(`現在地: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+
+        // Find nearby stations (top 5)
+        const nearbyStations = findNearbyStations(latitude, longitude, 5);
+
+        if (nearbyStations.length === 0) {
+          setLocationStationsList(
+            '<p class="text-center text-lg">近くに駅が見つかりませんでした</p>',
+          );
+          return;
+        }
+
+        // Generate HTML for station list
+        const stationsHtml = nearbyStations
+          .map(
+            (station) => `
+            <button
+              class="w-full text-left p-4 mb-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition border-2 border-white"
+              data-station-uri="${station.uri}"
+              data-railway-uri="${station.railway}"
+            >
+              <div class="font-bold text-xl">${station.name}</div>
+              <div class="text-sm text-gray-300 mt-1">距離: ${formatDistance(station.distance)}</div>
+            </button>
+          `,
+          )
+          .join('');
+
+        setLocationStationsList(stationsHtml);
+
+        // Add click handlers to station buttons
+        const stationButtons = modal.querySelectorAll('[data-station-uri]');
+        stationButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const stationUri = button.getAttribute('data-station-uri');
+            const railwayUri = button.getAttribute('data-railway-uri');
+            if (stationUri && railwayUri) {
+              onStationSelect(stationUri, railwayUri);
+              closeLocationModal();
+            }
+          });
+        });
+      } catch (error) {
+        const e = error instanceof Error ? error : new Error(String(error));
+        console.error('Location error:', e);
+        setLocationStatus('エラー: ' + e.message);
+        setLocationStationsList(
+          '<p class="text-center text-lg text-red-400">位置情報の取得に失敗しました。ブラウザの設定で位置情報の使用を許可してください。</p>',
+        );
+      }
+    });
+
+    locationModalInitialized = true;
+  }
 }
