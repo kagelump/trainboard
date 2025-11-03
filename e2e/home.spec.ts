@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Trainboard Basic Functionality', () => {
   test('should load the home page', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     
     // Check that the main header is present
     await expect(page.locator('#station-header')).toBeVisible();
@@ -12,7 +12,7 @@ test.describe('Trainboard Basic Functionality', () => {
   });
 
   test('should display settings button', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     
     // Check that settings button exists
     const settingsButton = page.locator('#settings-button');
@@ -21,7 +21,7 @@ test.describe('Trainboard Basic Functionality', () => {
   });
 
   test('should display location button', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     
     // Check that location button exists
     const locationButton = page.locator('#location-button');
@@ -30,7 +30,7 @@ test.describe('Trainboard Basic Functionality', () => {
   });
 
   test('should have departure board panels', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     
     // Check for both direction panels
     await expect(page.locator('#panel-inbound')).toBeVisible();
@@ -42,7 +42,7 @@ test.describe('Trainboard Basic Functionality', () => {
   });
 
   test('should have direction headers', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'networkidle' });
     
     // Check that direction headers exist
     await expect(page.locator('#direction-inbound-header')).toBeVisible();
