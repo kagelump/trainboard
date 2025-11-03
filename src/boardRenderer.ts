@@ -28,10 +28,7 @@ import {
   getStationConfigs,
   ensureStationNamesForDepartures,
 } from './dataLoaders';
-import {
-  getApiKey,
-  getApiBaseUrl,
-} from './config';
+import { getApiKey, getApiBaseUrl } from './config';
 import { visibilityManager } from './visibilityManager';
 import { tickManager, TickType, type TickEvent } from './tickManager';
 
@@ -234,6 +231,10 @@ function pauseTicks(): void {
  */
 function resumeTicks(stationUri: string): void {
   console.info('Resuming ticks (page visible)');
+  // Update the UI clock immediately so the display is correct as soon as
+  // the page becomes visible or ticks are resumed.
+  uiUpdateClock();
+
   tickManager.start();
 
   // Immediately fetch fresh data when resuming
