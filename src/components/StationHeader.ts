@@ -9,15 +9,12 @@ export class StationHeader extends LitElement {
   static styles = css`
     :host {
       display: block;
-    }
-
-    .station-name {
       font-size: 1.875rem; /* text-3xl */
       letter-spacing: -0.025em; /* tracking-tight */
     }
 
     @media (min-width: 640px) {
-      .station-name {
+      :host {
         font-size: 3rem; /* sm:text-5xl */
       }
     }
@@ -27,7 +24,7 @@ export class StationHeader extends LitElement {
   stationName = '読込中...';
 
   render() {
-    return html`<h1 class="station-name">${this.stationName}</h1>`;
+    return html`${this.stationName}`;
   }
 }
 

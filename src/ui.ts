@@ -9,6 +9,7 @@ import operators from './operators.json';
 import { DISPLAYED_TRAINS_LIMIT } from './constants';
 import './components/DeparturesList.js';
 import './components/StationHeader.js';
+import './components/HeaderButton.js';
 import { TrainDepartureView } from './components/TrainDepartureView.js';
 import type { DeparturesList } from './components/DeparturesList.js';
 import type { StationHeader } from './components/StationHeader.js';

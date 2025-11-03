@@ -15,20 +15,12 @@
       <station-header></station-header>
       <div class="flex items-center space-x-2 sm:space-x-4">
         <span id="time-header" class="text-2xl sm:text-4xl font-mono">--:--</span>
-        <button
+        <header-button
           id="location-button"
-          class="rounded-md sm:rounded-lg shadow-xl hover:bg-white hover:text-black transition duration-150"
+          icon="📍"
           title="現在地から最寄り駅を探す"
-        >
-          📍
-        </button>
-        <button
-          id="settings-button"
-          class="rounded-md sm:rounded-lg shadow-xl hover:bg-white hover:text-black transition duration-150"
-          title="設定"
-        >
-          ⚙️
-        </button>
+        ></header-button>
+        <header-button id="settings-button" icon="⚙️" title="設定"></header-button>
       </div>
     </header>
 
