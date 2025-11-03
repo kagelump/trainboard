@@ -159,6 +159,7 @@ export class DeparturesList extends LitElement {
       // Only update if there are departures to show.
       if (this.departures && this.departures.length > 0) {
         // Wait for the update cycle to complete and the shadow DOM to be ready.
+        // Calculate current time immediately for responsive UX (don't wait for next tick)
         const now = new Date();
         const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
         this.updateComplete.then(() => this.updateMinutesOnce(nowSeconds));

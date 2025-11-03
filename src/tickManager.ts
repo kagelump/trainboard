@@ -180,7 +180,9 @@ import {
   CLOCK_UPDATE_INTERVAL_MS,
 } from './config';
 
+// Note: Major ticks handle both timetable AND status API refreshes.
+// Both use TIMETABLE_REFRESH_INTERVAL_MS (5 minutes) as they refresh together.
 export const tickManager = new TickManager(
-  TIMETABLE_REFRESH_INTERVAL_MS, // Major ticks for API refresh
+  TIMETABLE_REFRESH_INTERVAL_MS, // Major ticks for API refresh (timetable + status)
   CLOCK_UPDATE_INTERVAL_MS, // Minor ticks for UI updates (clock, minutes)
 );
