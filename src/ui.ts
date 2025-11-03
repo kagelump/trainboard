@@ -40,10 +40,16 @@ export function setPageTitle(title: string): void {
   document.title = title;
 }
 
-export function setStationHeader(name: string | null): void {
+export function setStationHeader(
+  name: string | null,
+  railwayName?: string | null,
+  operatorName?: string | null,
+): void {
   const el = document.querySelector('station-header') as StationHeader | null;
   if (!el) return;
   el.stationName = name || '読込中...';
+  el.railwayName = railwayName || '';
+  el.operatorName = operatorName || '';
 }
 
 export function setLoadingState(): void {
@@ -184,7 +190,7 @@ export function chooseInitialRailway(
 /**
  * Get a friendly operator name from the operator URI
  */
-function getOperatorName(operatorUri: string): string {
+export function getOperatorName(operatorUri: string): string {
   if (!operatorUri) return 'その他';
   // Extract operator name from URI like "odpt.Operator:Tokyu" -> "Tokyu"
   const parts = operatorUri.split(':');

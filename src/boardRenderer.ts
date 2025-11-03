@@ -14,6 +14,7 @@ import {
   showStatus as uiShowStatus,
   clearStatus as uiClearStatus,
   openApiModal as uiOpenApiModal,
+  getOperatorName,
   STORAGE_KEY_RAILWAY_URI,
   STORAGE_KEY_STATION_URI,
 } from './ui';
@@ -26,6 +27,7 @@ import {
   getInboundFriendlyName,
   getOutboundFriendlyName,
   getStationConfigs,
+  getRailwayConfigs,
   ensureStationNamesForDepartures,
 } from './dataLoaders';
 import { getApiKey, getApiBaseUrl } from './config';
@@ -267,7 +269,13 @@ export async function renderBoard(): Promise<void> {
   if (!stationConfig) return;
 
   // Step 2: Set initial UI state
-  setStationHeader(stationConfig.name);
+  // Get railway and operator information
+  const railwayConfigs = getRailwayConfigs();
+  const railwayConfig = railwayConfigs.find((r) => r.uri === currentConfig.railwayUri);
+  const railwayName = railwayConfig ? railwayConfig.name : '';
+  const operatorName = railwayConfig ? getOperatorName(railwayConfig.operator) : '';
+
+  setStationHeader(stationConfig.name, railwayName, operatorName);
   setLoadingState();
   setDirectionHeaders(getInboundFriendlyName(), getOutboundFriendlyName());
 
