@@ -52,6 +52,7 @@ let timetableIntervalId: number | undefined;
 let statusIntervalId: number | undefined;
 let clockIntervalId: number | undefined;
 let isPaused = false;
+let visibilityCallback: ((isVisible: boolean) => void) | null = null;
 
 // --- Getters/Setters ---
 export function getCurrentConfig() {
@@ -304,11 +305,19 @@ export async function renderBoard(): Promise<void> {
   
   // Step 6: Initialize visibility manager to pause/resume when tab is hidden/visible
   visibilityManager.initialize();
-  visibilityManager.onVisibilityChange((isVisible) => {
+  
+  // Remove old visibility callback if it exists to prevent accumulation
+  if (visibilityCallback) {
+    visibilityManager.offVisibilityChange(visibilityCallback);
+  }
+  
+  // Register new visibility callback
+  visibilityCallback = (isVisible: boolean) => {
     if (isVisible) {
       resumePeriodicRefreshIntervals(stationConfig.uri);
     } else {
       pausePeriodicRefreshIntervals();
     }
-  });
+  };
+  visibilityManager.onVisibilityChange(visibilityCallback);
 }
