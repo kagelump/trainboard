@@ -100,11 +100,11 @@ describe('TickManager', () => {
     const callback1 = vi.fn();
     const callback2 = vi.fn();
 
-    tickManager.onMajorTick(callback1);
+    const unsub1 = tickManager.onMajorTick(callback1);
     tickManager.onMajorTick(callback2);
 
-    // Remove callback1
-    tickManager.offMajorTick(callback1);
+    // Remove callback1 via unsubscribe
+    unsub1();
 
     tickManager.start();
     vi.advanceTimersByTime(1000);
@@ -196,5 +196,26 @@ describe('TickManager', () => {
         currentTimeSeconds: 10 * 3600 + 30 * 60 + 46, // 37846 seconds
       }),
     );
+  });
+
+  it('allows a callback to unsubscribe itself via event.unsubscribe()', () => {
+    const spy = vi.fn();
+
+    // Register a callback that unsubscribes itself the first time it's called
+    tickManager.onMajorTick((event) => {
+      spy();
+      // unsubscribe itself so it won't be called on subsequent ticks
+      event.unsubscribe();
+    });
+
+    tickManager.start();
+
+    // First tick should call spy once
+    vi.advanceTimersByTime(1000);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    // Advance another interval; the callback should not be called again
+    vi.advanceTimersByTime(1000);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 });

@@ -30,7 +30,7 @@ import {
 } from './dataLoaders';
 import { getApiKey, getApiBaseUrl } from './config';
 import { visibilityManager } from './visibilityManager';
-import { tickManager, TickType, type TickEvent } from './tickManager';
+import { globalTickManager, TickType, type TickEvent } from './tickManager';
 
 // --- State ---
 export let currentConfig: {
@@ -45,6 +45,8 @@ export let currentConfig: {
 
 let majorTickCallback: ((event: TickEvent) => void) | null = null;
 let minorTickCallback: ((event: TickEvent) => void) | null = null;
+let majorTickUnsub: (() => void) | null = null;
+let minorTickUnsub: (() => void) | null = null;
 let visibilityCallback: ((isVisible: boolean) => void) | null = null;
 
 // --- Getters/Setters ---
@@ -119,12 +121,8 @@ async function fetchAndRenderTimetableData(stationUri: string): Promise<boolean>
 
   // Pass the full departures lists to the UI; the DeparturesList component
   // will handle display limit, caching, and replacements itself.
-  uiRenderDirection('inbound', inboundTrains, stationNameCache, TRAIN_TYPE_MAP, {
-    autoUpdate: true,
-  });
-  uiRenderDirection('outbound', outboundTrains, stationNameCache, TRAIN_TYPE_MAP, {
-    autoUpdate: true,
-  });
+  uiRenderDirection('inbound', inboundTrains, stationNameCache, TRAIN_TYPE_MAP);
+  uiRenderDirection('outbound', outboundTrains, stationNameCache, TRAIN_TYPE_MAP);
 
   return true;
 }
@@ -158,12 +156,14 @@ async function updateRailwayStatus(): Promise<void> {
  */
 function setupTickCallbacks(stationUri: string): void {
   // Remove old callbacks if they exist
-  if (majorTickCallback) {
-    tickManager.offMajorTick(majorTickCallback);
+  if (majorTickUnsub) {
+    majorTickUnsub();
+    majorTickUnsub = null;
     majorTickCallback = null;
   }
-  if (minorTickCallback) {
-    tickManager.offMinorTick(minorTickCallback);
+  if (minorTickUnsub) {
+    minorTickUnsub();
+    minorTickUnsub = null;
     minorTickCallback = null;
   }
 
@@ -199,13 +199,13 @@ function setupTickCallbacks(stationUri: string): void {
       }
     }
   };
-  tickManager.onMajorTick(majorTickCallback);
+  majorTickUnsub = globalTickManager.onMajorTick(majorTickCallback);
 
   // Register minor tick callback for clock updates
   minorTickCallback = () => {
     uiUpdateClock();
   };
-  tickManager.onMinorTick(minorTickCallback);
+  minorTickUnsub = globalTickManager.onMinorTick(minorTickCallback);
 
   // Update clock immediately
   uiUpdateClock();
@@ -216,7 +216,7 @@ function setupTickCallbacks(stationUri: string): void {
  */
 function pauseTicks(): void {
   console.info('Pausing ticks (page hidden)');
-  tickManager.stop();
+  globalTickManager.stop();
 }
 
 /**
@@ -229,7 +229,7 @@ function resumeTicks(stationUri: string): void {
   // the page becomes visible or ticks are resumed.
   uiUpdateClock();
 
-  tickManager.start();
+  globalTickManager.start();
 
   // Immediately fetch fresh data when resuming
   fetchAndRenderTimetableData(stationUri).catch(console.error);
@@ -282,7 +282,7 @@ export async function renderBoard(): Promise<void> {
   setupTickCallbacks(stationConfig.uri);
 
   // Step 6: Start the tick manager
-  tickManager.start();
+  globalTickManager.start();
 
   // Step 7: Initialize visibility manager to pause/resume when tab is hidden/visible
   visibilityManager.initialize();

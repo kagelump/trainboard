@@ -39,6 +39,11 @@ export interface TickEvent {
   type: TickType;
   timestamp: number; // Unix timestamp in milliseconds
   currentTimeSeconds: number; // Seconds since midnight for UI calculations
+  /**
+   * Calling this will unsubscribe the current callback.
+   * Provided to allow callbacks to unsubscribe themselves during execution.
+   */
+  unsubscribe: () => void;
 }
 
 /**
@@ -52,8 +57,12 @@ type TickCallback = (event: TickEvent) => void;
  * This provides better separation of concerns and cleaner integration with visibility management.
  */
 export class TickManager {
-  private majorCallbacks: TickCallback[] = [];
-  private minorCallbacks: TickCallback[] = [];
+  // Callback storage uses Maps and unsubscribe functions; arrays removed.
+  // Internal id generator for subscriptions
+  private nextCallbackId = 1;
+  // Use maps to allow O(1) removal by id and to return unsubscribe functions
+  private majorCallbackMap: Map<number, TickCallback> | undefined;
+  private minorCallbackMap: Map<number, TickCallback> | undefined;
   private majorIntervalId: number | undefined;
   private minorIntervalId: number | undefined;
   private majorIntervalMs: number;
@@ -118,39 +127,40 @@ export class TickManager {
    * Register a callback for major ticks (API refreshes).
    * @param callback Function to call when a major tick occurs
    */
-  public onMajorTick(callback: TickCallback): void {
-    this.majorCallbacks.push(callback);
+  /**
+   * Register a callback for major ticks (API refreshes).
+   * Returns an unsubscribe function for easy cleanup.
+   */
+  public onMajorTick(callback: TickCallback): () => void {
+    if (!this.majorCallbackMap) {
+      this.majorCallbackMap = new Map<number, TickCallback>();
+    }
+    const id = this.nextCallbackId++;
+    this.majorCallbackMap.set(id, callback);
+
+    return () => {
+      this.majorCallbackMap?.delete(id);
+    };
   }
 
   /**
    * Register a callback for minor ticks (UI updates).
-   * @param callback Function to call when a minor tick occurs
+   * Returns an unsubscribe function for easy cleanup.
    */
-  public onMinorTick(callback: TickCallback): void {
-    this.minorCallbacks.push(callback);
+  public onMinorTick(callback: TickCallback): () => void {
+    if (!this.minorCallbackMap) {
+      this.minorCallbackMap = new Map<number, TickCallback>();
+    }
+    const id = this.nextCallbackId++;
+    this.minorCallbackMap.set(id, callback);
+
+    return () => {
+      this.minorCallbackMap?.delete(id);
+    };
   }
 
-  /**
-   * Remove a previously registered major tick callback.
-   * @param callback The callback to remove
-   */
-  public offMajorTick(callback: TickCallback): void {
-    const index = this.majorCallbacks.indexOf(callback);
-    if (index !== -1) {
-      this.majorCallbacks.splice(index, 1);
-    }
-  }
-
-  /**
-   * Remove a previously registered minor tick callback.
-   * @param callback The callback to remove
-   */
-  public offMinorTick(callback: TickCallback): void {
-    const index = this.minorCallbacks.indexOf(callback);
-    if (index !== -1) {
-      this.minorCallbacks.splice(index, 1);
-    }
-  }
+  // Note: explicit removal by function reference has been removed. Use the
+  // unsubscribe function returned by `onMajorTick` / `onMinorTick` instead.
 
   /**
    * Get whether the tick manager is currently running.
@@ -171,21 +181,56 @@ export class TickManager {
     // computed from local time.
     const currentTimeSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
-    const event: TickEvent = {
-      type,
-      timestamp,
-      currentTimeSeconds,
-    };
+    // Use map entries so we can provide an unsubscribe function specific
+    // to each callback (so callbacks can remove themselves).
+    if (type === TickType.Major) {
+      if (!this.majorCallbackMap) return;
+      const entries = Array.from(this.majorCallbackMap.entries());
+      // Iterate over a snapshot of entries to protect against mutation
+      for (const [id, callback] of entries) {
+        const event: TickEvent = {
+          type,
+          timestamp,
+          currentTimeSeconds,
+          unsubscribe: () => {
+            try {
+              this.majorCallbackMap?.delete(id);
+            } catch (e) {
+              // ignore
+            }
+          },
+        };
 
-    const callbacks = type === TickType.Major ? this.majorCallbacks : this.minorCallbacks;
-
-    callbacks.forEach((callback) => {
-      try {
-        callback(event);
-      } catch (error) {
-        console.error(`Error in ${type} tick callback:`, error);
+        try {
+          callback(event);
+        } catch (error) {
+          console.error(`Error in ${type} tick callback:`, error);
+        }
       }
-    });
+    } else {
+      if (!this.minorCallbackMap) return;
+      const entries = Array.from(this.minorCallbackMap.entries());
+      for (const [id, callback] of entries) {
+        const event: TickEvent = {
+          type,
+          timestamp,
+          currentTimeSeconds,
+          unsubscribe: () => {
+            try {
+              this.minorCallbackMap?.delete(id);
+            } catch (e) {
+              // ignore
+            }
+          },
+        };
+
+        try {
+          callback(event);
+        } catch (error) {
+          console.error(`Error in ${type} tick callback:`, error);
+        }
+      }
+    }
   }
 
   /**
@@ -203,7 +248,7 @@ import { TIMETABLE_REFRESH_INTERVAL_MS, CLOCK_UPDATE_INTERVAL_MS } from './confi
 
 // Note: Major ticks handle both timetable AND status API refreshes.
 // Both use TIMETABLE_REFRESH_INTERVAL_MS (5 minutes) as they refresh together.
-export const tickManager = new TickManager(
+export const globalTickManager = new TickManager(
   TIMETABLE_REFRESH_INTERVAL_MS, // Major ticks for API refresh (timetable + status)
   CLOCK_UPDATE_INTERVAL_MS, // Minor ticks for UI updates (clock, minutes)
 );

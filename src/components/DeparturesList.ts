@@ -2,58 +2,14 @@ import { html, css, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './TrainRow.js';
+import { TrainDepartureView } from './TrainDepartureView.js';
 import type { StationTimetableEntry } from '../types';
 import type { SimpleCache } from '../cache';
-import { tickManager, type TickEvent } from '../tickManager';
+import { TickManager, globalTickManager } from '../tickManager';
+import { provide } from '@lit/context';
+import { tickManagerContext } from './TimerContext.js';
 
 import { DISPLAYED_TRAINS_LIMIT } from '../constants';
-
-export class TrainDepartureView {
-  departureTime: string;
-  trainTypeUri: string;
-  // We only care about one destination.  Maybe there are cases with multiple? idk.
-  destination: string;
-
-  /**
-   * Construct a TrainDepartureView from a StationTimetableEntry.
-   * @param entry Raw StationTimetableEntry from ODPT
-   * @param stationNameCache Optional cache mapping station URIs to display names
-   */
-  constructor(entry: StationTimetableEntry, stationNameCache?: SimpleCache<string> | null) {
-    this.departureTime = (entry['odpt:departureTime'] || '') as string;
-    this.trainTypeUri = (entry['odpt:trainType'] || '') as string;
-
-    // Resolve a human-friendly destination title. The API may return either
-    // a string URI or an object with dc:title or owl:sameAs. Prefer the cached
-    // station name when available.
-    let destinationTitle = 'N/A';
-    const dests = entry['odpt:destinationStation'];
-    if (Array.isArray(dests) && dests.length > 0) {
-      const first = dests[0];
-      if (typeof first === 'string') {
-        destinationTitle = (stationNameCache && stationNameCache.get(first)) || first;
-      } else if (first && typeof first === 'object') {
-        destinationTitle = (first as any)['dc:title'] || (first as any)['title'] || 'N/A';
-        if ((destinationTitle === 'N/A' || !destinationTitle) && (first as any)['owl:sameAs']) {
-          const uri = (first as any)['owl:sameAs'];
-          if (typeof uri === 'string')
-            destinationTitle = (stationNameCache && stationNameCache.get(uri)) || uri;
-        }
-      }
-    } else if (typeof dests === 'string') {
-      destinationTitle = (stationNameCache && stationNameCache.get(dests)) || dests;
-    }
-
-    this.destination = destinationTitle;
-  }
-
-  /**
-   * Helper to create a view from an entry, used by callers that prefer a factory.
-   */
-  static from(entry: StationTimetableEntry, stationNameCache?: SimpleCache<string> | null) {
-    return new TrainDepartureView(entry, stationNameCache);
-  }
-}
 
 /**
  * DeparturesList component - displays a list of train departures
@@ -94,6 +50,9 @@ export class DeparturesList extends LitElement {
     }
   `;
 
+  @provide({ context: tickManagerContext })
+  tickManager: TickManager = globalTickManager;
+
   @property({ type: Array })
   departures: TrainDepartureView[] = [];
 
@@ -108,9 +67,6 @@ export class DeparturesList extends LitElement {
 
   @property({ type: Number })
   displayLimit = DISPLAYED_TRAINS_LIMIT;
-
-  private tickCallback: ((event: TickEvent) => void) | null = null;
-  // NOTE: TrainRow now owns parsing and minutes calculation.
 
   private updateMinutesOnce = (nowSeconds: number): void => {
     const trainRows = Array.from(this.shadowRoot?.querySelectorAll('train-row') || []);
@@ -130,15 +86,7 @@ export class DeparturesList extends LitElement {
     });
 
     if (departedIndices.length > 0) {
-      // Map departed indices (which correspond to positions within the displayed
-      // slice) to indices within the full `departures` array. Since we render
-      // only the first `displayLimit` items, the displayed index matches the
-      // same index in the full array.
       const fullDepartedIndices = departedIndices;
-
-      // Remove departed entries from the full departures list. Remaining
-      // entries (including ones beyond displayLimit) will automatically shift
-      // into the displayed window on the next render.
       const updatedDepartures = this.departures.filter((_, i) => !fullDepartedIndices.includes(i));
       this.departures = updatedDepartures;
       this.dispatchEvent(
@@ -151,43 +99,27 @@ export class DeparturesList extends LitElement {
     }
   };
 
-  private startTickListener() {
-    if (this.tickCallback) return;
-
-    this.tickCallback = (event: TickEvent) => {
-      this.updateMinutesOnce(event.currentTimeSeconds);
-    };
-    tickManager.onMinorTick(this.tickCallback);
-  }
-
-  private stopTickListener() {
-    if (!this.tickCallback) return;
-    tickManager.offMinorTick(this.tickCallback);
-    this.tickCallback = null;
-  }
-
-  // Mark when the component has completed its first render. Tests and
-  // the minutes-updater can listen for the 'departures-list-rendered'
-  // event to know it's safe to query the element's shadow DOM.
-  private __rendered = false;
-
-  connectedCallback() {
-    super.connectedCallback();
-    // No longer need visibility change handler - tick manager handles pause/resume
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    // Clean up
-    this.stopTickListener();
-  }
+  private handleTrainDeparted = (e: CustomEvent): void => {
+    // Remove the departed train from departures, this should trigger a rerender.
+    try {
+      const detail = e?.detail as { departureTime?: string } | undefined;
+      const depTime = detail?.departureTime;
+      if (depTime) {
+        // Find the first matching departure by departureTime and remove it.
+        const idx = this.departures.findIndex((d) => d.departureTime === depTime);
+        if (idx !== -1) {
+          this.departures = this.departures.filter((_, i) => i !== idx);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to remove departed train by event detail:', err);
+    }
+  };
 
   firstUpdated() {
-    this.__rendered = true;
     this.dispatchEvent(
       new CustomEvent('departures-list-rendered', { bubbles: true, composed: true }),
     );
-    this.startTickListener();
   }
 
   updated(changedProps: Map<string, any>) {
@@ -236,6 +168,7 @@ export class DeparturesList extends LitElement {
               trainTypeName="${trainType.name}"
               trainTypeClass="${trainType.class}"
               destination="${view.destination}"
+              @train-departed=${this.handleTrainDeparted}
             ></train-row>
           `;
         },

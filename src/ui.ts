@@ -8,7 +8,7 @@ import sortedPrefectures from './sorted_prefectures.json';
 import operators from './operators.json';
 import { DISPLAYED_TRAINS_LIMIT } from './constants';
 import './components/DeparturesList.js';
-import { TrainDepartureView } from './components/DeparturesList.js';
+import { TrainDepartureView } from './components/TrainDepartureView.js';
 import type { DeparturesList } from './components/DeparturesList.js';
 
 type StationCfg = { name: string; uri: string };

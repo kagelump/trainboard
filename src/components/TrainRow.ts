@@ -1,6 +1,9 @@
 import { html, css, LitElement } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
+import { consume } from '@lit/context';
 import { getTrainTypeStyleSheet } from '../trainTypeStyles.js';
+import { tickManagerContext } from '../components/TimerContext.js';
+import { TickManager } from '../tickManager.js';
 
 /**
  * TrainRow component - displays a single train departure row
@@ -114,6 +117,9 @@ export class TrainRow extends LitElement {
       }
     }
   }
+  @consume({ context: tickManagerContext })
+  @property({ attribute: false })
+  private tickManager!: TickManager;
 
   @property({ type: String })
   departureTime = '';
@@ -170,6 +176,30 @@ export class TrainRow extends LitElement {
     }
 
     return false;
+  }
+
+  firstUpdated() {
+    this.updateMinutes();
+    this.tickManager.onMinorTick((e) => {
+      if (this.updateMinutes()) {
+        this.dispatchEvent(
+          new CustomEvent('train-departed', {
+            bubbles: true,
+            composed: true,
+            detail: { departureTime: this.departureTime }, // This is unique for a departure list.
+          }),
+        );
+        e.unsubscribe();
+      }
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    // Ensure we unsubscribe when the element is removed from the DOM
+    (this as any)._minorUnsub?.();
+    (this as any)._minorUnsub = undefined;
+    (this as any)._boundOnTick = undefined;
   }
 
   render() {
