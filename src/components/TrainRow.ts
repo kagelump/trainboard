@@ -156,11 +156,13 @@ export class TrainRow extends LitElement {
     const depSecs = this.parseTimeToSeconds(dep);
     const diff = depSecs - now;
 
-    if (diff <= 0) {
+    if (diff <= -60) {
       return true; // departed
     }
 
-    if (diff <= 60) {
+    if (diff <= 0) {
+      this.minutesText = '発車';
+    } else if (diff <= 60) {
       this.minutesText = '到着';
     } else {
       const mins = Math.ceil(diff / 60);
