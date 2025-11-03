@@ -4,7 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import './TrainRow.js';
 import type { StationTimetableEntry } from '../types';
 import type { SimpleCache } from '../cache';
-import { visibilityManager } from '../visibilityManager';
+import { tickManager, type TickEvent } from '../tickManager';
 
 import { DISPLAYED_TRAINS_LIMIT } from '../constants';
 
@@ -68,13 +68,10 @@ export class DeparturesList extends LitElement {
   @property({ type: Number })
   displayLimit = DISPLAYED_TRAINS_LIMIT;
 
-  private minutesUpdaterId: number | undefined;
-  // NOTE: TrainRow now owns parsing and minutes calculation. Remove this
-  // helper when no other modules reference it.
+  private tickCallback: ((event: TickEvent) => void) | null = null;
+  // NOTE: TrainRow now owns parsing and minutes calculation.
 
-  private updateMinutesOnce = (): void => {
-    const now = new Date();
-    const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  private updateMinutesOnce = (nowSeconds: number): void => {
 
     const trainRows = Array.from(this.shadowRoot?.querySelectorAll('train-row') || []);
     if (trainRows.length === 0) return;
@@ -113,30 +110,20 @@ export class DeparturesList extends LitElement {
     }
   };
 
-  private startMinutesUpdater() {
-    if (this.minutesUpdaterId) return;
-    // Only start if page is visible
-    if (!visibilityManager.getIsVisible()) return;
-    this.minutesUpdaterId = window.setInterval(this.updateMinutesOnce, 15_000) as unknown as number;
+  private startTickListener() {
+    if (this.tickCallback) return;
+
+    this.tickCallback = (event: TickEvent) => {
+      this.updateMinutesOnce(event.currentTimeSeconds);
+    };
+    tickManager.onMinorTick(this.tickCallback);
   }
 
-  private stopMinutesUpdater() {
-    if (!this.minutesUpdaterId) return;
-    clearInterval(this.minutesUpdaterId);
-    this.minutesUpdaterId = undefined;
+  private stopTickListener() {
+    if (!this.tickCallback) return;
+    tickManager.offMinorTick(this.tickCallback);
+    this.tickCallback = null;
   }
-
-  private onVisibilityChange = (isVisible: boolean) => {
-    if (isVisible && this.autoUpdateMinutes) {
-      // Resume the updater when page becomes visible
-      this.startMinutesUpdater();
-      // Update immediately when resuming
-      this.updateMinutesOnce();
-    } else {
-      // Pause the updater when page is hidden
-      this.stopMinutesUpdater();
-    }
-  };
 
   // Mark when the component has completed its first render. Tests and
   // the minutes-updater can listen for the 'departures-list-rendered'
@@ -145,15 +132,13 @@ export class DeparturesList extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    // Register visibility change handler
-    visibilityManager.onVisibilityChange(this.onVisibilityChange);
+    // No longer need visibility change handler - tick manager handles pause/resume
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     // Clean up
-    this.stopMinutesUpdater();
-    visibilityManager.offVisibilityChange(this.onVisibilityChange);
+    this.stopTickListener();
   }
 
   firstUpdated() {
@@ -161,20 +146,22 @@ export class DeparturesList extends LitElement {
     this.dispatchEvent(
       new CustomEvent('departures-list-rendered', { bubbles: true, composed: true }),
     );
-    if (this.autoUpdateMinutes) this.startMinutesUpdater();
+    if (this.autoUpdateMinutes) this.startTickListener();
   }
 
   updated(changedProps: Map<string, any>) {
     if (changedProps.has('autoUpdateMinutes')) {
-      if (this.autoUpdateMinutes) this.startMinutesUpdater();
-      else this.stopMinutesUpdater();
+      if (this.autoUpdateMinutes) this.startTickListener();
+      else this.stopTickListener();
     }
     // When departures change, ensure minutes are calculated for the newly rendered rows.
     if (changedProps.has('departures')) {
       // Only update if there are departures to show.
       if (this.departures && this.departures.length > 0) {
         // Wait for the update cycle to complete and the shadow DOM to be ready.
-        this.updateComplete.then(() => this.updateMinutesOnce());
+        const now = new Date();
+        const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        this.updateComplete.then(() => this.updateMinutesOnce(nowSeconds));
       }
     }
   }

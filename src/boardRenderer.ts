@@ -31,11 +31,9 @@ import {
 import {
   getApiKey,
   getApiBaseUrl,
-  TIMETABLE_REFRESH_INTERVAL_MS,
-  STATUS_REFRESH_INTERVAL_MS,
-  CLOCK_UPDATE_INTERVAL_MS,
 } from './config';
 import { visibilityManager } from './visibilityManager';
+import { tickManager, TickType, type TickEvent } from './tickManager';
 
 // --- State ---
 export let currentConfig: {
@@ -48,10 +46,8 @@ export let currentConfig: {
   stationName: null,
 };
 
-let timetableIntervalId: number | undefined;
-let statusIntervalId: number | undefined;
-let clockIntervalId: number | undefined;
-let isPaused = false;
+let majorTickCallback: ((event: TickEvent) => void) | null = null;
+let minorTickCallback: ((event: TickEvent) => void) | null = null;
 let visibilityCallback: ((isVisible: boolean) => void) | null = null;
 
 // --- Getters/Setters ---
@@ -166,16 +162,22 @@ async function updateRailwayStatus(): Promise<void> {
 }
 
 /**
- * Sets up periodic refresh intervals for timetable and status updates.
+ * Sets up tick callbacks for timetable and status updates.
  * @param stationUri The station URI to refresh timetable for
  */
-function setupPeriodicRefreshIntervals(stationUri: string): void {
-  // Clear existing intervals
-  if (typeof timetableIntervalId !== 'undefined') clearInterval(timetableIntervalId);
-  if (typeof statusIntervalId !== 'undefined') clearInterval(statusIntervalId);
+function setupTickCallbacks(stationUri: string): void {
+  // Remove old callbacks if they exist
+  if (majorTickCallback) {
+    tickManager.offMajorTick(majorTickCallback);
+    majorTickCallback = null;
+  }
+  if (minorTickCallback) {
+    tickManager.offMinorTick(minorTickCallback);
+    minorTickCallback = null;
+  }
 
-  // Timetable refresh interval - always read the current station URI from config
-  timetableIntervalId = window.setInterval(async () => {
+  // Register major tick callback for API refreshes (timetable and status)
+  majorTickCallback = async () => {
     // Reload from localStorage to get the latest station URI
     try {
       const savedStationUri = localStorage.getItem(STORAGE_KEY_STATION_URI);
@@ -190,13 +192,9 @@ function setupPeriodicRefreshIntervals(stationUri: string): void {
         await fetchAndRenderTimetableData(currentConfig.stationUri);
       }
     }
-  }, TIMETABLE_REFRESH_INTERVAL_MS);
 
-  // Status refresh interval - always read the current railway URI from config
-  statusIntervalId = window.setInterval(async () => {
+    // Update railway status
     const apiKey = getApiKey();
-
-    // Reload from localStorage to get the latest railway URI
     try {
       const savedRailwayUri = localStorage.getItem(STORAGE_KEY_RAILWAY_URI);
       const railwayUri = savedRailwayUri || currentConfig.railwayUri;
@@ -209,49 +207,34 @@ function setupPeriodicRefreshIntervals(stationUri: string): void {
         await fetchStatus(apiKey, getApiBaseUrl(), currentConfig.railwayUri);
       }
     }
-  }, STATUS_REFRESH_INTERVAL_MS);
+  };
+  tickManager.onMajorTick(majorTickCallback);
 
-  // Clock update interval
-  clockIntervalId = window.setInterval(uiUpdateClock, CLOCK_UPDATE_INTERVAL_MS);
+  // Register minor tick callback for clock updates
+  minorTickCallback = () => {
+    uiUpdateClock();
+  };
+  tickManager.onMinorTick(minorTickCallback);
+
+  // Update clock immediately
   uiUpdateClock();
 }
 
 /**
- * Pauses all periodic refresh intervals to save CPU when page is hidden.
+ * Pauses the tick manager to save CPU when page is hidden.
  */
-function pausePeriodicRefreshIntervals(): void {
-  if (isPaused) return;
-
-  console.info('Pausing periodic refresh intervals (page hidden)');
-
-  if (typeof timetableIntervalId !== 'undefined') {
-    clearInterval(timetableIntervalId);
-    timetableIntervalId = undefined;
-  }
-  if (typeof statusIntervalId !== 'undefined') {
-    clearInterval(statusIntervalId);
-    statusIntervalId = undefined;
-  }
-  if (typeof clockIntervalId !== 'undefined') {
-    clearInterval(clockIntervalId);
-    clockIntervalId = undefined;
-  }
-
-  isPaused = true;
+function pauseTicks(): void {
+  console.info('Pausing ticks (page hidden)');
+  tickManager.stop();
 }
 
 /**
- * Resumes all periodic refresh intervals when page becomes visible.
+ * Resumes the tick manager when page becomes visible.
  * @param stationUri The station URI to refresh timetable for
  */
-function resumePeriodicRefreshIntervals(stationUri: string): void {
-  if (!isPaused) return;
-
-  console.info('Resuming periodic refresh intervals (page visible)');
-  isPaused = false;
-
-  // Re-establish the intervals by calling the setup function
-  setupPeriodicRefreshIntervals(stationUri);
+function resumeTicks(stationUri: string): void {
+  console.info('Resuming ticks (page visible)');
+  tickManager.start();
 
   // Immediately fetch fresh data when resuming
   fetchAndRenderTimetableData(stationUri).catch(console.error);
@@ -300,10 +283,13 @@ export async function renderBoard(): Promise<void> {
   // Step 4: Update railway operation status (Banner)
   await updateRailwayStatus();
 
-  // Step 5: Set up periodic refresh intervals
-  setupPeriodicRefreshIntervals(stationConfig.uri);
+  // Step 5: Set up tick callbacks for periodic updates
+  setupTickCallbacks(stationConfig.uri);
 
-  // Step 6: Initialize visibility manager to pause/resume when tab is hidden/visible
+  // Step 6: Start the tick manager
+  tickManager.start();
+
+  // Step 7: Initialize visibility manager to pause/resume when tab is hidden/visible
   visibilityManager.initialize();
 
   // Remove old visibility callback if it exists to prevent accumulation
@@ -314,9 +300,9 @@ export async function renderBoard(): Promise<void> {
   // Register new visibility callback
   visibilityCallback = (isVisible: boolean) => {
     if (isVisible) {
-      resumePeriodicRefreshIntervals(stationConfig.uri);
+      resumeTicks(stationConfig.uri);
     } else {
-      pausePeriodicRefreshIntervals();
+      pauseTicks();
     }
   };
   visibilityManager.onVisibilityChange(visibilityCallback);

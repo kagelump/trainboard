@@ -1,0 +1,181 @@
+// src/tickManager.ts
+// Global tick manager for coordinating major and minor ticks across the application
+
+/**
+ * Tick types:
+ * - Major: API refresh ticks (e.g., fetch timetable, status)
+ * - Minor: UI update ticks (e.g., update minutes, clean departed trains, update clock)
+ */
+export enum TickType {
+  Major = 'major',
+  Minor = 'minor',
+}
+
+/**
+ * Tick event containing current time and tick type
+ */
+export interface TickEvent {
+  type: TickType;
+  timestamp: number; // Unix timestamp in milliseconds
+  currentTimeSeconds: number; // Seconds since midnight for UI calculations
+}
+
+/**
+ * Callback function type for tick events
+ */
+type TickCallback = (event: TickEvent) => void;
+
+/**
+ * TickManager coordinates all periodic updates in the application.
+ * Instead of components managing their own setInterval, they subscribe to tick events.
+ * This provides better separation of concerns and cleaner integration with visibility management.
+ */
+export class TickManager {
+  private majorCallbacks: TickCallback[] = [];
+  private minorCallbacks: TickCallback[] = [];
+  private majorIntervalId: number | undefined;
+  private minorIntervalId: number | undefined;
+  private majorIntervalMs: number;
+  private minorIntervalMs: number;
+  private isRunning = false;
+
+  /**
+   * @param majorIntervalMs Interval for major ticks (API refreshes) in milliseconds
+   * @param minorIntervalMs Interval for minor ticks (UI updates) in milliseconds
+   */
+  constructor(majorIntervalMs: number, minorIntervalMs: number) {
+    this.majorIntervalMs = majorIntervalMs;
+    this.minorIntervalMs = minorIntervalMs;
+  }
+
+  /**
+   * Start the tick manager, emitting tick events at configured intervals.
+   */
+  public start(): void {
+    if (this.isRunning) {
+      return;
+    }
+
+    this.isRunning = true;
+
+    // Start major tick interval
+    this.majorIntervalId = window.setInterval(() => {
+      this.emitTick(TickType.Major);
+    }, this.majorIntervalMs);
+
+    // Start minor tick interval
+    this.minorIntervalId = window.setInterval(() => {
+      this.emitTick(TickType.Minor);
+    }, this.minorIntervalMs);
+
+    console.info('TickManager started');
+  }
+
+  /**
+   * Stop the tick manager, clearing all intervals.
+   */
+  public stop(): void {
+    if (!this.isRunning) {
+      return;
+    }
+
+    if (this.majorIntervalId !== undefined) {
+      clearInterval(this.majorIntervalId);
+      this.majorIntervalId = undefined;
+    }
+
+    if (this.minorIntervalId !== undefined) {
+      clearInterval(this.minorIntervalId);
+      this.minorIntervalId = undefined;
+    }
+
+    this.isRunning = false;
+    console.info('TickManager stopped');
+  }
+
+  /**
+   * Register a callback for major ticks (API refreshes).
+   * @param callback Function to call when a major tick occurs
+   */
+  public onMajorTick(callback: TickCallback): void {
+    this.majorCallbacks.push(callback);
+  }
+
+  /**
+   * Register a callback for minor ticks (UI updates).
+   * @param callback Function to call when a minor tick occurs
+   */
+  public onMinorTick(callback: TickCallback): void {
+    this.minorCallbacks.push(callback);
+  }
+
+  /**
+   * Remove a previously registered major tick callback.
+   * @param callback The callback to remove
+   */
+  public offMajorTick(callback: TickCallback): void {
+    const index = this.majorCallbacks.indexOf(callback);
+    if (index !== -1) {
+      this.majorCallbacks.splice(index, 1);
+    }
+  }
+
+  /**
+   * Remove a previously registered minor tick callback.
+   * @param callback The callback to remove
+   */
+  public offMinorTick(callback: TickCallback): void {
+    const index = this.minorCallbacks.indexOf(callback);
+    if (index !== -1) {
+      this.minorCallbacks.splice(index, 1);
+    }
+  }
+
+  /**
+   * Get whether the tick manager is currently running.
+   */
+  public getIsRunning(): boolean {
+    return this.isRunning;
+  }
+
+  /**
+   * Emit a tick event to all registered callbacks of the given type.
+   * @param type The type of tick to emit
+   */
+  private emitTick(type: TickType): void {
+    const now = new Date();
+    const timestamp = now.getTime();
+    const currentTimeSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+    const event: TickEvent = {
+      type,
+      timestamp,
+      currentTimeSeconds,
+    };
+
+    const callbacks = type === TickType.Major ? this.majorCallbacks : this.minorCallbacks;
+
+    callbacks.forEach((callback) => {
+      try {
+        callback(event);
+      } catch (error) {
+        console.error(`Error in ${type} tick callback:`, error);
+      }
+    });
+  }
+
+  /**
+   * Manually trigger a tick event (useful for immediate updates or testing).
+   * @param type The type of tick to emit
+   */
+  public triggerTick(type: TickType): void {
+    this.emitTick(type);
+  }
+}
+
+// Singleton instance for use across the app
+// These intervals match the existing configuration
+export const tickManager = new TickManager(
+  300_000, // 5 minutes for major ticks (API refresh)
+  15_000, // 15 seconds for minor ticks (UI updates)
+);
