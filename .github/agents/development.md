@@ -17,6 +17,14 @@
 4. Preserve working functionality
 5. Add or update tests as needed
 
+### Refactoring policy
+
+Because this repository is small and we own the entire webapp, most refactors can be done atomically across the codebase. You do not need to maintain backward compatibility between internal modules or components when doing an internal refactor — it's acceptable to update all call sites in the same change. That said, keep these guardrails:
+
+- Keep changes small and focused; prefer a single logical change per PR.
+- Update or add tests and run the Pre-Change Checklist before committing.
+- If a change affects external integrations (CI, published packages, or external APIs), clearly note the impact in the commit/PR and add documentation or migration notes where appropriate.
+
 ### Post-Change Checklist
 
 1. Run `npm test` to verify tests pass
