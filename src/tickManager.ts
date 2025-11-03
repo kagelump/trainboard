@@ -174,8 +174,13 @@ export class TickManager {
 }
 
 // Singleton instance for use across the app
-// These intervals match the existing configuration
+// Import intervals from config for consistency
+import {
+  TIMETABLE_REFRESH_INTERVAL_MS,
+  CLOCK_UPDATE_INTERVAL_MS,
+} from './config';
+
 export const tickManager = new TickManager(
-  300_000, // 5 minutes for major ticks (API refresh)
-  15_000, // 15 seconds for minor ticks (UI updates)
+  TIMETABLE_REFRESH_INTERVAL_MS, // Major ticks for API refresh
+  CLOCK_UPDATE_INTERVAL_MS, // Minor ticks for UI updates (clock, minutes)
 );
