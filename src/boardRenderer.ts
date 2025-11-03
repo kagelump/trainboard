@@ -117,18 +117,12 @@ async function fetchAndRenderTimetableData(stationUri: string): Promise<boolean>
   // Ensure we have readable station names for destinations before rendering
   await ensureStationNamesForDepartures(apiKey, getApiBaseUrl(), inboundTrains, outboundTrains);
 
-  // Show the first N trains in each direction and provide the remaining trains as a cache
-  const inboundInitial = inboundTrains.slice(0, 5);
-  const outboundInitial = outboundTrains.slice(0, 5);
-  const inboundCache = inboundTrains.slice(5);
-  const outboundCache = outboundTrains.slice(5);
-
-  uiRenderDirection('inbound', inboundInitial, stationNameCache, TRAIN_TYPE_MAP, {
-    trainCache: inboundCache,
+  // Pass the full departures lists to the UI; the DeparturesList component
+  // will handle display limit, caching, and replacements itself.
+  uiRenderDirection('inbound', inboundTrains, stationNameCache, TRAIN_TYPE_MAP, {
     autoUpdate: true,
   });
-  uiRenderDirection('outbound', outboundInitial, stationNameCache, TRAIN_TYPE_MAP, {
-    trainCache: outboundCache,
+  uiRenderDirection('outbound', outboundTrains, stationNameCache, TRAIN_TYPE_MAP, {
     autoUpdate: true,
   });
 

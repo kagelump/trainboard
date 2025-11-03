@@ -8,6 +8,7 @@ import sortedPrefectures from './sorted_prefectures.json';
 import operators from './operators.json';
 import { DISPLAYED_TRAINS_LIMIT } from './constants';
 import './components/DeparturesList.js';
+import { TrainDepartureView } from './components/DeparturesList.js';
 import type { DeparturesList } from './components/DeparturesList.js';
 
 type StationCfg = { name: string; uri: string };
@@ -82,7 +83,6 @@ export function renderDirection(
   departures: StationTimetableEntry[],
   stationNameCache: SimpleCache<string>,
   trainTypeMap: Record<string, { name: string; class: string }>,
-  options?: { trainCache?: StationTimetableEntry[]; autoUpdate?: boolean; displayLimit?: number },
 ): void {
   console.log('Rendering departures for', directionId, 'with', departures.length, 'entries');
   const container = document.getElementById(`departures-${directionId}`) as HTMLElement;
@@ -97,16 +97,12 @@ export function renderDirection(
     container.appendChild(departuresList);
   }
 
-  // Update component properties
-  departuresList.departures = departures;
+  // Convert raw entries into TrainDepartureView instances and hand those to the component
+  const views = departures.map((d) => new TrainDepartureView(d, stationNameCache));
+  departuresList.departures = views;
   departuresList.stationNameCache = stationNameCache;
   departuresList.trainTypeMap = trainTypeMap;
   departuresList.loading = false;
-
-  if (options?.trainCache) departuresList.trainCache = options.trainCache;
-  if (typeof options?.autoUpdate !== 'undefined')
-    departuresList.autoUpdateMinutes = !!options.autoUpdate;
-  if (typeof options?.displayLimit === 'number') departuresList.displayLimit = options.displayLimit;
 }
 
 // (App-level minutes-updater removed — individual `departures-list` components

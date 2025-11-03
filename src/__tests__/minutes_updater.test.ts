@@ -39,7 +39,6 @@ describe('minutes updater initial run', () => {
 
     // Render with autoUpdate enabled and an empty trainCache (no replacements needed)
     renderDirection('outbound', departures as any, stationNameCache as any, trainTypeMap as any, {
-      trainCache: [],
       autoUpdate: true,
     });
 
