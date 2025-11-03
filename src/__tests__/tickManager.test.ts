@@ -181,8 +181,10 @@ describe('TickManager', () => {
     const callback = vi.fn();
     tickManager.onMajorTick(callback);
 
-    // Set system time to a specific value (e.g., 10:30:45)
-    const testDate = new Date('2024-01-01T10:30:45Z');
+    // Set system time to a specific local value (e.g., 10:30:45 local time)
+    // Use the Date(year, monthIndex, day, hour, minute, second) constructor
+    // which creates a date in the runtime's local timezone.
+    const testDate = new Date(2024, 0, 1, 10, 30, 45); // 2024-01-01 10:30:45 local
     vi.setSystemTime(testDate);
 
     tickManager.start();

@@ -166,10 +166,10 @@ export class TickManager {
   private emitTick(type: TickType): void {
     const now = new Date();
     const timestamp = now.getTime();
-    // Use UTC-based time so tests that set system time with a 'Z' (UTC) timestamp
-    // are deterministic regardless of the runner's local timezone.
-    const currentTimeSeconds =
-      now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
+    // Use local time (seconds since local midnight). The UI displays local clock
+    // and departure minutes relative to the user's timezone, so this must be
+    // computed from local time.
+    const currentTimeSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
     const event: TickEvent = {
       type,
