@@ -8,8 +8,10 @@ import sortedPrefectures from './sorted_prefectures.json';
 import operators from './operators.json';
 import { DISPLAYED_TRAINS_LIMIT } from './constants';
 import './components/DeparturesList.js';
+import './components/StationHeader.js';
 import { TrainDepartureView } from './components/TrainDepartureView.js';
 import type { DeparturesList } from './components/DeparturesList.js';
+import type { StationHeader } from './components/StationHeader.js';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -38,9 +40,9 @@ export function setPageTitle(title: string): void {
 }
 
 export function setStationHeader(name: string | null): void {
-  const el = document.getElementById('station-header');
+  const el = document.querySelector('station-header') as StationHeader | null;
   if (!el) return;
-  el.textContent = name || '';
+  el.stationName = name || '読込中...';
 }
 
 export function setLoadingState(): void {
