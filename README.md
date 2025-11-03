@@ -177,7 +177,10 @@ The app includes geolocation support to help users find nearby stations:
 - `npm run build` — build for production (`dist/`)
 - `npm run deploy` — build and publish `dist/` to `gh-pages` using `gh-pages` (local push)
 - `npm run typecheck` — run `tsc --noEmit`
-- `npm test` — run Vitest tests
+- `npm test` — run Vitest unit tests
+- `npm run test:e2e` — run Playwright end-to-end tests
+- `npm run test:e2e:ui` — run e2e tests in interactive UI mode
+- `npm run test:e2e:headed` — run e2e tests in headed mode (visible browser)
 
 ### Utility Scripts
 
@@ -248,6 +251,42 @@ cd ~/trainboard/scripts/rpi-eink
 chmod +x install.sh
 ./install.sh
 ```
+
+## Testing
+
+The project includes comprehensive test coverage:
+
+### Unit Tests
+
+Unit tests are written with [Vitest](https://vitest.dev/) and located in `src/__tests__/`. They test individual modules like routing, parsing, UI utilities, and visibility management.
+
+Run unit tests:
+```bash
+npm test
+```
+
+### End-to-End Tests
+
+E2e tests are written with [Playwright](https://playwright.dev/) and located in the `e2e/` directory. They test the application from a user's perspective in a real browser.
+
+Run e2e tests:
+```bash
+npm run test:e2e
+```
+
+For interactive testing with UI:
+```bash
+npm run test:e2e:ui
+```
+
+See [e2e/README.md](e2e/README.md) for detailed documentation on e2e testing.
+
+### Continuous Integration
+
+All tests run automatically on pull requests and pushes to `main` via GitHub Actions. The CI workflow includes:
+- Unit tests with Vitest
+- Type checking with TypeScript
+- E2e tests with Playwright
 
 Notes & next steps
 
