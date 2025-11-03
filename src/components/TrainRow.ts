@@ -117,9 +117,18 @@ export class TrainRow extends LitElement {
       }
     }
   }
+
   @consume({ context: tickManagerContext })
   @property({ attribute: false })
   private tickManager!: TickManager;
+
+  @property({ type: Number })
+  // Initialize to current seconds-since-midnight by default so rows can
+  // compute minutes immediately without waiting for an external update.
+  nowSeconds: number = (() => {
+    const d = new Date();
+    return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+  })();
 
   @property({ type: String })
   departureTime = '';
@@ -133,55 +142,43 @@ export class TrainRow extends LitElement {
   @property({ type: String })
   destination = '';
 
-  @property({ type: String })
-  minutesText = '--';
-
   // Convert HH:MM to seconds since midnight
-  private parseTimeToSeconds(timeStr: string): number {
-    const [hStr, mStr] = (timeStr || '').split(':');
+  private departureTimeSec(): number {
+    const [hStr, mStr] = (this.departureTime || '').split(':');
     const h = Number(hStr || 0);
     const m = Number(mStr || 0);
     return h * 3600 + m * 60;
   }
 
   /**
-   * Update the minutes display for this train row.
-   * Returns true if the train has departed (i.e. should be removed from the list),
-   * otherwise false.
+   * Compute the minutes display string for this train row.
+   * This replaces the previous reactive `minutesText` property.
    */
-  public updateMinutes(nowSeconds?: number): boolean {
-    const now =
-      typeof nowSeconds === 'number'
-        ? nowSeconds
-        : (() => {
-            const d = new Date();
-            return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
-          })();
+  public minutes(): string {
+    const diff = this.departureTimeSec() - this.nowSeconds;
 
-    const dep = (this.departureTime as string) || this.getAttribute('departuretime') || '';
-    const depSecs = this.parseTimeToSeconds(dep);
-    const diff = depSecs - now;
-
-    // If departure time is already in the past, consider it departed.
-    if (diff < 0) {
-      return true; // departed
-    }
-
-    // If departure is within the next 60 seconds, show '到着'
-    if (diff <= 60) {
-      this.minutesText = '到着';
+    if (diff < -60) {
+      return '発車済';
+    } else if (diff <= 60) {
+      return '到着';
     } else {
       const mins = Math.ceil(diff / 60);
-      this.minutesText = `${mins}分`;
+      return `${mins}分`;
     }
+  }
 
-    return false;
+  /**
+   * Returns true if the train should be considered departed and removed from the list.
+   */
+  public trainDeparted(): boolean {
+    // If departure time is already more than 60s in the past, consider it departed.
+    return this.departureTimeSec() - this.nowSeconds < -60;
   }
 
   firstUpdated() {
-    this.updateMinutes();
     this.tickManager.onMinorTick((e) => {
-      if (this.updateMinutes()) {
+      this.nowSeconds = e.currentTimeSeconds;
+      if (this.trainDeparted()) {
         this.dispatchEvent(
           new CustomEvent('train-departed', {
             bubbles: true,
@@ -194,17 +191,9 @@ export class TrainRow extends LitElement {
     });
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    // Ensure we unsubscribe when the element is removed from the DOM
-    (this as any)._minorUnsub?.();
-    (this as any)._minorUnsub = undefined;
-    (this as any)._boundOnTick = undefined;
-  }
-
   render() {
     return html`
-      <div class="minutes-col" data-departure="${this.departureTime}">${this.minutesText}</div>
+      <div class="minutes-col" data-departure="${this.departureTime}">${this.minutes()}</div>
       <div class="time-col">${this.departureTime || '--'}</div>
       <div class="train-type-badge-wrapper">
         <span part="badge" class="train-type-badge ${this.trainTypeClass}"

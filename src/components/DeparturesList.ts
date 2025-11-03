@@ -68,37 +68,6 @@ export class DeparturesList extends LitElement {
   @property({ type: Number })
   displayLimit = DISPLAYED_TRAINS_LIMIT;
 
-  private updateMinutesOnce = (nowSeconds: number): void => {
-    const trainRows = Array.from(this.shadowRoot?.querySelectorAll('train-row') || []);
-    if (trainRows.length === 0) return;
-
-    const departedIndices: number[] = [];
-    trainRows.forEach((trainRow, index) => {
-      // Delegate minutes calculation to the TrainRow component. The
-      // TrainRow.updateMinutes returns true when the train has departed.
-      try {
-        const departed = (trainRow as any).updateMinutes(nowSeconds);
-        if (departed) departedIndices.push(index);
-      } catch (e) {
-        // On any error, skip updating this row but continue processing others
-        console.warn('Failed to update minutes on train-row', e);
-      }
-    });
-
-    if (departedIndices.length > 0) {
-      const fullDepartedIndices = departedIndices;
-      const updatedDepartures = this.departures.filter((_, i) => !fullDepartedIndices.includes(i));
-      this.departures = updatedDepartures;
-      this.dispatchEvent(
-        new CustomEvent('departures-list-departed', {
-          detail: { departedCount: departedIndices.length },
-          bubbles: true,
-          composed: true,
-        }),
-      );
-    }
-  };
-
   private handleTrainDeparted = (e: CustomEvent): void => {
     // Remove the departed train from departures, this should trigger a rerender.
     try {
@@ -120,20 +89,6 @@ export class DeparturesList extends LitElement {
     this.dispatchEvent(
       new CustomEvent('departures-list-rendered', { bubbles: true, composed: true }),
     );
-  }
-
-  updated(changedProps: Map<string, any>) {
-    // When departures change, ensure minutes are calculated for the newly rendered rows.
-    if (changedProps.has('departures')) {
-      // Only update if there are departures to show.
-      if (this.departures && this.departures.length > 0) {
-        // Wait for the update cycle to complete and the shadow DOM to be ready.
-        // Calculate current time immediately for responsive UX (don't wait for next tick)
-        const now = new Date();
-        const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-        this.updateComplete.then(() => this.updateMinutesOnce(nowSeconds));
-      }
-    }
   }
 
   render() {

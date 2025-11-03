@@ -35,7 +35,7 @@ export function getUpcomingDepartures(
   departuresData: OdptStationTimetable[],
   directionUri: string,
   nowMins: number,
-  limit = 5,
+  limit = 10,
 ): StationTimetableEntry[] {
   const timetable = departuresData.find((d) => (d as any)['odpt:railDirection'] === directionUri);
   const items = (timetable?.['odpt:stationTimetableObject'] ?? []) as StationTimetableEntry[];
