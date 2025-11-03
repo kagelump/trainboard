@@ -1,13 +1,9 @@
 import { test, expect } from 'vitest';
-import fs from 'fs';
+// Import the JSON directly (tsconfig.resolveJsonModule = true)
+import holidays from '../holidays.json';
 
 test('src/holidays.json is present and valid', () => {
-  const fileUrl = new URL('../holidays.json', import.meta.url);
-  const exists = fs.existsSync(fileUrl);
-  expect(exists).toBe(true);
-
-  const raw = fs.readFileSync(fileUrl, 'utf8');
-  const data = JSON.parse(raw);
+  const data: Record<string, string> = holidays as unknown as Record<string, string>;
 
   expect(data).toBeTruthy();
   expect(typeof data).toBe('object');

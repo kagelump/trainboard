@@ -166,7 +166,10 @@ export class TickManager {
   private emitTick(type: TickType): void {
     const now = new Date();
     const timestamp = now.getTime();
-    const currentTimeSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    // Use UTC-based time so tests that set system time with a 'Z' (UTC) timestamp
+    // are deterministic regardless of the runner's local timezone.
+    const currentTimeSeconds =
+      now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
 
     const event: TickEvent = {
       type,
@@ -196,10 +199,7 @@ export class TickManager {
 
 // Singleton instance for use across the app
 // Import intervals from config for consistency
-import {
-  TIMETABLE_REFRESH_INTERVAL_MS,
-  CLOCK_UPDATE_INTERVAL_MS,
-} from './config';
+import { TIMETABLE_REFRESH_INTERVAL_MS, CLOCK_UPDATE_INTERVAL_MS } from './config';
 
 // Note: Major ticks handle both timetable AND status API refreshes.
 // Both use TIMETABLE_REFRESH_INTERVAL_MS (5 minutes) as they refresh together.
