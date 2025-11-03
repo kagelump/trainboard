@@ -3,7 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { getTrainTypeStyleSheet } from '../trainTypeStyles.js';
 import { tickManagerContext } from '../components/TimerContext.js';
-import { TickManager } from '../tickManager.js';
+import { TickEvent, TickManager } from '../tickManager.js';
 
 /**
  * TrainRow component - displays a single train departure row
@@ -152,12 +152,11 @@ export class TrainRow extends LitElement {
 
   /**
    * Compute the minutes display string for this train row.
-   * This replaces the previous reactive `minutesText` property.
    */
   public minutes(): string {
     const diff = this.departureTimeSec() - this.nowSeconds;
 
-    if (diff < -60) {
+    if (diff < 0) {
       return '発車済';
     } else if (diff <= 60) {
       return '到着';
@@ -175,19 +174,24 @@ export class TrainRow extends LitElement {
     return this.departureTimeSec() - this.nowSeconds < -60;
   }
 
+  private onTick(e: TickEvent): void {
+    console.log('TrainRow received tick event:', e);
+    this.nowSeconds = e.currentTimeSeconds;
+    if (this.trainDeparted()) {
+      this.dispatchEvent(
+        new CustomEvent('train-departed', {
+          bubbles: true,
+          composed: true,
+          detail: { departureTime: this.departureTime }, // This is unique for a departure list.
+        }),
+      );
+      e.unsubscribe();
+    }
+  }
+
   firstUpdated() {
     this.tickManager.onMinorTick((e) => {
-      this.nowSeconds = e.currentTimeSeconds;
-      if (this.trainDeparted()) {
-        this.dispatchEvent(
-          new CustomEvent('train-departed', {
-            bubbles: true,
-            composed: true,
-            detail: { departureTime: this.departureTime }, // This is unique for a departure list.
-          }),
-        );
-        e.unsubscribe();
-      }
+      this.onTick(e);
     });
   }
 
