@@ -8,6 +8,7 @@
     "clean": "rm -rf dist",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
+    "fetch:holidays": "node scripts/fetch_holidays.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "start": "http-server -c-1 -p 8080",
