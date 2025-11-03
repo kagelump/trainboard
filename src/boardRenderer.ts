@@ -221,9 +221,9 @@ function setupPeriodicRefreshIntervals(stationUri: string): void {
  */
 function pausePeriodicRefreshIntervals(): void {
   if (isPaused) return;
-  
+
   console.info('Pausing periodic refresh intervals (page hidden)');
-  
+
   if (typeof timetableIntervalId !== 'undefined') {
     clearInterval(timetableIntervalId);
     timetableIntervalId = undefined;
@@ -236,7 +236,7 @@ function pausePeriodicRefreshIntervals(): void {
     clearInterval(clockIntervalId);
     clockIntervalId = undefined;
   }
-  
+
   isPaused = true;
 }
 
@@ -246,13 +246,13 @@ function pausePeriodicRefreshIntervals(): void {
  */
 function resumePeriodicRefreshIntervals(stationUri: string): void {
   if (!isPaused) return;
-  
+
   console.info('Resuming periodic refresh intervals (page visible)');
   isPaused = false;
-  
+
   // Re-establish the intervals by calling the setup function
   setupPeriodicRefreshIntervals(stationUri);
-  
+
   // Immediately fetch fresh data when resuming
   fetchAndRenderTimetableData(stationUri).catch(console.error);
   updateRailwayStatus().catch(console.error);
@@ -297,20 +297,20 @@ export async function renderBoard(): Promise<void> {
   const success = await fetchAndRenderTimetableData(stationConfig.uri);
   if (!success) return;
 
-  // Step 4: Update railway operation status
+  // Step 4: Update railway operation status (Banner)
   await updateRailwayStatus();
 
   // Step 5: Set up periodic refresh intervals
   setupPeriodicRefreshIntervals(stationConfig.uri);
-  
+
   // Step 6: Initialize visibility manager to pause/resume when tab is hidden/visible
   visibilityManager.initialize();
-  
+
   // Remove old visibility callback if it exists to prevent accumulation
   if (visibilityCallback) {
     visibilityManager.offVisibilityChange(visibilityCallback);
   }
-  
+
   // Register new visibility callback
   visibilityCallback = (isVisible: boolean) => {
     if (isVisible) {

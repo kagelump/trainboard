@@ -24,6 +24,10 @@ export const STATUS_REFRESH_INTERVAL_MS = 300_000; // 5 minutes
 export const MINUTES_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
 export const CLOCK_UPDATE_INTERVAL_MS = 10_000; // 10 seconds
 
+// Time in minutes to add to current time for cutoff calculations.
+// Departing this far into the future will still be hidden.
+export const CUTOFF_MIN = 1; // 1 minute
+
 /**
  * Sets the ODPT API key.
  */

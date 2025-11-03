@@ -69,12 +69,8 @@ export class DeparturesList extends LitElement {
   displayLimit = DISPLAYED_TRAINS_LIMIT;
 
   private minutesUpdaterId: number | undefined;
-  private parseTimeToSeconds(timeStr: string): number {
-    const [hStr, mStr] = (timeStr || '').split(':');
-    const h = Number(hStr || 0);
-    const m = Number(mStr || 0);
-    return h * 3600 + m * 60;
-  }
+  // NOTE: TrainRow now owns parsing and minutes calculation. Remove this
+  // helper when no other modules reference it.
 
   private updateMinutesOnce = (): void => {
     const now = new Date();
@@ -85,17 +81,14 @@ export class DeparturesList extends LitElement {
 
     const departedIndices: number[] = [];
     trainRows.forEach((trainRow, index) => {
-      const dep = trainRow.getAttribute('departuretime') || '';
-      const depSecs = this.parseTimeToSeconds(dep);
-      const diff = depSecs - nowSeconds;
-
-      if (diff <= 0) {
-        departedIndices.push(index);
-      } else if (diff <= 60) {
-        (trainRow as any).minutesText = '到着';
-      } else {
-        const mins = Math.ceil(diff / 60);
-        (trainRow as any).minutesText = `${mins}分`;
+      // Delegate minutes calculation to the TrainRow component. The
+      // TrainRow.updateMinutes returns true when the train has departed.
+      try {
+        const departed = (trainRow as any).updateMinutes(nowSeconds);
+        if (departed) departedIndices.push(index);
+      } catch (e) {
+        // On any error, skip updating this row but continue processing others
+        console.warn('Failed to update minutes on train-row', e);
       }
     });
 

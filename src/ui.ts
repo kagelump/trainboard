@@ -84,6 +84,7 @@ export function renderDirection(
   trainTypeMap: Record<string, { name: string; class: string }>,
   options?: { trainCache?: StationTimetableEntry[]; autoUpdate?: boolean; displayLimit?: number },
 ): void {
+  console.log('Rendering departures for', directionId, 'with', departures.length, 'entries');
   const container = document.getElementById(`departures-${directionId}`) as HTMLElement;
   if (!container) return;
 

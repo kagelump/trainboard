@@ -130,12 +130,54 @@ export class TrainRow extends LitElement {
   @property({ type: String })
   minutesText = '--';
 
+  // Convert HH:MM to seconds since midnight
+  private parseTimeToSeconds(timeStr: string): number {
+    const [hStr, mStr] = (timeStr || '').split(':');
+    const h = Number(hStr || 0);
+    const m = Number(mStr || 0);
+    return h * 3600 + m * 60;
+  }
+
+  /**
+   * Update the minutes display for this train row.
+   * Returns true if the train has departed (i.e. should be removed from the list),
+   * otherwise false.
+   */
+  public updateMinutes(nowSeconds?: number): boolean {
+    const now =
+      typeof nowSeconds === 'number'
+        ? nowSeconds
+        : (() => {
+            const d = new Date();
+            return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+          })();
+
+    const dep = (this.departureTime as string) || this.getAttribute('departuretime') || '';
+    const depSecs = this.parseTimeToSeconds(dep);
+    const diff = depSecs - now;
+
+    if (diff <= 0) {
+      return true; // departed
+    }
+
+    if (diff <= 60) {
+      this.minutesText = '到着';
+    } else {
+      const mins = Math.ceil(diff / 60);
+      this.minutesText = `${mins}分`;
+    }
+
+    return false;
+  }
+
   render() {
     return html`
       <div class="minutes-col" data-departure="${this.departureTime}">${this.minutesText}</div>
       <div class="time-col">${this.departureTime || '--'}</div>
       <div class="train-type-badge-wrapper">
-        <span part="badge" class="train-type-badge ${this.trainTypeClass}">${this.trainTypeName}</span>
+        <span part="badge" class="train-type-badge ${this.trainTypeClass}"
+          >${this.trainTypeName}</span
+        >
       </div>
       <div class="destination-text">${this.destination}</div>
     `;
