@@ -9,6 +9,7 @@ import type {
   OdptRailDirection,
   OdptTrainType,
 } from './types';
+import holidays from './holidays.json';
 
 /**
  * Fetches data from a URL with automatic retry logic.
@@ -48,6 +49,23 @@ export async function fetchStationsList(
   return (await resp.json()) as OdptStation[];
 }
 
+export function calendarURI(): string {
+  // Build YYYY-MM-DD for today's local date and check holidays.json first.
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
+  // holidays.json maps date strings (YYYY-MM-DD) to holiday names.
+  if (Object.prototype.hasOwnProperty.call(holidays, todayStr)) {
+    return 'odpt.Calendar:SaturdayHoliday';
+  }
+
+  const d = today.getDay();
+  return d >= 1 && d <= 5 ? 'odpt.Calendar:Weekday' : 'odpt.Calendar:SaturdayHoliday';
+}
+
 export async function fetchStationTimetable(
   stationUri: string,
   apiKey: string | null,
@@ -57,15 +75,11 @@ export async function fetchStationTimetable(
   if (!apiBaseUrl || !stationUri || !railwayUri) {
     throw new Error('API base URL, station URI, and railway URI are required');
   }
-  const calendarURI = (() => {
-    const d = new Date().getDay();
-    return d >= 1 && d <= 5 ? 'odpt.Calendar:Weekday' : 'odpt.Calendar:SaturdayHoliday';
-  })();
   const params = new URLSearchParams();
   if (apiKey) params.set('acl:consumerKey', String(apiKey));
   params.set('odpt:railway', railwayUri);
   params.set('odpt:station', stationUri);
-  params.set('odpt:calendar', calendarURI);
+  params.set('odpt:calendar', calendarURI());
   const url = `${apiBaseUrl}odpt:StationTimetable?${params.toString()}`;
   const resp = await apiFetch(url);
   return (await resp.json()) as OdptStationTimetable[];
