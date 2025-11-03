@@ -1,5 +1,26 @@
 // src/tickManager.ts
 // Global tick manager for coordinating major and minor ticks across the application
+//
+// Architecture:
+// ┌─────────────────────────────────────────────────────────────────┐
+// │ VisibilityManager                                               │
+// │   └─ pauses/resumes TickManager when page is hidden/visible    │
+// └─────────────────────────────────────────────────────────────────┘
+//                              │
+//                              ▼
+// ┌─────────────────────────────────────────────────────────────────┐
+// │ TickManager (Singleton)                                         │
+// │   ├─ Major Ticks (every 5 min) ──→ API refresh callbacks       │
+// │   └─ Minor Ticks (every 10 sec) ──→ UI update callbacks        │
+// └─────────────────────────────────────────────────────────────────┘
+//         │                                   │
+//         ▼                                   ▼
+// ┌──────────────────┐            ┌────────────────────┐
+// │  boardRenderer   │            │  DeparturesList    │
+// │  - fetchTimetable│            │  - updateMinutes   │
+// │  - fetchStatus   │            │  - cleanDeparted   │
+// │  - updateClock   │            │                    │
+// └──────────────────┘            └────────────────────┘
 
 /**
  * Tick types:
