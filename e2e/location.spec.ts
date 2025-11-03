@@ -4,7 +4,7 @@ test.describe('Location Modal', () => {
   test('should open location modal when location button is clicked', async ({ page }) => {
     await page.goto('/');
     
-    // Mock geolocation permission denied to avoid browser prompts
+    // Deny geolocation permission to avoid browser prompts in tests
     await page.context().grantPermissions([]);
     
     // Click location button
