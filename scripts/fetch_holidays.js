@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const URL = 'https://holidays-jp.github.io/api/v1/date.json';
-const OUT_PATH = path.resolve(process.cwd(), 'src', 'holidays.json');
+const OUT_PATH = path.resolve(process.cwd(), 'src', 'odpt', 'data', 'holidays.json');
 
 (async function main() {
   try {
