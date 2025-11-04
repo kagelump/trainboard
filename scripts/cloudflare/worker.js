@@ -416,9 +416,14 @@ function getCorsHeaders(request) {
     allowedOrigins === '*' ||
     (origin && allowedOrigins.split(',').some((o) => o.trim() === origin));
 
+  // MCP endpoints support POST, other endpoints are GET only
+  const url = new URL(request.url);
+  const isMcpEndpoint = url.pathname.startsWith('/mcp/');
+  const allowedMethods = isMcpEndpoint ? 'GET, POST, OPTIONS' : 'GET, OPTIONS';
+
   return {
     'Access-Control-Allow-Origin': isAllowed ? (allowedOrigins === '*' ? '*' : origin) : 'null',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': allowedMethods,
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };
