@@ -1,29 +1,51 @@
 # CI/CD and Deployment Agent Instructions
 
-## GitHub Actions Workflow
+## GitHub Actions Workflows
 
-### Workflow File
+The repository includes two automated workflows:
 
-`.github/workflows/deploy.yml` - Automated build and deployment to GitHub Pages
+### Deploy Workflow
 
-### Trigger
+**File**: `.github/workflows/deploy.yml` - Automated build and deployment to GitHub Pages
 
+**Trigger**:
 - **Event**: Push to `main` branch
 - **Manual**: Can be triggered manually from Actions tab
 
-### Workflow Steps
-
+**Workflow Steps**:
 1. **Checkout**: Uses `actions/checkout@v4`
 2. **Setup Node.js**: Uses `actions/setup-node@v4` with Node.js 22
 3. **Install**: Runs `npm ci` for clean dependency installation
 4. **Build**: Runs `npm run build` to create production assets
 5. **Deploy**: Uses `peaceiris/actions-gh-pages@v3` to deploy `dist/` to `gh-pages` branch
 
-### Permissions
-
+**Permissions**:
 ```yaml
 permissions:
   contents: write # Required for deploying to gh-pages branch
+```
+
+### Holiday Update Workflow
+
+**File**: `.github/workflows/update-holidays.yml` - Automated update of Japanese holiday data
+
+**Trigger**:
+- **Schedule**: Runs monthly on the 1st day at 00:00 UTC
+- **Manual**: Can be triggered manually from Actions tab
+
+**Workflow Steps**:
+1. **Checkout**: Uses `actions/checkout@v4`
+2. **Setup Node.js**: Uses `actions/setup-node@v4` with Node.js 18
+3. **Install**: Runs `npm ci` for clean dependency installation
+4. **Fetch Holidays**: Runs `npm run fetch:holidays` to update holiday data
+5. **Commit & Push**: Commits changes to `src/odpt/data/holidays.json` if updated
+
+**Purpose**: Keeps Japanese holiday data current for accurate calendar-based timetable selection (Weekday vs. Saturday/Holiday schedules).
+
+**Permissions**:
+```yaml
+permissions:
+  contents: write # Required for committing holiday updates
 ```
 
 ## Build Process

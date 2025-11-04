@@ -17,26 +17,53 @@ All tests are located in `src/__tests__/` directory and follow the naming patter
 
 ## Existing Tests
 
-### src/__tests__/parsing.test.ts
-Tests for parsing utilities and data transformation functions.
-
 ### src/__tests__/api.test.ts
 Tests for API client functionality.
 
 ### src/__tests__/api_query.test.ts
 Tests for API query construction.
 
-### src/__tests__/routing.test.ts
-Tests for URL routing, railway/station name matching, and URL parameter parsing.
+### src/__tests__/boardRendererVisibility.test.ts
+Tests for board renderer visibility integration with Page Visibility API.
+
+### src/__tests__/departureListVisibility.test.ts
+Tests for departures list visibility integration and state management.
+
+### src/__tests__/holidays.test.ts
+Tests for holiday data parsing and handling.
 
 ### src/__tests__/location.test.ts
 Tests for geolocation utilities, distance calculation, and nearby station finding.
 
+### src/__tests__/minutes_updater.test.ts
+Tests for the minutes countdown updater functionality.
+
+### src/__tests__/parsing.test.ts
+Tests for parsing utilities and data transformation functions.
+
 ### src/__tests__/rendering.test.ts
-Tests for departure board rendering logic.
+Tests for departure board rendering logic using Lit components.
+
+### src/__tests__/routing.test.ts
+Tests for URL routing, railway/station name matching, and URL parameter parsing.
+
+### src/__tests__/tickManager.test.ts
+Tests for the TickManager interval management system.
+
+### src/__tests__/tickManagerVisibility.test.ts
+Tests for TickManager integration with Page Visibility API.
+
+### src/__tests__/trainrow.test.ts
+Tests for TrainRow component rendering and behavior.
 
 ### src/__tests__/ui.test.ts
 Tests for UI components and DOM manipulation.
+
+### src/__tests__/visibilityIntegration.test.ts
+Tests for integrated visibility management across components.
+
+### src/__tests__/visibilityManager.test.ts
+Tests for the VisibilityManager module and Page Visibility API integration.
 
 ## Writing New Tests
 
@@ -81,18 +108,18 @@ describe('Module Name', () => {
 ## What to Test
 
 ### Priority Testing Areas
-1. **Utility Functions** (src/utils.ts)
+1. **Utility Functions** (src/lib/utils.ts)
    - Data parsing and transformation
    - Date/time formatting
    - String manipulation
    - Validation functions
 
-2. **API Response Parsing** (src/api.ts)
+2. **API Response Parsing** (src/odpt/api.ts)
    - Response validation
    - Data extraction
    - Error handling
 
-3. **Caching Logic** (src/cache.ts)
+3. **Caching Logic** (src/lib/cache.ts)
    - Cache hit/miss scenarios
    - TTL expiration
    - Cache invalidation
@@ -107,10 +134,20 @@ describe('Module Name', () => {
    - Railway/station name matching (exact, partial, case-insensitive)
    - URL generation and updates
 
-6. **Geolocation** (src/location.ts)
+6. **Geolocation** (src/lib/location.ts)
    - Distance calculation (Haversine formula)
    - Nearby station finding
    - Distance formatting
+
+7. **Visibility Management** (src/lib/visibilityManager.ts)
+   - Page Visibility API integration
+   - Callback registration and execution
+   - State transitions
+
+8. **Interval Management** (src/lib/tickManager.ts)
+   - Tick scheduling and execution
+   - Pause/resume functionality
+   - Integration with visibility manager
 
 ### What NOT to Test
 - Third-party libraries (Vite, etc.)
@@ -289,7 +326,7 @@ npm test -- --reporter=verbose
 
 ### Example
 ```typescript
-import type { StationData, TrainInfo } from '../types';
+import type { StationData, TrainInfo } from '../odpt/types';
 
 const mockStation: StationData = {
   id: 'odpt.Station:Tokyu.Toyoko.MusashiKosugi',
