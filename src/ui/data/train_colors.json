@@ -185,9 +185,9 @@
     "fill": "black"
   },
   "odpt.TrainType:Tokyu.LimitedExpress": {
-    "outline": "yellow",
+    "outline": "white",
     "text": "white",
-    "fill": "black"
+    "fill": "yellow"
   },
   "odpt.TrainType:Tokyu.Local": {
     "outline": "black",

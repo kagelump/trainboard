@@ -74,6 +74,11 @@ export class TrainRow extends LitElement {
       word-break: break-word;
     }
 
+    /* Non-local train destination styling */
+    .destination-text.non-local {
+      color: yellow;
+    }
+
     /* Responsive: mobile-friendly layout tweaks */
     @media (max-width: 640px) {
       .minutes-col {
@@ -140,6 +145,9 @@ export class TrainRow extends LitElement {
   trainTypeClass = '';
 
   @property({ type: String })
+  trainTypeUri = '';
+
+  @property({ type: String })
   destination = '';
 
   // Convert HH:MM to seconds since midnight
@@ -174,6 +182,14 @@ export class TrainRow extends LitElement {
     return this.departureTimeSec() - this.nowSeconds < -60;
   }
 
+  /**
+   * Returns true if the train type is a local train.
+   */
+  private isLocalTrain(): boolean {
+    // Check if the trainTypeUri contains ".Local"
+    return this.trainTypeUri.includes('.Local');
+  }
+
   private onTick(e: TickEvent): void {
     console.log('TrainRow received tick event:', e);
     this.nowSeconds = e.currentTimeSeconds;
@@ -196,6 +212,10 @@ export class TrainRow extends LitElement {
   }
 
   render() {
+    const destinationClass = this.isLocalTrain()
+      ? 'destination-text'
+      : 'destination-text non-local';
+
     return html`
       <div class="minutes-col" data-departure="${this.departureTime}">${this.minutes()}</div>
       <div class="time-col">${this.departureTime || '--'}</div>
@@ -204,7 +224,7 @@ export class TrainRow extends LitElement {
           >${this.trainTypeName}</span
         >
       </div>
-      <div class="destination-text">${this.destination}</div>
+      <div class="${destinationClass}">${this.destination}</div>
     `;
   }
 }
