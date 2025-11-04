@@ -444,14 +444,13 @@ function getAllowedOrigins() {
 /**
  * Get cache TTL from environment or use default
  */
-function getCacheTtl() {
-  // Backwards-compatible: accept optional endpoint argument to vary TTL per endpoint
-  const args = Array.from(arguments);
-  const endpoint = args.length > 0 ? args[0] : undefined;
-
-  // If the caller indicates we're fetching live train status, use a shorter TTL
-  if (typeof endpoint === 'string' && endpoint.startsWith('odpt:TrainInformation')) {
-    return 300; // 5 minutes
+function getCacheTtl(endpoint) {
+  // If the caller indicates we're fetching live/real-time data, use a shorter TTL
+  if (typeof endpoint === 'string') {
+    // Real-time train position and operation status should be cached briefly
+    if (endpoint.startsWith('odpt:Train') || endpoint.startsWith('odpt:TrainInformation')) {
+      return 300; // 5 minutes
+    }
   }
 
   return typeof CACHE_TTL !== 'undefined' && CACHE_TTL
