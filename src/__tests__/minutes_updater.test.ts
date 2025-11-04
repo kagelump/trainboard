@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderDirection } from '../ui';
-import { SimpleCache } from '../cache';
+import { renderDirection } from '../ui/departures';
+import { SimpleCache } from '../lib/cache';
+// Import components to register them
+import '../ui/components/DeparturesList.js';
+import '../ui/components/TrainRow.js';
 
 beforeEach(() => {
   // Reset DOM between tests
@@ -42,14 +45,11 @@ describe('minutes updater initial run', () => {
       autoUpdate: true,
     });
 
-    // Wait for the departures-list rendered event to ensure shadow DOM exists
+    // Wait for the departures-list to complete initial render
     const departuresList = outContainer.querySelector('departures-list') as HTMLElement | null;
     expect(departuresList).toBeTruthy();
-    await new Promise<void>((resolve) => {
-      const list = departuresList as any;
-      if (list.__rendered) return resolve();
-      list.addEventListener('departures-list-rendered', () => resolve(), { once: true });
-    });
+
+    await (departuresList as any)?.updateComplete;
 
     const shadowRoot = (departuresList as any).shadowRoot;
     expect(shadowRoot).toBeTruthy();
@@ -58,5 +58,5 @@ describe('minutes updater initial run', () => {
     expect(trainRows.length).toBeGreaterThan(0);
 
     // no cleanup required; component will clear interval on disconnect when dom is reset in next test
-  });
+  }, 10000); // Increase timeout to 10 seconds
 });

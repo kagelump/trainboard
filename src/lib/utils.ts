@@ -1,5 +1,5 @@
 // src/utils.ts
-import type { OdptStationTimetable, StationTimetableEntry } from './types';
+import type { OdptStationTimetable, StationTimetableEntry } from '../odpt/types';
 
 /**
  * Extracts Japanese text from a multilingual object or returns the string as-is.

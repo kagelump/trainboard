@@ -1,3 +1,3 @@
 import { createContext } from '@lit/context';
-import { TickManager } from '../tickManager';
+import { TickManager } from '../../lib/tickManager';
 export const tickManagerContext = createContext<TickManager>('tickManager');

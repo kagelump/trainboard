@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { VisibilityManager } from '../visibilityManager';
+import { VisibilityManager } from '../lib/visibilityManager';
 
 describe('VisibilityManager', () => {
   let manager: VisibilityManager;

@@ -1,8 +1,8 @@
 // src/routing.ts
 // URL routing for railway and station selection
 
-import type { StationConfig } from './types';
-import type { RailwayConfig } from './dataLoaders';
+import type { StationConfig } from './odpt/types';
+import type { RailwayConfig } from './odpt/dataLoaders';
 
 export interface RouteParams {
   railwayName: string | null;

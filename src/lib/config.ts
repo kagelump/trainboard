@@ -1,14 +1,14 @@
 // src/config.ts
 // Configuration management for the trainboard application
 
-import { STORAGE_KEY_API_KEY } from './ui';
+import { STORAGE_KEY_API_KEY } from '../ui/settings';
 
 // --- Configuration State ---
 export let ODPT_API_KEY: string | null = null;
 // Load compile-time defaults from defaults.json (committed). This file contains
 // non-secret defaults such as API_BASE_URL and default selections. Secrets
 // (API keys) should not be committed and are handled via the settings modal.
-import defaults from '../defaults.json';
+import defaults from '../../defaults.json';
 
 export let API_BASE_URL: string =
   (defaults && defaults.API_BASE_URL) ||

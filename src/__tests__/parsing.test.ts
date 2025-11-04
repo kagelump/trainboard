@@ -4,7 +4,7 @@ import {
   getUpcomingDepartures,
   collectDestinationUris,
   formatTimeHHMM,
-} from '../utils';
+} from '../lib/utils';
 
 describe('parsing utils', () => {
   it('timeToMinutes converts HH:MM to minutes since midnight', () => {

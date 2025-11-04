@@ -9,7 +9,7 @@ import type {
   OdptRailDirection,
   OdptTrainType,
 } from './types';
-import holidays from './holidays.json';
+import holidays from './data/holidays.json';
 
 /**
  * Fetches data from a URL with automatic retry logic.

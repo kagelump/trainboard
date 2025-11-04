@@ -2,8 +2,8 @@ import { html, css, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { getTrainTypeStyleSheet } from '../trainTypeStyles.js';
-import { tickManagerContext } from '../components/TimerContext.js';
-import { TickEvent, TickManager } from '../tickManager.js';
+import { tickManagerContext } from './TimerContext.js';
+import { TickEvent, TickManager } from '../../lib/tickManager.js';
 
 /**
  * TrainRow component - displays a single train departure row

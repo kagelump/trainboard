@@ -1,6 +1,6 @@
 // src/__tests__/location.test.ts
 import { describe, it, expect } from 'vitest';
-import { calculateDistance, formatDistance, findNearbyStations } from '../location';
+import { calculateDistance, formatDistance, findNearbyStations } from '../lib/location';
 
 describe('location utilities', () => {
   describe('calculateDistance', () => {

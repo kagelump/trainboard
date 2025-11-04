@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { TickManager, TickType } from '../tickManager';
-import { visibilityManager } from '../visibilityManager';
+import { TickManager, TickType } from '../lib/tickManager';
+import { visibilityManager } from '../lib/visibilityManager';
 
 /**
  * Integration test demonstrating how TickManager works with VisibilityManager

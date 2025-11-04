@@ -1,7 +1,7 @@
 // src/location.ts
 // Geolocation utilities for finding nearby stations
 
-import stationsData from './stations.json';
+import stationsData from './data/stations.json';
 
 export interface StationFeature {
   type: 'Feature';

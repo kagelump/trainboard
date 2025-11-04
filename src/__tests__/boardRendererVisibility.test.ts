@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { visibilityManager } from '../visibilityManager';
+import { visibilityManager } from '../lib/visibilityManager';
 
 /**
  * Test to verify that departure list doesn't become empty after tab visibility change.

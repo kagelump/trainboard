@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { visibilityManager } from '../visibilityManager';
+import { visibilityManager } from '../lib/visibilityManager';
 
 /**
  * Integration test demonstrating the Page Visibility API in action

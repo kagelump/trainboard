@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 
 // Tests for Recent Railways and train caching behavior
 // (combined during merge/rebase)
-import { getRecentRailways, addRecentRailway, STORAGE_KEY_RECENT_RAILWAYS } from '../ui';
+import { getRecentRailways, addRecentRailway, STORAGE_KEY_RECENT_RAILWAYS } from '../ui/settings';
 
 describe('Recent Railways', () => {
   beforeEach(() => {

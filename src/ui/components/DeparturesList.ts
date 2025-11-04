@@ -3,13 +3,13 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './TrainRow.js';
 import { TrainDepartureView } from './TrainDepartureView.js';
-import type { StationTimetableEntry } from '../types';
-import type { SimpleCache } from '../cache';
-import { TickManager, globalTickManager } from '../tickManager';
+import type { StationTimetableEntry } from '../../odpt/types.js';
+import type { SimpleCache } from '../../lib/cache.js';
+import { TickManager, globalTickManager } from '../../lib/tickManager.js';
 import { provide } from '@lit/context';
 import { tickManagerContext } from './TimerContext.js';
 
-import { DISPLAYED_TRAINS_LIMIT } from '../constants';
+import { DISPLAYED_TRAINS_LIMIT } from '../../lib/constants.js';
 
 /**
  * DeparturesList component - displays a list of train departures

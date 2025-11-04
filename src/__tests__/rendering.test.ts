@@ -1,8 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderDirection, setLoadingState, setDirectionHeaders } from '../ui';
-import { SimpleCache } from '../cache';
-import type { StationTimetableEntry } from '../types';
-import type { DeparturesList } from '../components/DeparturesList';
+import { renderDirection, setLoadingState, setDirectionHeaders } from '../ui/departures';
+import { SimpleCache } from '../lib/cache';
+import type { StationTimetableEntry } from '../odpt/types';
+// Import components to register them
+import '../ui/components/DeparturesList.js';
+import '../ui/components/TrainRow.js';
+import type { DeparturesList } from '../ui/components/DeparturesList';
 
 describe('Train Row Rendering', () => {
   beforeEach(() => {
@@ -27,7 +30,9 @@ describe('Train Row Rendering', () => {
     // Wait for Lit to render
     await departuresList?.updateComplete;
 
-    expect(departuresList?.shadowRoot?.textContent).toContain('本日の発車予定はありません');
+    expect(departuresList?.shadowRoot).toBeTruthy();
+    const shadowText = departuresList?.shadowRoot?.textContent || '';
+    expect(shadowText).toContain('本日の発車予定はありません');
   });
 
   it('should render train rows with correct data', async () => {
@@ -54,9 +59,13 @@ describe('Train Row Rendering', () => {
     // Wait for Lit to render
     await departuresList?.updateComplete;
 
+    expect(departuresList?.shadowRoot).toBeTruthy();
+
     // Get train-row elements from the DeparturesList shadow DOM
     const trainRow = departuresList?.shadowRoot?.querySelector('train-row');
     await (trainRow as any)?.updateComplete;
+
+    expect(trainRow?.shadowRoot).toBeTruthy();
 
     // Get content from the train-row shadow DOM
     const trainRowContent = trainRow?.shadowRoot?.textContent || '';
@@ -96,6 +105,8 @@ describe('Train Row Rendering', () => {
     // Wait for Lit to render
     await departuresList?.updateComplete;
 
+    expect(departuresList?.shadowRoot).toBeTruthy();
+
     const trainRows = departuresList?.shadowRoot?.querySelectorAll('train-row');
     expect(trainRows?.length).toBe(2);
   });
@@ -124,9 +135,13 @@ describe('Train Row Rendering', () => {
     // Wait for Lit to render
     await departuresList?.updateComplete;
 
+    expect(departuresList?.shadowRoot).toBeTruthy();
+
     // Get train-row element from the DeparturesList shadow DOM
     const trainRow = departuresList?.shadowRoot?.querySelector('train-row');
     await (trainRow as any)?.updateComplete;
+
+    expect(trainRow?.shadowRoot).toBeTruthy();
 
     // Get content from the train-row shadow DOM
     const trainRowContent = trainRow?.shadowRoot?.textContent || '';
@@ -155,9 +170,13 @@ describe('Train Row Rendering', () => {
     // Wait for Lit to render
     await departuresList?.updateComplete;
 
+    expect(departuresList?.shadowRoot).toBeTruthy();
+
     // Get train-row element from the DeparturesList shadow DOM
     const trainRow = departuresList?.shadowRoot?.querySelector('train-row');
     await (trainRow as any)?.updateComplete;
+
+    expect(trainRow?.shadowRoot).toBeTruthy();
 
     // Get content from the train-row shadow DOM
     const trainRowContent = trainRow?.shadowRoot?.textContent || '';
@@ -188,8 +207,14 @@ describe('UI State Rendering', () => {
     await inboundList?.updateComplete;
     await outboundList?.updateComplete;
 
-    expect(inboundList?.shadowRoot?.textContent).toContain('時刻表を取得中');
-    expect(outboundList?.shadowRoot?.textContent).toContain('時刻表を取得中');
+    expect(inboundList?.shadowRoot).toBeTruthy();
+    expect(outboundList?.shadowRoot).toBeTruthy();
+
+    const inboundText = inboundList?.shadowRoot?.textContent || '';
+    const outboundText = outboundList?.shadowRoot?.textContent || '';
+
+    expect(inboundText).toContain('時刻表を取得中');
+    expect(outboundText).toContain('時刻表を取得中');
   });
 
   it('should set direction headers', () => {

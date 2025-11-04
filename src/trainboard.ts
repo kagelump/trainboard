@@ -1,9 +1,9 @@
 // src/trainboard.ts
 // Main entry point and orchestrator for the trainboard application
 
-import { fetchRailways } from './api';
-import type { OdptRailway } from './types';
-import { getJapaneseText, safeGetElement } from './utils';
+import { fetchRailways } from './odpt/api';
+import type { OdptRailway } from './odpt/types';
+import { getJapaneseText, safeGetElement } from './lib/utils';
 import {
   chooseInitialStation,
   chooseInitialRailway,
@@ -13,8 +13,8 @@ import {
   setupLocationModal as uiSetupLocationModal,
   STORAGE_KEY_RAILWAY_URI,
   STORAGE_KEY_STATION_URI,
-} from './ui';
-import { injectTrainTypeStyles } from './trainTypeStyles';
+} from './ui/settings';
+import { injectTrainTypeStyles } from './ui/trainTypeStyles';
 import {
   loadLocalConfig,
   getApiKey,
@@ -22,7 +22,7 @@ import {
   getApiBaseUrl,
   DEFAULT_RAILWAY,
   DEFAULT_STATION_NAME,
-} from './config';
+} from './lib/config';
 import {
   type RailwayConfig,
   loadDirectionNames,
@@ -31,8 +31,8 @@ import {
   setRailwayConfigs,
   getRailwayConfigs,
   getStationConfigs,
-} from './dataLoaders';
-import { renderBoard, getCurrentConfig, setCurrentConfig } from './ui/boardRenderer';
+} from './odpt/dataLoaders';
+import { renderBoard, getCurrentConfig, setCurrentConfig } from './ui/renderBoard';
 import {
   parseRouteFromUrl,
   findRailwayByName,

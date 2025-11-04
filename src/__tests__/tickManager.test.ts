@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { TickManager, TickType } from '../tickManager';
+import { TickManager, TickType } from '../lib/tickManager';
 
 describe('TickManager', () => {
   let tickManager: TickManager;

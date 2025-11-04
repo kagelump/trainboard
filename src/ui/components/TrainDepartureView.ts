@@ -1,5 +1,5 @@
-import type { StationTimetableEntry } from '../types';
-import type { SimpleCache } from '../cache';
+import type { StationTimetableEntry } from '../../odpt/types';
+import type { SimpleCache } from '../../lib/cache';
 
 export class TrainDepartureView {
   departureTime: string;

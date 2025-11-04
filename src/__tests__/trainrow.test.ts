@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import '../components/TrainRow.js';
-import { TrainRow } from '../components/TrainRow.js';
+import '../ui/components/TrainRow.js';
+import { TrainRow } from '../ui/components/TrainRow.js';
 
 describe('TrainRow.updateMinutes', () => {
   it('shows 発車済 when train departed within 60 seconds', () => {

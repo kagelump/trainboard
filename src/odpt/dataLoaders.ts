@@ -9,11 +9,11 @@ import {
 } from './api';
 import type { OdptRailway, StationTimetableEntry, StationLite, StationConfig } from './types';
 export type { StationConfig } from './types';
-import { getJapaneseText, collectDestinationUris } from './utils';
-import { SimpleCache } from './cache';
-import { getTrainTypeCssClass } from './trainTypeStyles';
-import { setPageTitle } from './ui';
-import terminusData from './terminus.json';
+import { getJapaneseText, collectDestinationUris } from '../lib/utils';
+import { SimpleCache } from '../lib/cache';
+import { getTrainTypeCssClass } from '../ui/trainTypeStyles';
+import { setPageTitle } from '../ui/settings';
+import terminusData from './data/terminus.json';
 
 // --- Types ---
 // StationConfig is defined and exported from `src/types.ts`.

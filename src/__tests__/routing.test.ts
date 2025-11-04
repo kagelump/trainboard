@@ -7,7 +7,7 @@ import {
   getNamesFromUris,
   getBasePath,
 } from '../routing';
-import type { RailwayConfig, StationConfig } from '../dataLoaders';
+import type { RailwayConfig, StationConfig } from '../odpt/dataLoaders';
 
 describe('URL Routing', () => {
   // Mock window.location and window.history
@@ -28,7 +28,7 @@ describe('URL Routing', () => {
     (window as any).history = {
       pushState: vi.fn(),
     };
-    
+
     // Reset document.querySelector mock
     document.querySelector = vi.fn((selector: string) => {
       if (selector === 'base') return null;
@@ -81,7 +81,7 @@ describe('URL Routing', () => {
       expect(params.railwayName).toBe('東急東横線');
       expect(params.stationName).toBe('武蔵小杉 (TY11)');
     });
-    
+
     it('should parse railway and station from URL with base path', () => {
       window.location.pathname = '/trainboard/railway/東急東横線/station/武蔵小杉 (TY11)';
       const params = parseRouteFromUrl();
@@ -95,7 +95,7 @@ describe('URL Routing', () => {
       expect(params.railwayName).toBeNull();
       expect(params.stationName).toBeNull();
     });
-    
+
     it('should return null values for base path root', () => {
       window.location.pathname = '/trainboard/';
       const params = parseRouteFromUrl();
@@ -111,14 +111,16 @@ describe('URL Routing', () => {
     });
 
     it('should handle URL-encoded names', () => {
-      window.location.pathname = '/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
+      window.location.pathname =
+        '/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
       const params = parseRouteFromUrl();
       expect(params.railwayName).toBe('東急東横線');
       expect(params.stationName).toBe('武蔵小杉 (TY11)');
     });
-    
+
     it('should handle URL-encoded names with base path', () => {
-      window.location.pathname = '/trainboard/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
+      window.location.pathname =
+        '/trainboard/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
       const params = parseRouteFromUrl();
       expect(params.railwayName).toBe('東急東横線');
       expect(params.stationName).toBe('武蔵小杉 (TY11)');
@@ -128,7 +130,11 @@ describe('URL Routing', () => {
   describe('findRailwayByName', () => {
     const mockRailways: RailwayConfig[] = [
       { uri: 'odpt.Railway:Tokyu.Toyoko', name: '東急東横線', operator: 'odpt.Operator:Tokyu' },
-      { uri: 'odpt.Railway:JR-East.Yamanote', name: 'ＪＲ山手線', operator: 'odpt.Operator:JR-East' },
+      {
+        uri: 'odpt.Railway:JR-East.Yamanote',
+        name: 'ＪＲ山手線',
+        operator: 'odpt.Operator:JR-East',
+      },
     ];
 
     it('should find railway by exact name match', () => {
@@ -230,7 +236,7 @@ describe('URL Routing', () => {
         '/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)',
       );
     });
-    
+
     it('should update URL with railway and station names with base path', () => {
       window.location.pathname = '/trainboard/';
       updateUrl('東急東横線', '武蔵小杉 (TY11)');
@@ -254,13 +260,15 @@ describe('URL Routing', () => {
     });
 
     it('should not update if URL is already correct', () => {
-      window.location.pathname = '/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
+      window.location.pathname =
+        '/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
       updateUrl('東急東横線', '武蔵小杉 (TY11)');
       expect(window.history.pushState).not.toHaveBeenCalled();
     });
-    
+
     it('should not update if URL is already correct with base path', () => {
-      window.location.pathname = '/trainboard/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
+      window.location.pathname =
+        '/trainboard/railway/%E6%9D%B1%E6%80%A5%E6%9D%B1%E6%A8%AA%E7%B7%9A/station/%E6%AD%A6%E8%94%B5%E5%B0%8F%E6%9D%89%20(TY11)';
       updateUrl('東急東横線', '武蔵小杉 (TY11)');
       expect(window.history.pushState).not.toHaveBeenCalled();
     });

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DeparturesList } from '../components/DeparturesList';
-import { visibilityManager } from '../visibilityManager';
-import type { StationTimetableEntry } from '../types';
+import { DeparturesList } from '../ui/components/DeparturesList';
+import { visibilityManager } from '../lib/visibilityManager';
+import type { StationTimetableEntry } from '../odpt/types';
 
 /**
  * Integration test to verify that the departure list doesn't become empty
@@ -13,17 +13,18 @@ describe('DeparturesList Visibility Integration', () => {
   let container: HTMLDivElement;
 
   // Shared test utilities
-  const createMockStationNameCache = () => ({
-    get: (uri: string) => uri.split(':')[1] || uri,
-    set: () => {},
-    has: () => true,
-    clear: () => {},
-    keys: () => [],
-    enablePersistence: () => {},
-    map: new Map(),
-    maxEntries: 500,
-    persist: () => {},
-  }) as any;
+  const createMockStationNameCache = () =>
+    ({
+      get: (uri: string) => uri.split(':')[1] || uri,
+      set: () => {},
+      has: () => true,
+      clear: () => {},
+      keys: () => [],
+      enablePersistence: () => {},
+      map: new Map(),
+      maxEntries: 500,
+      persist: () => {},
+    }) as any;
 
   const createMockTrainTypeMap = () => ({
     'odpt.TrainType:Local': { name: '各駅停車', class: 'type-LOC' },
@@ -37,7 +38,7 @@ describe('DeparturesList Visibility Integration', () => {
     // Create a container and departures list element
     container = document.createElement('div');
     document.body.appendChild(container);
-    
+
     departuresList = document.createElement('departures-list') as DeparturesList;
     container.appendChild(departuresList);
   });

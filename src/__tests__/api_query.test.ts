@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { fetchRailDirections } from '../api';
+import { fetchRailDirections } from '../odpt/api';
 
 describe('API query string', () => {
   beforeEach(() => {

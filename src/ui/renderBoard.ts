@@ -1,14 +1,11 @@
 // src/ui/boardRenderer.ts
 // Board rendering and refresh logic (moved under src/ui)
 
-import { fetchStationTimetable, fetchStatus } from '../api';
-import type { OdptStationTimetable } from '../types';
-import { timeToMinutes, formatTimeHHMM, safeGetElement, getUpcomingDepartures } from '../utils';
+import { fetchStationTimetable, fetchStatus } from '../odpt/api';
+import type { OdptStationTimetable } from '../odpt/types';
+import { timeToMinutes, formatTimeHHMM, safeGetElement, getUpcomingDepartures } from '../lib/utils';
 import {
   setStationHeader,
-  setLoadingState,
-  setDirectionHeaders,
-  renderDirection as uiRenderDirection,
   updateClock as uiUpdateClock,
   showStatus as uiShowStatus,
   clearStatus as uiClearStatus,
@@ -16,7 +13,12 @@ import {
   getOperatorName,
   STORAGE_KEY_RAILWAY_URI,
   STORAGE_KEY_STATION_URI,
-} from './index';
+} from './settings';
+import {
+  setLoadingState,
+  setDirectionHeaders,
+  renderDirection as uiRenderDirection,
+} from './departures';
 import {
   type StationConfig,
   TRAIN_TYPE_MAP,
@@ -28,10 +30,10 @@ import {
   getStationConfigs,
   getRailwayConfigs,
   ensureStationNamesForDepartures,
-} from '../dataLoaders';
-import { getApiKey, getApiBaseUrl } from '../config';
-import { visibilityManager } from '../visibilityManager';
-import { globalTickManager, TickType, type TickEvent } from '../tickManager';
+} from '../odpt/dataLoaders';
+import { getApiKey, getApiBaseUrl } from '../lib/config';
+import { visibilityManager } from '../lib/visibilityManager';
+import { globalTickManager, TickType, type TickEvent } from '../lib/tickManager';
 
 // --- State ---
 export let currentConfig: {

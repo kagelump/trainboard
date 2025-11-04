@@ -1,19 +1,22 @@
 // src/ui/index.ts
-import type { StationTimetableEntry } from '../types';
-import type { SimpleCache } from '../cache';
-import { formatTimeHHMM } from '../utils';
-import { getStationConfigs, getRailwayConfigs } from '../dataLoaders';
-import prefectures from '../prefectures.json';
-import sortedPrefectures from '../sorted_prefectures.json';
-import operators from '../operators.json';
-import { DISPLAYED_TRAINS_LIMIT } from '../constants';
-import '../components/DeparturesList.js';
-import '../components/StationHeader.js';
-import '../components/HeaderButton.js';
-import { TrainDepartureView } from '../components/TrainDepartureView.js';
-import type { DeparturesList } from '../components/DeparturesList.js';
-import type { TrainDepartureView as TrainDepartureViewType } from '../components/TrainDepartureView.js';
-import type { StationHeader } from '../components/StationHeader.js';
+import type { StationTimetableEntry } from '../odpt/types';
+import type { SimpleCache } from '../lib/cache';
+import { formatTimeHHMM } from '../lib/utils';
+import { getStationConfigs, getRailwayConfigs } from '../odpt/dataLoaders';
+import prefectures from './data/prefectures.json';
+import sortedPrefectures from './data/sorted_prefectures.json';
+import operators from './data/operators.json';
+import { DISPLAYED_TRAINS_LIMIT } from '../lib/constants';
+import './components/DeparturesList.js';
+import './components/StationHeader.js';
+import './components/HeaderButton.js';
+import './departures';
+// Backwards-compatibility re-exports for functions moved to `src/ui/departures.ts`
+export { setLoadingState, setDirectionHeaders, renderDirection } from './departures';
+import { TrainDepartureView } from './components/TrainDepartureView.js';
+import type { DeparturesList } from './components/DeparturesList.js';
+import type { TrainDepartureView as TrainDepartureViewType } from './components/TrainDepartureView.js';
+import type { StationHeader } from './components/StationHeader.js';
 
 type StationCfg = { name: string; uri: string };
 type RailwayCfg = { name: string; uri: string; operator: string };
@@ -51,75 +54,6 @@ export function setStationHeader(
   el.stationName = name || '読込中...';
   el.railwayName = railwayName || '';
   el.operatorName = operatorName || '';
-}
-
-export function setLoadingState(): void {
-  const inContainer = document.getElementById('departures-inbound') as HTMLElement;
-  const outContainer = document.getElementById('departures-outbound') as HTMLElement;
-
-  // Create or get DeparturesList components
-  let inList = inContainer?.querySelector('departures-list') as DeparturesList;
-  let outList = outContainer?.querySelector('departures-list') as DeparturesList;
-
-  if (!inList) {
-    inList = document.createElement('departures-list') as DeparturesList;
-    if (inContainer) {
-      inContainer.innerHTML = '';
-      inContainer.appendChild(inList);
-    }
-  }
-
-  if (!outList) {
-    outList = document.createElement('departures-list') as DeparturesList;
-    if (outContainer) {
-      outContainer.innerHTML = '';
-      outContainer.appendChild(outList);
-    }
-  }
-
-  if (inList) inList.loading = true;
-  if (outList) outList.loading = true;
-}
-
-export function setDirectionHeaders(inHeaderText: string, outHeaderText: string): void {
-  const inHeader = document.getElementById('direction-inbound-header');
-  const outHeader = document.getElementById('direction-outbound-header');
-  if (inHeader) inHeader.textContent = `${inHeaderText}行き`;
-  if (outHeader) outHeader.textContent = `${outHeaderText}行き`;
-}
-
-export function renderDirection(
-  directionId: 'inbound' | 'outbound',
-  departures: Array<StationTimetableEntry | TrainDepartureViewType>,
-  stationNameCache: SimpleCache<string>,
-  trainTypeMap: Record<string, { name: string; class: string }>,
-  _options?: { autoUpdate?: boolean; [key: string]: any },
-): void {
-  console.log('Rendering departures for', directionId, 'with', departures.length, 'entries');
-  const container = document.getElementById(`departures-${directionId}`) as HTMLElement;
-  if (!container) return;
-
-  // Create or get DeparturesList component
-  let departuresList = container.querySelector('departures-list') as DeparturesList;
-
-  if (!departuresList) {
-    departuresList = document.createElement('departures-list') as DeparturesList;
-    container.innerHTML = '';
-    container.appendChild(departuresList);
-  }
-
-  // Normalize entries: callers may pass raw StationTimetableEntry objects or
-  // already-constructed TrainDepartureView instances. Ensure the component
-  // always receives TrainDepartureView instances.
-  const views = departures.map((d) =>
-    d instanceof TrainDepartureView
-      ? d
-      : new TrainDepartureView(d as StationTimetableEntry, stationNameCache),
-  );
-  departuresList.departures = views;
-  departuresList.stationNameCache = stationNameCache;
-  departuresList.trainTypeMap = trainTypeMap;
-  departuresList.loading = false;
 }
 
 // (App-level minutes-updater removed — individual `departures-list` components
@@ -555,7 +489,7 @@ export function setupLocationModal(
       try {
         // Dynamically import location module to avoid bundling issues
         const { getCurrentPosition, findNearbyStations, formatDistance } = await import(
-          '../location'
+          '../lib/location'
         );
 
         const position = await getCurrentPosition();

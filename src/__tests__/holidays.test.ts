@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 // Import the JSON directly (tsconfig.resolveJsonModule = true)
-import holidays from '../holidays.json';
+import holidays from '../odpt/data/holidays.json';
 
 test('src/holidays.json is present and valid', () => {
   const data: Record<string, string> = holidays as unknown as Record<string, string>;
