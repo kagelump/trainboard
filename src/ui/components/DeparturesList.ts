@@ -135,6 +135,7 @@ export class DeparturesList extends LitElement {
               departureTime="${departureTime}"
               trainTypeName="${trainType.name}"
               trainTypeClass="${trainType.class}"
+              trainTypeUri="${view.trainTypeUri}"
               destination="${view.destination}"
               @train-departed=${this.handleTrainDeparted}
             ></train-row>

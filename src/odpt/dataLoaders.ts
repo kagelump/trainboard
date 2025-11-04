@@ -12,6 +12,7 @@ export type { StationConfig } from './types';
 import { getJapaneseText, collectDestinationUris } from '../lib/utils';
 import { SimpleCache } from '../lib/cache';
 import { getTrainTypeCssClass } from '../ui/trainTypeStyles';
+import { applyTrainTypeRewrite } from '../ui/trainTypeRewrites';
 import { setPageTitle } from '../ui/settings';
 import terminusData from './data/terminus.json';
 
@@ -131,8 +132,11 @@ export async function loadTrainTypes(apiKey: string | null, apiBaseUrl: string):
         continue;
       }
 
+      // Apply any configured rewrites to the train type name
+      const displayName = applyTrainTypeRewrite(uri, name);
+
       const cssClass = getTrainTypeCssClass(uri);
-      TRAIN_TYPE_MAP[uri] = { name, class: cssClass };
+      TRAIN_TYPE_MAP[uri] = { name: displayName, class: cssClass };
     }
 
     console.log(`Loaded ${Object.keys(TRAIN_TYPE_MAP).length} train types`);
