@@ -186,8 +186,8 @@ export class TrainRow extends LitElement {
    * Returns true if the train type is a local train.
    */
   private isLocalTrain(): boolean {
-    // Check if the trainTypeUri contains ".Local"
-    return this.trainTypeUri.includes('.Local');
+    // Check if the trainTypeUri ends with ".Local"
+    return this.trainTypeUri.endsWith('.Local');
   }
 
   private onTick(e: TickEvent): void {
