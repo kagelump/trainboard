@@ -8,6 +8,7 @@ Trainboard is a compact static departure board for ODPT train lines. It's a Type
 
 - **Language**: TypeScript
 - **Build Tool**: Vite 7.x
+- **UI Framework**: Lit 3.x (web components)
 - **Testing**: Vitest
 - **Formatting**: Prettier
 - **Deployment**: GitHub Pages (via GitHub Actions)

@@ -225,7 +225,7 @@ This is implemented via the `visibilityManager` module which uses the browser's 
 
 ### Refresh Intervals
 
-The application uses the following refresh intervals (configured in `src/config.ts`):
+The application uses the following refresh intervals (configured in `src/lib/config.ts`):
 
 - **Timetable refresh**: 5 minutes (fetches departure data)
 - **Status refresh**: 5 minutes (fetches railway operation status)

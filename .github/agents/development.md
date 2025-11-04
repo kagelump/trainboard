@@ -38,7 +38,7 @@ Because this repository is small and we own the entire webapp, most refactors ca
 ### Type Safety
 
 - Always define proper types for function parameters and return values
-- Use the types defined in `src/types.ts` for consistency
+- Use the types defined in `src/odpt/types.ts` for consistency
 - Avoid using `any` - use `unknown` and type guards if needed
 - Leverage TypeScript's inference when appropriate
 
