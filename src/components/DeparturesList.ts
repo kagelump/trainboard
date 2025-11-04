@@ -53,8 +53,10 @@ export class DeparturesList extends LitElement {
   @provide({ context: tickManagerContext })
   tickManager: TickManager = globalTickManager;
 
+  // Accept either already-constructed TrainDepartureView objects or raw
+  // StationTimetableEntry objects (tests and callers may pass either).
   @property({ type: Array })
-  departures: TrainDepartureView[] = [];
+  departures: Array<TrainDepartureView | StationTimetableEntry> = [];
 
   @property({ type: Object })
   stationNameCache: SimpleCache<string> | null = null;
@@ -67,6 +69,13 @@ export class DeparturesList extends LitElement {
 
   @property({ type: Number })
   displayLimit = DISPLAYED_TRAINS_LIMIT;
+
+  // Compatibility flag: tests set `autoUpdateMinutes = false` to avoid
+  // starting minute update intervals during unit tests. Keep this as a
+  // property for tests, though the component's minute-update logic is
+  // handled by individual `train-row` elements / other managers.
+  @property({ type: Boolean })
+  autoUpdateMinutes = true;
 
   private handleTrainDeparted = (e: CustomEvent): void => {
     // Remove the departed train from departures, this should trigger a rerender.
@@ -100,11 +109,15 @@ export class DeparturesList extends LitElement {
       return html`<p class="empty-message">本日の発車予定はありません。</p>`;
     }
 
-    // Convert the first `displayLimit` raw entries into lightweight views
-    // which normalize the fields we care about (departureTime, trainTypeUri,
-    // and destination string). This keeps rendering code simple and makes
-    // the template work with a consistent shape.
-    const displayedEntries = this.departures.slice(0, this.displayLimit);
+    // Convert the first `displayLimit` entries into TrainDepartureView
+    // instances. Callers may pass either raw StationTimetableEntry objects
+    // or already-constructed TrainDepartureView instances.
+    const normalized = this.departures.map((d) =>
+      d instanceof TrainDepartureView
+        ? d
+        : new TrainDepartureView(d as StationTimetableEntry, this.stationNameCache),
+    );
+    const displayedEntries = normalized.slice(0, this.displayLimit);
 
     return html`
       ${repeat(

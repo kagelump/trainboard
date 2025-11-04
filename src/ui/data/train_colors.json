@@ -1,0 +1,322 @@
+{
+  "odpt.TrainType:Sotetsu.CommuterExpress": {
+    "outline": "black",
+    "text": "red",
+    "fill": "black"
+  },
+  "odpt.TrainType:Sotetsu.CommuterLimitedExpress": {
+    "outline": "black",
+    "text": "red",
+    "fill": "white"
+  },
+  "odpt.TrainType:Sotetsu.Express": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:Sotetsu.LimitedExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "red"
+  },
+  "odpt.TrainType:Sotetsu.Local": {
+    "outline": "black",
+    "text": "black",
+    "fill": "white"
+  },
+  "odpt.TrainType:Sotetsu.Rapid": {
+    "outline": "black",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Odakyu.CommuterExpress": {
+    "outline": "black",
+    "text": "red",
+    "fill": "black"
+  },
+  "odpt.TrainType:Odakyu.CommuterSemiExpress": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "black"
+  },
+  "odpt.TrainType:Odakyu.Express": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:Odakyu.LimitedExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "red"
+  },
+  "odpt.TrainType:Odakyu.Local": {
+    "outline": "black",
+    "text": "black",
+    "fill": "white"
+  },
+  "odpt.TrainType:Odakyu.RapidExpress": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:Odakyu.SemiExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "gray"
+  },
+  "odpt.TrainType:Keikyu.AccessExpress": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Keikyu.AirportRapidLimitedExpress": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:Keikyu.CommuterLimitedExpress": {
+    "outline": "black",
+    "text": "red",
+    "fill": "white"
+  },
+  "odpt.TrainType:Keikyu.EveningWing": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Keikyu.Express": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:Keikyu.LimitedExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "red"
+  },
+  "odpt.TrainType:Keikyu.Local": {
+    "outline": "black",
+    "text": "black",
+    "fill": "white"
+  },
+  "odpt.TrainType:Keikyu.MorningWing": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Keikyu.RapidLimitedExpress": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:Keikyu.Rapid": {
+    "outline": "black",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Seibu.CommuterExpress": {
+    "outline": "black",
+    "text": "red",
+    "fill": "black"
+  },
+  "odpt.TrainType:Seibu.CommuterSemiExpress": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "black"
+  },
+  "odpt.TrainType:Seibu.Express": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:Seibu.F-Liner": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Seibu.HaijimaLiner": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Seibu.LimitedExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "red"
+  },
+  "odpt.TrainType:Seibu.Local": {
+    "outline": "black",
+    "text": "black",
+    "fill": "white"
+  },
+  "odpt.TrainType:Seibu.RapidExpress": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:Seibu.Rapid": {
+    "outline": "black",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Seibu.S-TRAIN": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Seibu.SemiExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "gray"
+  },
+  "odpt.TrainType:Tokyu.CommuterLimitedExpress": {
+    "outline": "yellow",
+    "text": "red",
+    "fill": "white"
+  },
+  "odpt.TrainType:Tokyu.Express": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:Tokyu.F-Liner": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Tokyu.LimitedExpress": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Tokyu.Local": {
+    "outline": "black",
+    "text": "black",
+    "fill": "white"
+  },
+  "odpt.TrainType:Tokyu.S-TRAIN": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Tokyu.SemiExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "gray"
+  },
+  "odpt.TrainType:Tobu.Express": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:Tobu.F-Liner": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Tobu.KawagoeLimitedExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "red"
+  },
+  "odpt.TrainType:Tobu.LimitedExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "red"
+  },
+  "odpt.TrainType:Tobu.Local": {
+    "outline": "black",
+    "text": "black",
+    "fill": "white"
+  },
+  "odpt.TrainType:Tobu.RapidExpress": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:Tobu.Rapid": {
+    "outline": "black",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Tobu.SL-Taiju": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Tobu.SectionExpress": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:Tobu.SectionSemiExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "gray"
+  },
+  "odpt.TrainType:Tobu.SemiExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "gray"
+  },
+  "odpt.TrainType:Tobu.TH-LINER": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:Tobu.TJ-Liner": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:JR-East.ChuoSpecialRapid": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:JR-East.CommuterRapid": {
+    "outline": "black",
+    "text": "red",
+    "fill": "black"
+  },
+  "odpt.TrainType:JR-East.CommuterSpecialRapid": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:JR-East.Express": {
+    "outline": "black",
+    "text": "white",
+    "fill": "red"
+  },
+  "odpt.TrainType:JR-East.LimitedExpress": {
+    "outline": "black",
+    "text": "black",
+    "fill": "red"
+  },
+  "odpt.TrainType:JR-East.Liner": {
+    "outline": "yellow",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:JR-East.Local": {
+    "outline": "black",
+    "text": "black",
+    "fill": "white"
+  },
+  "odpt.TrainType:JR-East.OmeSpecialRapid": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  },
+  "odpt.TrainType:JR-East.Rapid": {
+    "outline": "black",
+    "text": "white",
+    "fill": "black"
+  },
+  "odpt.TrainType:JR-East.SpecialRapid": {
+    "outline": "black",
+    "text": "yellow",
+    "fill": "red"
+  }
+}

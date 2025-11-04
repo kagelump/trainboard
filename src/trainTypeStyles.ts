@@ -1,7 +1,7 @@
 // src/trainTypeStyles.ts
 // Dynamic CSS generation for train types based on train_colors.json
 
-import trainColorData from './train_colors.json';
+import trainColorData from './ui/data/train_colors.json';
 
 // Store the dynamically created stylesheet so it can be adopted by shadow roots
 let trainTypeStyleSheet: CSSStyleSheet | null = null;
