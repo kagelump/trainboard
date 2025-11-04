@@ -8,7 +8,7 @@
  *   node mcp-example.js https://your-worker.workers.dev
  */
 
-const WORKER_URL = process.argv[2] || 'https://odpt-api-proxy.workers.dev';
+const WORKER_URL = process.argv[2] || 'https://your-worker.workers.dev';
 
 async function main() {
   console.log('ODPT MCP Client Example\n');

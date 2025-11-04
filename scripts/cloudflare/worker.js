@@ -23,6 +23,8 @@
 // Configuration constants
 const DEFAULT_CACHE_TTL = 3600; // 1 hour
 const DEFAULT_API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
+const MCP_EXAMPLE_URL =
+  '/mcp/resources/get?uri=odpt://Station&odpt:railway=odpt.Railway:Tokyu.Toyoko';
 
 // MCP resource definitions for ODPT train endpoints
 const MCP_RESOURCES = [
@@ -89,6 +91,13 @@ const MCP_RESOURCES = [
 ];
 
 /**
+ * Helper function to check if a URL path is an MCP endpoint
+ */
+function isMcpEndpoint(pathname) {
+  return pathname.startsWith('/mcp/');
+}
+
+/**
  * Main fetch event handler
  */
 addEventListener('fetch', (event) => {
@@ -113,20 +122,17 @@ async function handleRequest(event) {
   const url = new URL(request.url);
 
   // MCP endpoints support both GET and POST
-  const isMcpEndpoint = url.pathname.startsWith('/mcp/');
+  const isEndpointMcp = isMcpEndpoint(url.pathname);
 
   // Only allow GET requests (except for MCP endpoints which also support POST)
-  if (request.method !== 'GET' && !(isMcpEndpoint && request.method === 'POST')) {
+  if (request.method !== 'GET' && !(isEndpointMcp && request.method === 'POST')) {
     return new Response('Method not allowed', {
       status: 405,
-      headers: { Allow: isMcpEndpoint ? 'GET, POST, OPTIONS' : 'GET, OPTIONS' },
+      headers: { Allow: isEndpointMcp ? 'GET, POST, OPTIONS' : 'GET, OPTIONS' },
     });
   }
 
   try {
-    // Parse the request URL
-    const url = new URL(request.url);
-
     // Health check endpoint
     if (url.pathname === '/health' || url.pathname === '/') {
       return new Response(
@@ -171,7 +177,7 @@ async function handleRequest(event) {
           JSON.stringify({
             error: 'Missing resource URI',
             message: 'Please provide a "uri" query parameter',
-            example: '/mcp/resources/get?uri=odpt://Station&odpt:railway=odpt.Railway:Tokyu.Toyoko',
+            example: MCP_EXAMPLE_URL,
           }),
           {
             status: 400,
@@ -418,8 +424,7 @@ function getCorsHeaders(request) {
 
   // MCP endpoints support POST, other endpoints are GET only
   const url = new URL(request.url);
-  const isMcpEndpoint = url.pathname.startsWith('/mcp/');
-  const allowedMethods = isMcpEndpoint ? 'GET, POST, OPTIONS' : 'GET, OPTIONS';
+  const allowedMethods = isMcpEndpoint(url.pathname) ? 'GET, POST, OPTIONS' : 'GET, OPTIONS';
 
   return {
     'Access-Control-Allow-Origin': isAllowed ? (allowedOrigins === '*' ? '*' : origin) : 'null',
