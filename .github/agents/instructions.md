@@ -18,30 +18,56 @@ Trainboard is a compact static departure board for ODPT train lines. It's a Type
 ```
 trainboard/
 ├── src/
-│   ├── api.ts              # ODPT API client
-│   ├── cache.ts            # SimpleCache implementation
-│   ├── trainboard.ts       # Main application logic
-│   ├── types.ts            # TypeScript type definitions
-│   ├── ui.ts               # UI rendering and DOM manipulation
-│   ├── utils.ts            # Utility functions
-│   ├── routing.ts          # URL routing for railway/station selection
-│   ├── location.ts         # Geolocation and nearby station finding
-│   ├── dataLoaders.ts      # Data loading and caching
-│   ├── boardRenderer.ts    # Departure board rendering
-│   ├── config.ts           # Configuration management
-│   ├── constants.ts        # Application constants
-│   ├── trainTypeStyles.ts  # Train type styling
-│   ├── components/         # UI components
-│   │   ├── DeparturesList.ts
-│   │   └── TrainRow.ts
-│   └── __tests__/          # Vitest test files
+│   ├── lib/
+│   │   ├── cache.ts            # SimpleCache implementation
+│   │   ├── config.ts           # Configuration management
+│   │   ├── constants.ts        # Application constants
+│   │   ├── location.ts         # Geolocation and nearby station finding
+│   │   ├── tickManager.ts      # Interval management for refresh scheduling
+│   │   ├── utils.ts            # Utility functions
+│   │   ├── visibilityManager.ts # Page Visibility API integration
+│   │   └── data/
+│   │       └── stations.json   # Station metadata
+│   ├── odpt/
+│   │   ├── api.ts              # ODPT API client
+│   │   ├── dataLoaders.ts      # Data loading and caching
+│   │   ├── types.ts            # TypeScript type definitions for ODPT
+│   │   └── data/
+│   │       ├── holidays.json   # Holiday data
+│   │       └── terminus.json   # Terminus station data
+│   ├── ui/
+│   │   ├── components/         # Lit-based web components
+│   │   │   ├── DeparturesList.ts      # Departure list component
+│   │   │   ├── HeaderButton.ts        # Header button component
+│   │   │   ├── StationHeader.ts       # Station header component
+│   │   │   ├── TimerContext.ts        # Timer context for components
+│   │   │   ├── TrainDepartureView.ts  # Train departure view component
+│   │   │   └── TrainRow.ts            # Train row component
+│   │   ├── departures.ts       # Departure-related UI utilities
+│   │   ├── renderBoard.ts      # Departure board rendering
+│   │   ├── settings.ts         # Settings modal and UI controls
+│   │   ├── trainTypeRewrites.ts # Train type name rewrites
+│   │   ├── trainTypeStyles.ts  # Train type styling
+│   │   └── data/               # UI data files (operators, prefectures, colors, etc.)
+│   ├── routing.ts              # URL routing for railway/station selection
+│   ├── trainboard.ts           # Main application logic and orchestration
+│   └── __tests__/              # Vitest test files
 │       ├── api.test.ts
 │       ├── api_query.test.ts
+│       ├── boardRendererVisibility.test.ts
+│       ├── departureListVisibility.test.ts
+│       ├── holidays.test.ts
+│       ├── location.test.ts
+│       ├── minutes_updater.test.ts
 │       ├── parsing.test.ts
 │       ├── rendering.test.ts
 │       ├── routing.test.ts
-│       ├── location.test.ts
-│       └── ui.test.ts
+│       ├── tickManager.test.ts
+│       ├── tickManagerVisibility.test.ts
+│       ├── trainrow.test.ts
+│       ├── ui.test.ts
+│       ├── visibilityIntegration.test.ts
+│       └── visibilityManager.test.ts
 ├── css/                # Stylesheets
 ├── dist/               # Production build output (generated)
 ├── index.html          # Main HTML entry point
@@ -115,17 +141,42 @@ npm run format
 
 ### Modules
 
-- `api.ts`: Keep API-related functions isolated
-- `cache.ts`: Caching logic (SimpleCache)
-- `ui.ts`: DOM manipulation and rendering
-- `utils.ts`: Pure utility functions
-- `trainboard.ts`: Main application orchestration
-- `routing.ts`: URL routing for railway/station selection with flexible name matching
-- `location.ts`: Geolocation utilities for finding nearby stations
-- `dataLoaders.ts`: Data loading, caching, and management
-- `boardRenderer.ts`: Departure board rendering logic
-- `config.ts`: Configuration management and API key handling
-- `components/`: Reusable UI components (DeparturesList, TrainRow)
+The codebase is organized into logical subdirectories:
+
+#### src/lib/
+Core utilities and shared functionality:
+- `cache.ts` — SimpleCache implementation for caching data with TTL
+- `config.ts` — Configuration management and API key handling
+- `constants.ts` — Application-wide constants
+- `location.ts` — Geolocation utilities for finding nearby stations
+- `tickManager.ts` — Interval management for scheduled refresh operations
+- `utils.ts` — Pure utility functions for parsing and formatting
+- `visibilityManager.ts` — Page Visibility API integration for CPU optimization
+
+#### src/odpt/
+ODPT API integration:
+- `api.ts` — ODPT API client for fetching train data
+- `dataLoaders.ts` — Data loading, caching, and railway metadata management
+- `types.ts` — TypeScript type definitions for ODPT data structures
+
+#### src/ui/
+UI rendering and components:
+- `renderBoard.ts` — Main departure board rendering logic
+- `settings.ts` — Settings modal and UI control setup
+- `departures.ts` — Departure-related UI utilities
+- `trainTypeRewrites.ts` — Train type name rewrites
+- `trainTypeStyles.ts` — Train type styling and CSS injection
+- `components/` — Lit-based web components:
+  - `DeparturesList.ts` — Departure list component
+  - `HeaderButton.ts` — Header button component
+  - `StationHeader.ts` — Station header component
+  - `TimerContext.ts` — Timer context for component synchronization
+  - `TrainDepartureView.ts` — Train departure view component
+  - `TrainRow.ts` — Individual train row component
+
+#### Root modules
+- `routing.ts` — URL routing for railway/station selection with flexible name matching
+- `trainboard.ts` — Main application entry point and orchestration
 
 ## Configuration
 

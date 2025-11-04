@@ -44,15 +44,33 @@ Because this repository is small and we own the entire webapp, most refactors ca
 
 ### Module Organization
 
-- Keep API calls in `api.ts`
-- Keep DOM manipulation in `ui.ts`
-- Keep caching logic in `cache.ts`
-- Keep utilities in `utils.ts`
-- Keep main logic in `trainboard.ts`
-- Keep URL routing in `routing.ts`
-- Keep geolocation logic in `location.ts`
-- Keep data loading in `dataLoaders.ts`
-- Keep rendering logic in `boardRenderer.ts`
+The codebase is organized into subdirectories for better separation of concerns:
+
+#### src/lib/ - Core Utilities
+- `cache.ts` — Caching logic
+- `config.ts` — Configuration and API key management
+- `constants.ts` — Application constants
+- `location.ts` — Geolocation logic
+- `tickManager.ts` — Interval management for refresh operations
+- `utils.ts` — General utilities
+- `visibilityManager.ts` — Page Visibility API integration
+
+#### src/odpt/ - ODPT API Integration
+- `api.ts` — API calls to ODPT endpoints
+- `dataLoaders.ts` — Data loading and railway metadata
+- `types.ts` — TypeScript type definitions for ODPT
+
+#### src/ui/ - UI and Rendering
+- `renderBoard.ts` — Main board rendering logic
+- `settings.ts` — Settings modal and controls
+- `departures.ts` — Departure-related UI
+- `trainTypeRewrites.ts` — Train type name rewrites
+- `trainTypeStyles.ts` — Train type styling
+- `components/` — Lit-based web components
+
+#### Root-level Modules
+- `routing.ts` — URL routing
+- `trainboard.ts` — Main application logic and orchestration
 
 ### Imports
 
@@ -120,8 +138,8 @@ npm test -- --watch   # Watch mode
 ### API Calls
 
 ```typescript
-// Use the API client from api.ts
-import { fetchTrainData } from './api';
+// Use the API client from src/odpt/api.ts
+import { fetchTrainData } from '../odpt/api';
 
 const data = await fetchTrainData(apiKey, station);
 ```
@@ -129,8 +147,8 @@ const data = await fetchTrainData(apiKey, station);
 ### Caching
 
 ```typescript
-// Use SimpleCache from cache.ts
-import { SimpleCache } from './cache';
+// Use SimpleCache from src/lib/cache.ts
+import { SimpleCache } from '../lib/cache';
 
 const cache = new SimpleCache<string, StationData>(ttl);
 cache.set(key, value);
@@ -140,18 +158,27 @@ const value = cache.get(key);
 ### UI Updates
 
 ```typescript
-// Use UI functions from ui.ts
-import { renderDepartures, showError } from './ui';
+// Use rendering functions from src/ui/renderBoard.ts
+import { renderBoard } from '../ui/renderBoard';
 
-renderDepartures(container, departures);
-showError(message);
+renderBoard(container, config);
+```
+
+### Interval Management
+
+```typescript
+// Use tickManager from src/lib/tickManager.ts
+import { TickManager } from '../lib/tickManager';
+
+const tickManager = new TickManager(callback, intervalMs);
+tickManager.start();
 ```
 
 ### URL Routing
 
 ```typescript
-// Use routing functions from routing.ts
-import { parseRouteFromUrl, updateUrl, findRailwayByName, findStationByName } from './routing';
+// Use routing functions from src/routing.ts
+import { parseRouteFromUrl, updateUrl, findRailwayByName, findStationByName } from '../routing';
 
 // Parse URL parameters
 const params = parseRouteFromUrl();
@@ -165,8 +192,8 @@ updateUrl(railwayName, stationName);
 ### Geolocation
 
 ```typescript
-// Use location functions from location.ts
-import { getCurrentPosition, findNearbyStations, formatDistance } from './location';
+// Use location functions from src/lib/location.ts
+import { getCurrentPosition, findNearbyStations, formatDistance } from '../lib/location';
 
 // Get user location and find nearby stations
 const position = await getCurrentPosition();
