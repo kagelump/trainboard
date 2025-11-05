@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker - ODPT API Proxy
+ * Cloudflare Worker - ODPT API Proxy with MCP Server Layer
  *
  * This worker acts as a secure proxy for the ODPT (Open Data Challenge for Public Transportation)
  * API, protecting your API key from being exposed in the browser.
@@ -9,6 +9,7 @@
  * - Forwards requests from the trainboard app to ODPT API
  * - Adds CORS headers for browser compatibility
  * - Caches responses to reduce API calls and improve performance
+ * - MCP (Model Context Protocol) server endpoints for AI/LLM integration
  *
  * Note: Basic rate limiting is provided by Cloudflare's infrastructure.
  * For advanced rate limiting, see the README for KV-based implementation examples.
@@ -22,6 +23,79 @@
 // Configuration constants
 const DEFAULT_CACHE_TTL = 3600; // 1 hour
 const DEFAULT_API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
+const MCP_EXAMPLE_URL =
+  '/mcp/resources/get?uri=odpt://Station&odpt:railway=odpt.Railway:Tokyu.Toyoko';
+
+// MCP resource definitions for ODPT train endpoints
+const MCP_RESOURCES = [
+  {
+    uri: 'odpt://PassengerSurvey',
+    name: 'odpt:PassengerSurvey',
+    description: 'Passenger survey data for railway lines and stations',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://Railway',
+    name: 'odpt:Railway',
+    description: 'Railway line metadata including operators, stations, and line codes',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://RailDirection',
+    name: 'odpt:RailDirection',
+    description: 'Rail direction information (inbound/outbound, up/down)',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://RailwayFare',
+    name: 'odpt:RailwayFare',
+    description: 'Railway fare information between stations',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://Station',
+    name: 'odpt:Station',
+    description: 'Station metadata including location, codes, and railway associations',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://StationTimetable',
+    name: 'odpt:StationTimetable',
+    description: 'Station departure/arrival timetables by calendar and direction',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://Train',
+    name: 'odpt:Train',
+    description: 'Real-time train position and status information',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://TrainInformation',
+    name: 'odpt:TrainInformation',
+    description: 'Railway operation status and service disruption messages',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://TrainTimetable',
+    name: 'odpt:TrainTimetable',
+    description: 'Train-level timetables with scheduled stops and times',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'odpt://TrainType',
+    name: 'odpt:TrainType',
+    description: 'Train type classifications (express, local, limited express, etc.)',
+    mimeType: 'application/json',
+  },
+];
+
+/**
+ * Helper function to check if a URL path is an MCP endpoint
+ */
+function isMcpEndpoint(pathname) {
+  return pathname.startsWith('/mcp/');
+}
 
 /**
  * Main fetch event handler
@@ -44,18 +118,21 @@ async function handleRequest(event) {
     });
   }
 
-  // Only allow GET requests
-  if (request.method !== 'GET') {
+  // Parse the request URL
+  const url = new URL(request.url);
+
+  // MCP endpoints support both GET and POST
+  const isEndpointMcp = isMcpEndpoint(url.pathname);
+
+  // Only allow GET requests (except for MCP endpoints which also support POST)
+  if (request.method !== 'GET' && !(isEndpointMcp && request.method === 'POST')) {
     return new Response('Method not allowed', {
       status: 405,
-      headers: { Allow: 'GET, OPTIONS' },
+      headers: { Allow: isEndpointMcp ? 'GET, POST, OPTIONS' : 'GET, OPTIONS' },
     });
   }
 
   try {
-    // Parse the request URL
-    const url = new URL(request.url);
-
     // Health check endpoint
     if (url.pathname === '/health' || url.pathname === '/') {
       return new Response(
@@ -64,6 +141,148 @@ async function handleRequest(event) {
           service: 'ODPT API Proxy',
           version: '1.0.0',
           timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCorsHeaders(request),
+          },
+        },
+      );
+    }
+
+    // MCP resources/list endpoint
+    if (url.pathname === '/mcp/resources/list') {
+      return new Response(
+        JSON.stringify({
+          resources: MCP_RESOURCES,
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...getCorsHeaders(request),
+          },
+        },
+      );
+    }
+
+    // MCP resources/get endpoint
+    if (url.pathname === '/mcp/resources/get') {
+      const resourceUri = url.searchParams.get('uri');
+
+      if (!resourceUri) {
+        return new Response(
+          JSON.stringify({
+            error: 'Missing resource URI',
+            message: 'Please provide a "uri" query parameter',
+            example: MCP_EXAMPLE_URL,
+          }),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'application/json',
+              ...getCorsHeaders(request),
+            },
+          },
+        );
+      }
+
+      // Find the resource definition
+      const resource = MCP_RESOURCES.find((r) => r.uri === resourceUri);
+
+      if (!resource) {
+        return new Response(
+          JSON.stringify({
+            error: 'Resource not found',
+            message: `Resource with URI "${resourceUri}" not found`,
+            availableResources: MCP_RESOURCES.map((r) => r.uri),
+          }),
+          {
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json',
+              ...getCorsHeaders(request),
+            },
+          },
+        );
+      }
+
+      // Extract ODPT endpoint name from resource
+      const endpoint = resource.name;
+
+      // Remove the 'uri' parameter and pass remaining params to ODPT API
+      const odptParams = new URLSearchParams(url.searchParams);
+      odptParams.delete('uri');
+
+      // Build the ODPT API URL
+      const apiUrl = buildApiUrl(endpoint, odptParams);
+
+      // Try to get from cache first
+      const cache = caches.default;
+      let response = await cache.match(apiUrl);
+
+      if (!response) {
+        // Cache miss - fetch from ODPT API
+        response = await fetchFromOdptApi(apiUrl);
+
+        // Cache successful responses
+        if (response.ok) {
+          const cacheTtl = getCacheTtl(endpoint);
+          const responseToCache = response.clone();
+          const cacheHeaders = new Headers(responseToCache.headers);
+          cacheHeaders.set('Cache-Control', `public, max-age=${cacheTtl}`);
+
+          const cachedResponse = new Response(responseToCache.body, {
+            status: responseToCache.status,
+            statusText: responseToCache.statusText,
+            headers: cacheHeaders,
+          });
+
+          event.waitUntil(cache.put(apiUrl, cachedResponse));
+        }
+      }
+
+      // Return the ODPT API response with CORS headers
+      const headers = new Headers(response.headers);
+      Object.entries(getCorsHeaders(request)).forEach(([key, value]) => {
+        headers.set(key, value);
+      });
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    }
+
+    // MCP tools/list endpoint
+    if (url.pathname === '/mcp/tools/list') {
+      return new Response(
+        JSON.stringify({
+          tools: [
+            {
+              name: 'query_odpt_resource',
+              description: 'Query ODPT train data resources with filtering parameters',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  resource: {
+                    type: 'string',
+                    description: 'The ODPT resource to query',
+                    enum: MCP_RESOURCES.map((r) => r.name),
+                  },
+                  filters: {
+                    type: 'object',
+                    description: 'Query filters (e.g., odpt:railway, odpt:station)',
+                    additionalProperties: true,
+                  },
+                },
+                required: ['resource'],
+              },
+            },
+          ],
         }),
         {
           status: 200,
@@ -203,9 +422,13 @@ function getCorsHeaders(request) {
     allowedOrigins === '*' ||
     (origin && allowedOrigins.split(',').some((o) => o.trim() === origin));
 
+  // MCP endpoints support POST, other endpoints are GET only
+  const url = new URL(request.url);
+  const allowedMethods = isMcpEndpoint(url.pathname) ? 'GET, POST, OPTIONS' : 'GET, OPTIONS';
+
   return {
     'Access-Control-Allow-Origin': isAllowed ? (allowedOrigins === '*' ? '*' : origin) : 'null',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': allowedMethods,
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };
@@ -221,14 +444,13 @@ function getAllowedOrigins() {
 /**
  * Get cache TTL from environment or use default
  */
-function getCacheTtl() {
-  // Backwards-compatible: accept optional endpoint argument to vary TTL per endpoint
-  const args = Array.from(arguments);
-  const endpoint = args.length > 0 ? args[0] : undefined;
-
-  // If the caller indicates we're fetching live train status, use a shorter TTL
-  if (typeof endpoint === 'string' && endpoint.startsWith('odpt:TrainInformation')) {
-    return 300; // 5 minutes
+function getCacheTtl(endpoint) {
+  // If the caller indicates we're fetching live/real-time data, use a shorter TTL
+  if (typeof endpoint === 'string') {
+    // Real-time train position and operation status should be cached briefly
+    if (endpoint.startsWith('odpt:Train') || endpoint.startsWith('odpt:TrainInformation')) {
+      return 300; // 5 minutes
+    }
   }
 
   return typeof CACHE_TTL !== 'undefined' && CACHE_TTL

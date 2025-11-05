@@ -10,6 +10,7 @@ The Cloudflare Worker acts as a secure proxy between your trainboard application
 - **Performance**: Responses are cached at Cloudflare's edge network, reducing API calls and improving load times
 - **Rate Limiting**: Built-in protection against abuse
 - **CORS Support**: Proper CORS headers for browser compatibility
+- **MCP Integration**: Model Context Protocol (MCP) endpoints for AI/LLM applications
 - **Zero Server Cost**: Runs on Cloudflare's free tier (100,000 requests/day)
 
 ## Architecture
@@ -29,12 +30,13 @@ The Cloudflare Worker acts as a secure proxy between your trainboard application
 
 ## Files
 
-- **`worker.js`** - Cloudflare Worker script that handles proxy logic
+- **`worker.js`** - Cloudflare Worker script that handles proxy logic and MCP endpoints
 - **`wrangler.toml.example`** - Template configuration for Wrangler CLI
 - **`setup.sh`** - Interactive setup script for initial configuration
 - **`deploy.sh`** - Deployment script for publishing the worker
 - **`test.sh`** - Test script to verify the deployed worker is working correctly
 - **`config.example.json`** - Example trainboard configuration for using the proxy
+- **`MCP_API.md`** - MCP endpoint documentation for AI/LLM integration
 - **`README.md`** - This documentation file
 - **`.gitignore`** - Prevents committing sensitive files like wrangler.toml
 
@@ -206,6 +208,30 @@ curl "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/odpt:StationTimetable?od
 # Get real-time trains
 curl "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/odpt:Train?odpt:railway=odpt.Railway:Tokyu.Toyoko"
 ```
+
+#### MCP Server Endpoints
+
+The worker also provides Model Context Protocol (MCP) endpoints for AI/LLM integration:
+
+**List available resources:**
+
+```bash
+curl https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/mcp/resources/list
+```
+
+**Get resource data:**
+
+```bash
+curl "https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/mcp/resources/get?uri=odpt://Station&odpt:railway=odpt.Railway:Tokyu.Toyoko"
+```
+
+**List available tools:**
+
+```bash
+curl https://odpt-api-proxy.YOUR-SUBDOMAIN.workers.dev/mcp/tools/list
+```
+
+See [MCP_API.md](MCP_API.md) for complete MCP endpoint documentation.
 
 Integrating with Trainboard
 
