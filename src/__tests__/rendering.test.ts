@@ -182,6 +182,64 @@ describe('Train Row Rendering', () => {
     const trainRowContent = trainRow?.shadowRoot?.textContent || '';
     expect(trainRowContent).toContain('不明');
   });
+
+  it('should render multi-colored train type with colored segments', async () => {
+    const stationNameCache = new SimpleCache<string>();
+    stationNameCache.set('odpt.Station:Test', 'テスト駅');
+
+    const trainTypeMap = {
+      'odpt.TrainType:Test.CommuterLimitedExpress': {
+        name: '通特',
+        class: 'type-CMTL',
+        coloredSegments: [
+          { text: '通', color: 'red' },
+          { text: '特', color: 'yellow' },
+        ],
+      },
+    };
+
+    const departures: StationTimetableEntry[] = [
+      {
+        'odpt:departureTime': '10:00',
+        'odpt:trainType': 'odpt.TrainType:Test.CommuterLimitedExpress',
+        'odpt:destinationStation': ['odpt.Station:Test'],
+      } as any,
+    ];
+
+    renderDirection('inbound', departures, stationNameCache, trainTypeMap);
+
+    const container = document.getElementById('departures-inbound');
+    const departuresList = container?.querySelector('departures-list') as DeparturesList;
+
+    // Wait for Lit to render
+    await departuresList?.updateComplete;
+
+    expect(departuresList?.shadowRoot).toBeTruthy();
+
+    // Get train-row element from the DeparturesList shadow DOM
+    const trainRow = departuresList?.shadowRoot?.querySelector('train-row');
+    await (trainRow as any)?.updateComplete;
+
+    expect(trainRow?.shadowRoot).toBeTruthy();
+
+    // Verify the badge contains the colored segments
+    const badge = trainRow?.shadowRoot?.querySelector('.train-type-badge');
+    expect(badge).toBeTruthy();
+
+    // Check for colored segments in the badge
+    const coloredSegments = badge?.querySelectorAll('.colored-segment');
+    expect(coloredSegments?.length).toBe(2);
+
+    // Check first segment (通 in red)
+    const firstSegment = coloredSegments?.[0] as HTMLElement;
+    expect(firstSegment?.textContent).toBe('通');
+    expect(firstSegment?.style.color).toBe('red');
+
+    // Check second segment (特 in yellow)
+    const secondSegment = coloredSegments?.[1] as HTMLElement;
+    expect(secondSegment?.textContent).toBe('特');
+    expect(secondSegment?.style.color).toBe('yellow');
+  });
 });
 
 describe('UI State Rendering', () => {
