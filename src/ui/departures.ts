@@ -6,6 +6,7 @@ import type { SimpleCache } from '../lib/cache';
 import type { DeparturesList } from './components/DeparturesList';
 import { TrainDepartureView } from './components/TrainDepartureView';
 import type { TrainDepartureView as TrainDepartureViewType } from './components/TrainDepartureView';
+import type { TrainTypeMapEntry } from '../odpt/dataLoaders';
 
 export function setLoadingState(): void {
   const inContainer = document.getElementById('departures-inbound') as HTMLElement;
@@ -46,7 +47,7 @@ export function renderDirection(
   directionId: 'inbound' | 'outbound',
   departures: Array<StationTimetableEntry | TrainDepartureViewType>,
   stationNameCache: SimpleCache<string>,
-  trainTypeMap: Record<string, { name: string; class: string }>,
+  trainTypeMap: Record<string, TrainTypeMapEntry>,
   _options?: { autoUpdate?: boolean; [key: string]: any },
 ): void {
   console.log('Rendering departures for', directionId, 'with', departures.length, 'entries');

@@ -1,4 +1,16 @@
 {
   "odpt.TrainType:Tokyu.F-Liner": "F特急",
-  "odpt.TrainType:Tokyu.Local": "各駅"
+  "odpt.TrainType:Tokyu.Local": "各駅",
+  "odpt.TrainType:Sotetsu.CommuterLimitedExpress": [
+    { "text": "通", "color": "red" },
+    { "text": "特", "color": "yellow" }
+  ],
+  "odpt.TrainType:Tokyu.CommuterLimitedExpress": [
+    { "text": "通", "color": "red" },
+    { "text": "特", "color": "yellow" }
+  ],
+  "odpt.TrainType:Keikyu.CommuterLimitedExpress": [
+    { "text": "通", "color": "red" },
+    { "text": "特", "color": "yellow" }
+  ]
 }
