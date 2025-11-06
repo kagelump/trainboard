@@ -8,6 +8,7 @@ import type { SimpleCache } from '../../lib/cache.js';
 import { TickManager, globalTickManager } from '../../lib/tickManager.js';
 import { provide } from '@lit/context';
 import { tickManagerContext } from './TimerContext.js';
+import type { TrainTypeMapEntry } from '../../odpt/dataLoaders.js';
 
 import { DISPLAYED_TRAINS_LIMIT } from '../../lib/constants.js';
 
@@ -62,7 +63,7 @@ export class DeparturesList extends LitElement {
   stationNameCache: SimpleCache<string> | null = null;
 
   @property({ type: Object })
-  trainTypeMap: Record<string, { name: string; class: string }> = {};
+  trainTypeMap: Record<string, TrainTypeMapEntry> = {};
 
   @property({ type: Boolean })
   loading = false;
@@ -137,6 +138,7 @@ export class DeparturesList extends LitElement {
               trainTypeClass="${trainType.class}"
               trainTypeUri="${view.trainTypeUri}"
               destination="${view.destination}"
+              .coloredSegments="${trainType.coloredSegments}"
               @train-departed=${this.handleTrainDeparted}
             ></train-row>
           `;

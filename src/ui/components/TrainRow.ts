@@ -4,6 +4,7 @@ import { consume } from '@lit/context';
 import { getTrainTypeStyleSheet } from '../trainTypeStyles.js';
 import { tickManagerContext } from './TimerContext.js';
 import { TickEvent, TickManager } from '../../lib/tickManager.js';
+import type { ColoredTextSegment } from '../trainTypeRewrites.js';
 
 /**
  * TrainRow component - displays a single train departure row
@@ -55,6 +56,13 @@ export class TrainRow extends LitElement {
       background-color: #333;
       color: #fff;
       border: 2px solid #333;
+    }
+    
+    /* Colored text segment within badge */
+    .train-type-badge .colored-segment {
+      /* Inherit font properties from parent */
+      font-size: inherit;
+      font-weight: inherit;
     }
 
     /* Default style for unknown/local train types */
@@ -150,6 +158,9 @@ export class TrainRow extends LitElement {
   @property({ type: String })
   destination = '';
 
+  @property({ type: Array })
+  coloredSegments?: ColoredTextSegment[];
+
   // Convert HH:MM to seconds since midnight
   private departureTimeSec(): number {
     const [hStr, mStr] = (this.departureTime || '').split(':');
@@ -216,12 +227,19 @@ export class TrainRow extends LitElement {
       ? 'destination-text'
       : 'destination-text non-local';
 
+    // Render colored segments if available, otherwise plain text
+    const badgeContent = this.coloredSegments
+      ? html`${this.coloredSegments.map(
+          (seg) => html`<span class="colored-segment" style="color: ${seg.color}">${seg.text}</span>`
+        )}`
+      : this.trainTypeName;
+
     return html`
       <div class="minutes-col" data-departure="${this.departureTime}">${this.minutes()}</div>
       <div class="time-col">${this.departureTime || '--'}</div>
       <div class="train-type-badge-wrapper">
         <span part="badge" class="train-type-badge ${this.trainTypeClass}"
-          >${this.trainTypeName}</span
+          >${badgeContent}</span
         >
       </div>
       <div class="${destinationClass}">${this.destination}</div>
