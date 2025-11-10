@@ -8,7 +8,7 @@ set -e
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="${APP_DIR:-$HOME/trainboard}"
-DISPLAY_DIR="${DISPLAY_DIR:-$HOME/E-paper_Separate_Program/10in2_e-Paper_G/RaspberryPi_JetsonNano/python}"
+DISPLAY_DIR="${DISPLAY_DIR:-$HOME/e-Paper/E-paper_Separate_Program/10in2_e-Paper_G/RaspberryPi_JetsonNano/python}"
 SCREENSHOT_PATH="${SCREENSHOT_PATH:-$APP_DIR/screenshot.png}"
 LOG_FILE="${LOG_FILE:-$HOME/log/trainboard-display.log}"
 HTTP_PORT="${HTTP_PORT:-8080}"
