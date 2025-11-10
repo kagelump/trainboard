@@ -12,7 +12,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "start": "http-server -c-1 -p 8080",
-    "format": "prettier --write \"src/**/*.{ts,js,tsx,jsx,json,md}\""
+    "format": "prettier --write \"src/**/*.{ts,js,tsx,jsx,json,md}\"",
+    "eink:preview": "node scripts/rpi-eink/dev-server.js"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
