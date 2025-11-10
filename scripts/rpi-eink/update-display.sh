@@ -71,10 +71,8 @@ log "Capturing screenshot from http://localhost:$HTTP_PORT..."
 NODE_CMD=$(command -v node || true)
 CAPTURE_SCRIPT="$APP_DIR/scripts/rpi-eink/capture-and-log.js"
 if [ -n "$NODE_CMD" ] && [ -f "$CAPTURE_SCRIPT" ]; then
-    # Determine owner of APP_DIR to run node as that user if possible
-    OWNER=$(stat -c '%U' "$APP_DIR" 2>/dev/null || echo "${SUDO_USER:-$(whoami)}")
-    log "Using Puppeteer capture via node (user: $OWNER)"
-    if ! sudo -u "$OWNER" "$NODE_CMD" "$CAPTURE_SCRIPT" "http://localhost:$HTTP_PORT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
+    log "Using Puppeteer capture via node"
+    if ! "$NODE_CMD" "$CAPTURE_SCRIPT" "http://localhost:$HTTP_PORT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
         log "Puppeteer capture failed; check $LOG_FILE for details"
         tail -n 200 "$LOG_FILE" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
         error_exit "Puppeteer capture failed"
