@@ -3,9 +3,9 @@
  * render-to-image.js
  * Server-side renderer for trainboard departure board
  * Generates PNG images without using a browser (faster on Raspberry Pi)
- * 
+ *
  * Usage: node render-to-image.js <outputPath> [width] [height] [configFile]
- * 
+ *
  * Performance: ~10x faster than Chromium on Raspberry Pi
  * Memory: ~50MB vs ~500MB for browser-based rendering
  */
@@ -48,21 +48,23 @@ function loadConfig() {
 function makeRequest(url) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https:') ? https : http;
-    client.get(url, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            reject(new Error(`Failed to parse JSON: ${e.message}`));
+    client
+      .get(url, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              reject(new Error(`Failed to parse JSON: ${e.message}`));
+            }
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
           }
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
-        }
-      });
-    }).on('error', reject);
+        });
+      })
+      .on('error', reject);
   });
 }
 
@@ -102,10 +104,10 @@ function getMinutesUntil(departureTime) {
   const now = new Date();
   const nowMinutes = timeToMinutes(formatTimeHHMM(now));
   const depMinutes = timeToMinutes(departureTime);
-  
+
   let diff = depMinutes - nowMinutes;
   if (diff < 0) diff += 1440; // Next day
-  
+
   return diff;
 }
 
@@ -114,13 +116,13 @@ function getMinutesUntil(departureTime) {
  */
 async function fetchFromAPI(endpoint, apiKey, apiBaseUrl) {
   let url = `${apiBaseUrl}${endpoint}`;
-  
+
   // Add API key if provided and not using proxy mode
   if (apiKey && !apiBaseUrl.includes('proxy')) {
     const separator = url.includes('?') ? '&' : '?';
     url += `${separator}acl:consumerKey=${encodeURIComponent(apiKey)}`;
   }
-  
+
   console.log(`[API] Fetching: ${endpoint}`);
   return makeRequest(url);
 }
@@ -132,7 +134,7 @@ async function fetchRailway(railwayUri, apiKey, apiBaseUrl) {
   const railways = await fetchFromAPI(
     `odpt:Railway?owl:sameAs=${encodeURIComponent(railwayUri)}`,
     apiKey,
-    apiBaseUrl
+    apiBaseUrl,
   );
   return railways && railways.length > 0 ? railways[0] : null;
 }
@@ -145,15 +147,15 @@ async function fetchStationTimetable(stationUri, railwayUri, apiKey, apiBaseUrl)
   const day = now.getDay();
   const isWeekday = day >= 1 && day <= 5;
   const isSaturday = day === 6;
-  
+
   let calendarType = isWeekday ? 'Weekday' : isSaturday ? 'Saturday' : 'SundayHoliday';
-  
+
   const timetables = await fetchFromAPI(
     `odpt:StationTimetable?odpt:station=${encodeURIComponent(stationUri)}&odpt:railway=${encodeURIComponent(railwayUri)}&odpt:calendar=odpt.Calendar:${calendarType}`,
     apiKey,
-    apiBaseUrl
+    apiBaseUrl,
   );
-  
+
   return timetables || [];
 }
 
@@ -162,7 +164,7 @@ async function fetchStationTimetable(stationUri, railwayUri, apiKey, apiBaseUrl)
  */
 function getUpcomingDepartures(timetables, directionUri, nowMinutes, limit = 5) {
   const allDepartures = [];
-  
+
   for (const tt of timetables) {
     const entries = tt['odpt:stationTimetableObject'] || [];
     for (const entry of entries) {
@@ -172,7 +174,7 @@ function getUpcomingDepartures(timetables, directionUri, nowMinutes, limit = 5) 
           const depMinutes = timeToMinutes(depTime);
           let minutesUntil = depMinutes - nowMinutes;
           if (minutesUntil < 0) minutesUntil += 1440;
-          
+
           allDepartures.push({
             time: depTime,
             minutesUntil,
@@ -184,7 +186,7 @@ function getUpcomingDepartures(timetables, directionUri, nowMinutes, limit = 5) 
       }
     }
   }
-  
+
   // Sort by minutes until departure and take first N
   allDepartures.sort((a, b) => a.minutesUntil - b.minutesUntil);
   return allDepartures.slice(0, limit);
@@ -211,19 +213,19 @@ function getTrainTypeName(trainTypeUri) {
   if (!trainTypeUri) return '普通';
   const parts = trainTypeUri.split('.');
   const shortName = parts[parts.length - 1] || '';
-  
+
   // Common mappings
   const typeMap = {
-    'Local': '普通',
-    'Express': '急行',
-    'LimitedExpress': '特急',
-    'Rapid': '快速',
-    'SemiExpress': '準急',
-    'Commuter': '通勤',
-    'CommuterLimitedExpress': '通勤特急',
-    'CommuterExpress': '通勤急行',
+    Local: '普通',
+    Express: '急行',
+    LimitedExpress: '特急',
+    Rapid: '快速',
+    SemiExpress: '準急',
+    Commuter: '通勤',
+    CommuterLimitedExpress: '通勤特急',
+    CommuterExpress: '通勤急行',
   };
-  
+
   return typeMap[shortName] || shortName || '普通';
 }
 
@@ -232,25 +234,25 @@ function getTrainTypeName(trainTypeUri) {
  */
 function drawBoard(canvas, ctx, data) {
   const { width, height, stationName, railwayName, currentTime, inbound, outbound } = data;
-  
+
   // Background
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, width, height);
-  
+
   // Header
   const headerHeight = 80;
   ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 32px sans-serif';
   ctx.fillText(stationName, 20, 45);
-  
+
   ctx.font = '20px sans-serif';
   ctx.fillText(railwayName, 20, 70);
-  
+
   // Current time (top right)
   ctx.font = 'bold 36px monospace';
   const timeWidth = ctx.measureText(currentTime).width;
   ctx.fillText(currentTime, width - timeWidth - 20, 50);
-  
+
   // Divider line
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 2;
@@ -258,11 +260,11 @@ function drawBoard(canvas, ctx, data) {
   ctx.moveTo(0, headerHeight);
   ctx.lineTo(width, headerHeight);
   ctx.stroke();
-  
+
   // Two-column layout
   const columnWidth = width / 2;
   const contentY = headerHeight + 10;
-  
+
   // Draw direction column
   function drawDirection(x, directionName, departures) {
     ctx.fillStyle = '#FFFFFF';
@@ -271,34 +273,34 @@ function drawBoard(canvas, ctx, data) {
     const titleText = `${directionName}行き`;
     const titleWidth = ctx.measureText(titleText).width;
     ctx.fillText(titleText, x + (columnWidth - titleWidth) / 2, titleY);
-    
+
     // Draw underline
     ctx.beginPath();
     ctx.moveTo(x + 20, titleY + 5);
     ctx.lineTo(x + columnWidth - 20, titleY + 5);
     ctx.stroke();
-    
+
     let y = titleY + 30;
-    
+
     if (departures.length === 0) {
       ctx.font = '24px sans-serif';
       ctx.fillStyle = '#AAAAAA';
       ctx.fillText('データなし', x + 30, y + 30);
       return;
     }
-    
+
     // Draw each departure
     for (const dep of departures) {
       const rowHeight = 50;
       y += rowHeight;
-      
+
       if (y > height - 20) break; // Don't overflow
-      
+
       // Time
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 32px monospace';
       ctx.fillText(dep.time, x + 20, y);
-      
+
       // Minutes until
       const mins = dep.minutesUntil;
       let minsText = '';
@@ -312,17 +314,17 @@ function drawBoard(canvas, ctx, data) {
       } else {
         minsText = `${mins}分`;
       }
-      
+
       ctx.font = 'bold 24px sans-serif';
       ctx.fillStyle = minsColor;
       ctx.fillText(minsText, x + 140, y);
-      
+
       // Train type
       const trainType = getTrainTypeName(dep.trainType);
       ctx.font = 'bold 20px sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(trainType, x + 230, y);
-      
+
       // Destination
       const dest = getDestinationName(dep.destination);
       ctx.font = '20px sans-serif';
@@ -332,16 +334,16 @@ function drawBoard(canvas, ctx, data) {
       }
     }
   }
-  
+
   // Draw both directions
   drawDirection(0, inbound.name, inbound.departures);
-  
+
   // Vertical divider
   ctx.beginPath();
   ctx.moveTo(columnWidth, headerHeight);
   ctx.lineTo(columnWidth, height);
   ctx.stroke();
-  
+
   drawDirection(columnWidth, outbound.name, outbound.departures);
 }
 
@@ -350,30 +352,31 @@ function drawBoard(canvas, ctx, data) {
  */
 async function renderToImage(outputPath, width, height, configOverride = {}) {
   console.log(`[RENDER] Starting render to ${outputPath} (${width}x${height})`);
-  
+
   // Load configuration
   const defaultConfig = loadConfig();
   const config = { ...defaultConfig, ...configOverride };
-  
+
   const apiKey = config.API_KEY || process.env.ODPT_API_KEY || null;
-  const apiBaseUrl = config.API_BASE_URL || 'https://api-challenge.odpt.org/api/v4/';
+  const apiBaseUrl =
+    config.API_BASE_URL || 'https://odpt-api-proxy.trainboard-odpt-proxy.workers.dev/';
   const railwayUri = config.DEFAULT_RAILWAY || 'odpt.Railway:Tokyu.Toyoko';
   const stationName = config.DEFAULT_STATION_NAME || '武蔵小杉';
-  
+
   console.log(`[CONFIG] Railway: ${railwayUri}`);
   console.log(`[CONFIG] Station: ${stationName}`);
   console.log(`[CONFIG] API Base: ${apiBaseUrl}`);
-  
+
   // Fetch railway data
   const railway = await fetchRailway(railwayUri, apiKey, apiBaseUrl);
   if (!railway) {
     throw new Error('Failed to fetch railway data');
   }
-  
+
   const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
   const inboundDirUri = railway['odpt:ascendingRailDirection'];
   const outboundDirUri = railway['odpt:descendingRailDirection'];
-  
+
   // Find station in stationOrder
   const stationOrder = railway['odpt:stationOrder'] || [];
   let stationUri = null;
@@ -384,28 +387,30 @@ async function renderToImage(outputPath, width, height, configOverride = {}) {
       break;
     }
   }
-  
+
   if (!stationUri) {
-    throw new Error(`Station "${stationName}" not found in railway ${railwayUri}. Available stations: ${stationOrder.map(s => getJapaneseText(s['odpt:stationTitle'])).join(', ')}`);
+    throw new Error(
+      `Station "${stationName}" not found in railway ${railwayUri}. Available stations: ${stationOrder.map((s) => getJapaneseText(s['odpt:stationTitle'])).join(', ')}`,
+    );
   }
-  
+
   console.log(`[STATION] Found: ${stationUri}`);
-  
+
   // Fetch timetables
   const timetables = await fetchStationTimetable(stationUri, railwayUri, apiKey, apiBaseUrl);
-  
+
   // Get current time and departures
   const now = new Date();
   const currentTime = formatTimeHHMM(now);
   const nowMinutes = timeToMinutes(currentTime);
-  
+
   const inboundDepartures = getUpcomingDepartures(timetables, inboundDirUri, nowMinutes);
   const outboundDepartures = getUpcomingDepartures(timetables, outboundDirUri, nowMinutes);
-  
+
   // Get direction names
   let inboundName = '上り';
   let outboundName = '下り';
-  
+
   if (inboundDirUri) {
     const parts = inboundDirUri.split('.');
     inboundName = parts[parts.length - 1] || '上り';
@@ -414,14 +419,14 @@ async function renderToImage(outputPath, width, height, configOverride = {}) {
     const parts = outboundDirUri.split('.');
     outboundName = parts[parts.length - 1] || '下り';
   }
-  
+
   console.log(`[DATA] Inbound: ${inboundDepartures.length} departures`);
   console.log(`[DATA] Outbound: ${outboundDepartures.length} departures`);
-  
+
   // Create canvas and draw
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
-  
+
   drawBoard(canvas, ctx, {
     width,
     height,
@@ -431,11 +436,11 @@ async function renderToImage(outputPath, width, height, configOverride = {}) {
     inbound: { name: inboundName, departures: inboundDepartures },
     outbound: { name: outboundName, departures: outboundDepartures },
   });
-  
+
   // Save to file
   const buffer = canvas.toBuffer('image/png');
   fs.writeFileSync(outputPath, buffer);
-  
+
   console.log(`[SUCCESS] Image saved to ${outputPath} (${buffer.length} bytes)`);
 }
 
@@ -447,7 +452,7 @@ async function main() {
   const width = parseInt(process.argv[3] || '960', 10);
   const height = parseInt(process.argv[4] || '640', 10);
   const configFile = process.argv[5];
-  
+
   let configOverride = {};
   if (configFile && fs.existsSync(configFile)) {
     try {
@@ -456,7 +461,7 @@ async function main() {
       console.warn(`[WARN] Failed to load config file ${configFile}:`, e.message);
     }
   }
-  
+
   try {
     await renderToImage(outputPath, width, height, configOverride);
     process.exit(0);
