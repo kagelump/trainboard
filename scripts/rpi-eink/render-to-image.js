@@ -386,7 +386,7 @@ async function renderToImage(outputPath, width, height, configOverride = {}) {
   }
   
   if (!stationUri) {
-    throw new Error(`Station "${stationName}" not found in railway ${railwayUri}`);
+    throw new Error(`Station "${stationName}" not found in railway ${railwayUri}. Available stations: ${stationOrder.map(s => getJapaneseText(s['odpt:stationTitle'])).join(', ')}`);
   }
   
   console.log(`[STATION] Found: ${stationUri}`);
