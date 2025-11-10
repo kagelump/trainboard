@@ -166,23 +166,26 @@ function getUpcomingDepartures(timetables, directionUri, nowMinutes, limit = 5) 
   const allDepartures = [];
 
   for (const tt of timetables) {
+    // Check if this timetable matches the requested direction
+    if (tt['odpt:railDirection'] !== directionUri) {
+      continue;
+    }
+
     const entries = tt['odpt:stationTimetableObject'] || [];
     for (const entry of entries) {
-      if (entry['odpt:railDirection'] === directionUri) {
-        const depTime = entry['odpt:departureTime'];
-        if (depTime) {
-          const depMinutes = timeToMinutes(depTime);
-          let minutesUntil = depMinutes - nowMinutes;
-          if (minutesUntil < 0) minutesUntil += 1440;
+      const depTime = entry['odpt:departureTime'];
+      if (depTime) {
+        const depMinutes = timeToMinutes(depTime);
+        let minutesUntil = depMinutes - nowMinutes;
+        if (minutesUntil < 0) minutesUntil += 1440;
 
-          allDepartures.push({
-            time: depTime,
-            minutesUntil,
-            destination: entry['odpt:destinationStation'] || [],
-            trainType: entry['odpt:trainType'] || '',
-            trainNumber: entry['odpt:trainNumber'] || '',
-          });
-        }
+        allDepartures.push({
+          time: depTime,
+          minutesUntil,
+          destination: entry['odpt:destinationStation'] || [],
+          trainType: entry['odpt:trainType'] || '',
+          trainNumber: entry['odpt:trainNumber'] || '',
+        });
       }
     }
   }
