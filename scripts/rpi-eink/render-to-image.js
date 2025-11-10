@@ -196,16 +196,93 @@ function getUpcomingDepartures(timetables, directionUri, nowMinutes, limit = 5) 
 }
 
 /**
- * Get station name from destination array
+ * Fetch station metadata by URIs
  */
-function getDestinationName(destinations) {
+async function fetchStationsByUris(stationUris, apiKey, apiBaseUrl) {
+  if (!stationUris || stationUris.length === 0) return [];
+
+  const stations = [];
+
+  // Fetch stations individually to avoid proxy issues with bulk queries
+  for (const uri of stationUris) {
+    try {
+      const endpoint = `odpt:Station?owl:sameAs=${encodeURIComponent(uri)}`;
+      const result = await fetchFromAPI(endpoint, apiKey, apiBaseUrl);
+      if (result && result.length > 0) {
+        stations.push(...result);
+      }
+    } catch (error) {
+      console.warn(`[WARN] Failed to fetch station ${uri}:`, error.message);
+    }
+  }
+
+  return stations;
+}
+
+/**
+ * Collect all unique destination station URIs from departures
+ */
+function collectDestinationUris(departures) {
+  const uris = new Set();
+  for (const dep of departures) {
+    const dests = dep.destination;
+    if (Array.isArray(dests)) {
+      for (const d of dests) {
+        if (typeof d === 'string') {
+          uris.add(d);
+        } else if (d && d['owl:sameAs']) {
+          uris.add(d['owl:sameAs']);
+        }
+      }
+    } else if (typeof dests === 'string') {
+      uris.add(dests);
+    }
+  }
+  return Array.from(uris);
+}
+
+/**
+ * Build a cache of station URIs to Japanese names
+ */
+async function buildStationNameCache(departures, apiKey, apiBaseUrl) {
+  const cache = new Map();
+
+  // Collect all destination URIs
+  const allUris = collectDestinationUris(departures);
+  if (allUris.length === 0) return cache;
+
+  // Fetch station data
+  const stations = await fetchStationsByUris(allUris, apiKey, apiBaseUrl);
+
+  // Populate cache
+  for (const station of stations) {
+    const uri = station['owl:sameAs'] || station['@id'];
+    const name = getJapaneseText(station['dc:title'] || station['odpt:stationTitle']);
+    if (uri && name) {
+      cache.set(uri, name);
+    }
+  }
+
+  return cache;
+}
+
+/**
+ * Get station name from destination array using cache
+ */
+function getDestinationName(destinations, stationNameCache) {
   if (!destinations || destinations.length === 0) return '不明';
   const dest = destinations[destinations.length - 1];
+
   if (typeof dest === 'string') {
-    // Extract station name from URI like "odpt.Station:Tokyu.Toyoko.Yokohama"
+    // Look up in cache first
+    if (stationNameCache && stationNameCache.has(dest)) {
+      return stationNameCache.get(dest);
+    }
+    // Fallback: Extract station name from URI like "odpt.Station:Tokyu.Toyoko.Yokohama"
     const parts = dest.split('.');
     return parts[parts.length - 1] || '不明';
   }
+
   return getJapaneseText(dest['dc:title'] || dest['odpt:stationTitle']) || '不明';
 }
 
@@ -236,7 +313,16 @@ function getTrainTypeName(trainTypeUri) {
  * Draw the departure board to canvas
  */
 function drawBoard(canvas, ctx, data) {
-  const { width, height, stationName, railwayName, currentTime, inbound, outbound } = data;
+  const {
+    width,
+    height,
+    stationName,
+    railwayName,
+    currentTime,
+    inbound,
+    outbound,
+    stationNameCache,
+  } = data;
 
   // Background
   ctx.fillStyle = '#000000';
@@ -269,8 +355,8 @@ function drawBoard(canvas, ctx, data) {
   const contentY = headerHeight + 10;
 
   // Draw direction column
-  function drawDirection(x, directionName, departures) {
-    ctx.fillStyle = '#FFFFFF';
+  function drawDirection(x, directionName, departures, stationNameCache) {
+    ctx.fillStyle = '#000000';
     ctx.font = 'bold 28px sans-serif';
     const titleY = contentY + 35;
     const titleText = `${directionName}行き`;
@@ -287,7 +373,7 @@ function drawBoard(canvas, ctx, data) {
 
     if (departures.length === 0) {
       ctx.font = '24px sans-serif';
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = '#666666';
       ctx.fillText('データなし', x + 30, y + 30);
       return;
     }
@@ -300,14 +386,14 @@ function drawBoard(canvas, ctx, data) {
       if (y > height - 20) break; // Don't overflow
 
       // Time
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = '#000000';
       ctx.font = 'bold 32px monospace';
       ctx.fillText(dep.time, x + 20, y);
 
       // Minutes until
       const mins = dep.minutesUntil;
       let minsText = '';
-      let minsColor = '#FFFFFF';
+      let minsColor = '#000000';
       if (mins === 0) {
         minsText = '発車';
         minsColor = '#FF0000';
@@ -325,11 +411,11 @@ function drawBoard(canvas, ctx, data) {
       // Train type
       const trainType = getTrainTypeName(dep.trainType);
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = '#000000';
       ctx.fillText(trainType, x + 230, y);
 
       // Destination
-      const dest = getDestinationName(dep.destination);
+      const dest = getDestinationName(dep.destination, stationNameCache);
       ctx.font = '20px sans-serif';
       const destX = x + 320;
       if (destX + 10 < x + columnWidth - 10) {
@@ -339,7 +425,7 @@ function drawBoard(canvas, ctx, data) {
   }
 
   // Draw both directions
-  drawDirection(0, inbound.name, inbound.departures);
+  drawDirection(0, inbound.name, inbound.departures, stationNameCache);
 
   // Vertical divider
   ctx.beginPath();
@@ -347,7 +433,7 @@ function drawBoard(canvas, ctx, data) {
   ctx.lineTo(columnWidth, height);
   ctx.stroke();
 
-  drawDirection(columnWidth, outbound.name, outbound.departures);
+  drawDirection(columnWidth, outbound.name, outbound.departures, stationNameCache);
 }
 
 /**
@@ -410,6 +496,10 @@ async function renderToImage(outputPath, width, height, configOverride = {}) {
   const inboundDepartures = getUpcomingDepartures(timetables, inboundDirUri, nowMinutes);
   const outboundDepartures = getUpcomingDepartures(timetables, outboundDirUri, nowMinutes);
 
+  // Build station name cache for destination display
+  const allDepartures = [...inboundDepartures, ...outboundDepartures];
+  const stationNameCache = await buildStationNameCache(allDepartures, apiKey, apiBaseUrl);
+
   // Get direction names
   let inboundName = '上り';
   let outboundName = '下り';
@@ -438,6 +528,7 @@ async function renderToImage(outputPath, width, height, configOverride = {}) {
     currentTime,
     inbound: { name: inboundName, departures: inboundDepartures },
     outbound: { name: outboundName, departures: outboundDepartures },
+    stationNameCache,
   });
 
   // Save to file
