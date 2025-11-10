@@ -18,7 +18,7 @@ DISPLAY_HEIGHT=640
 # Default Puppeteer wait settings: wait for a train-row element before capturing.
 # This can be overridden by setting WAIT_FOR_SELECTOR, WAIT_TIMEOUT_MS, or
 # WAIT_AFTER_LOAD_MS in the environment or systemd unit.
-export WAIT_FOR_SELECTOR="${WAIT_FOR_SELECTOR:-train-row}"
+export WAIT_FOR_FUNCTION="${WAIT_FOR_FUNCTION:-window.__DEPARTURES_RENDERED === true}"
 export WAIT_TIMEOUT_MS="${WAIT_TIMEOUT_MS:-20000}"
 export WAIT_AFTER_LOAD_MS="${WAIT_AFTER_LOAD_MS:-5000}"
 
