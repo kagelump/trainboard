@@ -8,7 +8,7 @@ set -e
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="${APP_DIR:-$HOME/trainboard}"
-DISPLAY_DIR="${DISPLAY_DIR:-$HOME/e-Paper/E-paper_Separate_Program/10in2_e-Paper_G/RaspberryPi_JetsonNano/python}"
+DISPLAY_DIR="${DISPLAY_DIR:-$HOME/e-Paper/E-paper_Separate_Program/10in2_e-Paper_G/RaspberryPi_JetsonNano/python/lib}"
 SCREENSHOT_PATH="${SCREENSHOT_PATH:-$APP_DIR/screenshot.png}"
 LOG_FILE="${LOG_FILE:-$HOME/log/trainboard-display.log}"
 HTTP_PORT="${HTTP_PORT:-8080}"
@@ -168,7 +168,7 @@ def main():
 
     try:
         logging.info("Initializing e-Paper display...")
-        epd = epd10in2_G.EPD()
+        epd = epd10in2g.EPD()
 
         # Initialize the display
         if refresh_mode == 'full':
@@ -217,7 +217,7 @@ def main():
         sys.exit(1)
     except KeyboardInterrupt:
         logging.info("Interrupted by user")
-        epd10in2_G.epdconfig.module_exit()
+        epd10in2g.epdconfig.module_exit()
         sys.exit(0)
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
