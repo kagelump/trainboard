@@ -128,7 +128,7 @@ install_system_deps() {
     log_step "Installing system dependencies..."
 
     apt install -y \
-        chromium-browser \
+        chromium \
         xvfb \
         python3-pip \
         python3-pil \
