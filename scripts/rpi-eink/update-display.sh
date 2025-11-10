@@ -11,7 +11,7 @@ APP_DIR="${APP_DIR:-$HOME/trainboard}"
 DISPLAY_DIR="${DISPLAY_DIR:-$HOME/e-Paper/E-paper_Separate_Program/10in2_e-Paper_G/RaspberryPi_JetsonNano/python/lib}"
 SCREENSHOT_PATH="${SCREENSHOT_PATH:-$APP_DIR/screenshot.png}"
 LOG_FILE="${LOG_FILE:-$HOME/log/trainboard-display.log}"
-HTTP_PORT="${HTTP_PORT:-8080}"
+TRAINBOARD_URL="${TRAINBOARD_URL:-https://trainboard.hinoka.org}"
 DISPLAY_WIDTH=960
 DISPLAY_HEIGHT=640
 
@@ -51,35 +51,14 @@ if [ ! -d "$DISPLAY_DIR" ]; then
     error_exit "E-Paper display directory not found: $DISPLAY_DIR"
 fi
 
-# Start local web server if not already running
-if ! pgrep -f "http-server.*$HTTP_PORT" > /dev/null; then
-    log "Starting local web server on port $HTTP_PORT..."
-    cd "$APP_DIR/dist" || error_exit "dist directory not found"
-    nohup npx http-server -p "$HTTP_PORT" > /tmp/trainboard-server.log 2>&1 &
-    sleep 10
-fi
-
-# Wait up to 15s for local web server to respond (retry loop)
-log "Waiting for local web server to respond on port $HTTP_PORT..."
-for i in $(seq 1 15); do
-    if curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
-        break
-    fi
-    sleep 1
-done
-
-if ! curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
-    error_exit "Web server is not responding on port $HTTP_PORT after retries"
-fi
-
-log "Capturing screenshot from http://localhost:$HTTP_PORT..."
+log "Capturing screenshot from $TRAINBOARD_URL..."
 
 # Prefer Puppeteer capture if node and the capture script are available
 NODE_CMD=$(command -v node || true)
 CAPTURE_SCRIPT="$APP_DIR/scripts/rpi-eink/capture-and-log.js"
 if [ -n "$NODE_CMD" ] && [ -f "$CAPTURE_SCRIPT" ]; then
     log "Using Puppeteer capture via node"
-    if ! "$NODE_CMD" "$CAPTURE_SCRIPT" "http://localhost:$HTTP_PORT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
+    if ! "$NODE_CMD" "$CAPTURE_SCRIPT" "$TRAINBOARD_URL" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
         log "Puppeteer capture failed; check $LOG_FILE for details"
         # Print last 50 lines directly to stdout (NOT to log file to avoid recursion)
         tail -n 50 "$LOG_FILE" | sed 's/^/  /'
@@ -103,7 +82,7 @@ else
         --single-process \
         --window-size=${DISPLAY_WIDTH},${DISPLAY_HEIGHT} \
         --screenshot="$SCREENSHOT_PATH" \
-        "http://localhost:$HTTP_PORT" \
+        "$TRAINBOARD_URL" \
         >"$CHROMIUM_LOG" 2>&1; then
         log "Chromium capture failed; see $CHROMIUM_LOG for details"
         tail -n 200 "$CHROMIUM_LOG" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
