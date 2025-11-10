@@ -126,7 +126,7 @@ async function main() {
       await page.waitForFunction(WAIT_FOR_FUNCTION, { timeout: WAIT_TIMEOUT });
     } else {
       console.log('[INFO] No wait condition provided; waiting fixed ms:', WAIT_AFTER_LOAD_MS);
-      await page.waitForTimeout(WAIT_AFTER_LOAD_MS);
+      await new Promise(resolve => setTimeout(resolve, WAIT_AFTER_LOAD_MS));
     }
 
     await page.screenshot({ path: out });
