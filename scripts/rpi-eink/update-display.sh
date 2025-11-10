@@ -52,31 +52,58 @@ if ! pgrep -f "http-server.*$HTTP_PORT" > /dev/null; then
     sleep 10
 fi
 
-# Verify web server is responding
+# Wait up to 15s for local web server to respond (retry loop)
+log "Waiting for local web server to respond on port $HTTP_PORT..."
+for i in $(seq 1 15); do
+    if curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
+        break
+    fi
+    sleep 1
+done
+
 if ! curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
-    error_exit "Web server is not responding on port $HTTP_PORT"
+    error_exit "Web server is not responding on port $HTTP_PORT after retries"
 fi
 
 log "Capturing screenshot from http://localhost:$HTTP_PORT..."
 
-# Capture screenshot using Chromium in headless mode
-# Use xvfb-run to provide a virtual X server
-xvfb-run -a --server-args="-screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x24" \
-    chromium \
-    --headless \
-    --enable-logging=stderr \
-    --v=1 \
-    --disable-gpu \
-    --no-sandbox \
-    --disable-dev-shm-usage \
-    --disable-software-rasterizer \
-    --disable-extensions \
-    --disable-setuid-sandbox \
-    --single-process \
-    --window-size=${DISPLAY_WIDTH},${DISPLAY_HEIGHT} \
-    --screenshot="$SCREENSHOT_PATH" \
-    "http://localhost:$HTTP_PORT" \
-    || error_exit "Failed to capture screenshot"
+# Prefer Puppeteer capture if node and the capture script are available
+NODE_CMD=$(command -v node || true)
+CAPTURE_SCRIPT="$APP_DIR/scripts/rpi-eink/capture-and-log.js"
+if [ -n "$NODE_CMD" ] && [ -f "$CAPTURE_SCRIPT" ]; then
+    # Determine owner of APP_DIR to run node as that user if possible
+    OWNER=$(stat -c '%U' "$APP_DIR" 2>/dev/null || echo "${SUDO_USER:-$(whoami)}")
+    log "Using Puppeteer capture via node (user: $OWNER)"
+    if ! sudo -u "$OWNER" "$NODE_CMD" "$CAPTURE_SCRIPT" "http://localhost:$HTTP_PORT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
+        log "Puppeteer capture failed; check $LOG_FILE for details"
+        tail -n 200 "$LOG_FILE" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
+        error_exit "Puppeteer capture failed"
+    fi
+else
+    # Fallback: use Chromium under Xvfb with verbose logging and a timeout
+    CHROMIUM_LOG="/tmp/chromium-screenshot.log"
+    : > "$CHROMIUM_LOG"
+    if ! timeout 30s xvfb-run -a --server-args="-screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x24" \
+        chromium \
+        --headless \
+        --enable-logging=stderr \
+        --v=1 \
+        --no-sandbox \
+        --disable-gpu \
+        --disable-dev-shm-usage \
+        --disable-software-rasterizer \
+        --disable-extensions \
+        --disable-setuid-sandbox \
+        --single-process \
+        --window-size=${DISPLAY_WIDTH},${DISPLAY_HEIGHT} \
+        --screenshot="$SCREENSHOT_PATH" \
+        "http://localhost:$HTTP_PORT" \
+        >"$CHROMIUM_LOG" 2>&1; then
+        log "Chromium capture failed; see $CHROMIUM_LOG for details"
+        tail -n 200 "$CHROMIUM_LOG" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
+        error_exit "Failed to capture screenshot"
+    fi
+fi
 
 # Verify screenshot was created
 if [ ! -f "$SCREENSHOT_PATH" ]; then
