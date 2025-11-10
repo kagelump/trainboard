@@ -239,12 +239,12 @@ function drawBoard(canvas, ctx, data) {
   const { width, height, stationName, railwayName, currentTime, inbound, outbound } = data;
 
   // Background
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, width, height);
 
   // Header
   const headerHeight = 80;
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = '#000000';
   ctx.font = 'bold 32px sans-serif';
   ctx.fillText(stationName, 20, 45);
 
@@ -257,7 +257,7 @@ function drawBoard(canvas, ctx, data) {
   ctx.fillText(currentTime, width - timeWidth - 20, 50);
 
   // Divider line
-  ctx.strokeStyle = '#FFFFFF';
+  ctx.strokeStyle = '#000000';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, headerHeight);
@@ -270,7 +270,7 @@ function drawBoard(canvas, ctx, data) {
 
   // Draw direction column
   function drawDirection(x, directionName, departures) {
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = '#000000';
     ctx.font = 'bold 28px sans-serif';
     const titleY = contentY + 35;
     const titleText = `${directionName}行き`;
@@ -287,7 +287,7 @@ function drawBoard(canvas, ctx, data) {
 
     if (departures.length === 0) {
       ctx.font = '24px sans-serif';
-      ctx.fillStyle = '#AAAAAA';
+      ctx.fillStyle = '#666666';
       ctx.fillText('データなし', x + 30, y + 30);
       return;
     }
@@ -300,14 +300,14 @@ function drawBoard(canvas, ctx, data) {
       if (y > height - 20) break; // Don't overflow
 
       // Time
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = '#000000';
       ctx.font = 'bold 32px monospace';
       ctx.fillText(dep.time, x + 20, y);
 
       // Minutes until
       const mins = dep.minutesUntil;
       let minsText = '';
-      let minsColor = '#FFFFFF';
+      let minsColor = '#000000';
       if (mins === 0) {
         minsText = '発車';
         minsColor = '#FF0000';
@@ -325,7 +325,7 @@ function drawBoard(canvas, ctx, data) {
       // Train type
       const trainType = getTrainTypeName(dep.trainType);
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = '#000000';
       ctx.fillText(trainType, x + 230, y);
 
       // Destination
