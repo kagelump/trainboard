@@ -44,62 +44,83 @@ if [ ! -d "$DISPLAY_DIR" ]; then
     error_exit "E-Paper display directory not found: $DISPLAY_DIR"
 fi
 
-# Start local web server if not already running
-if ! pgrep -f "http-server.*$HTTP_PORT" > /dev/null; then
-    log "Starting local web server on port $HTTP_PORT..."
-    cd "$APP_DIR/dist" || error_exit "dist directory not found"
-    nohup npx http-server -p "$HTTP_PORT" > /tmp/trainboard-server.log 2>&1 &
-    sleep 10
-fi
+log "Capturing screenshot..."
 
-# Wait up to 15s for local web server to respond (retry loop)
-log "Waiting for local web server to respond on port $HTTP_PORT..."
-for i in $(seq 1 15); do
-    if curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
-        break
-    fi
-    sleep 1
-done
-
-if ! curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
-    error_exit "Web server is not responding on port $HTTP_PORT after retries"
-fi
-
-log "Capturing screenshot from http://localhost:$HTTP_PORT..."
-
-# Prefer Puppeteer capture if node and the capture script are available
+# Prefer direct rendering if available (fastest, no browser needed)
 NODE_CMD=$(command -v node || true)
-CAPTURE_SCRIPT="$APP_DIR/scripts/rpi-eink/capture-and-log.js"
-if [ -n "$NODE_CMD" ] && [ -f "$CAPTURE_SCRIPT" ]; then
-    log "Using Puppeteer capture via node"
-    if ! "$NODE_CMD" "$CAPTURE_SCRIPT" "http://localhost:$HTTP_PORT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
-        log "Puppeteer capture failed; check $LOG_FILE for details"
-        tail -n 200 "$LOG_FILE" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
-        error_exit "Puppeteer capture failed"
+RENDER_SCRIPT="$APP_DIR/scripts/rpi-eink/render-to-image.js"
+
+if [ -n "$NODE_CMD" ] && [ -f "$RENDER_SCRIPT" ]; then
+    log "Using direct Node.js renderer (no browser needed)"
+    if "$NODE_CMD" "$RENDER_SCRIPT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
+        log "Direct rendering completed successfully"
+    else
+        log "Direct rendering failed, falling back to browser-based capture"
+        DIRECT_RENDER_FAILED=1
     fi
 else
-    # Fallback: use Chromium under Xvfb with verbose logging and a timeout
-    CHROMIUM_LOG="/tmp/chromium-screenshot.log"
-    : > "$CHROMIUM_LOG"
-    if ! timeout 30s xvfb-run -a --server-args="-screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x24" \
-        chromium \
-        --headless \
-        --enable-logging=stderr \
-        --v=1 \
-        --no-sandbox \
-        --disable-gpu \
-        --disable-dev-shm-usage \
-        --disable-software-rasterizer \
-        --disable-extensions \
-        --disable-setuid-sandbox \
-        --single-process \
-        --window-size=${DISPLAY_WIDTH},${DISPLAY_HEIGHT} \
-        --screenshot="$SCREENSHOT_PATH" \
-        "http://localhost:$HTTP_PORT" \
-        >"$CHROMIUM_LOG" 2>&1; then
-        log "Chromium capture failed; see $CHROMIUM_LOG for details"
-        tail -n 200 "$CHROMIUM_LOG" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
-        error_exit "Failed to capture screenshot"
+    log "Direct renderer not available, using browser-based capture"
+    DIRECT_RENDER_FAILED=1
+fi
+
+# Fallback to browser-based capture if direct rendering is unavailable or failed
+if [ -n "$DIRECT_RENDER_FAILED" ]; then
+    # Start local web server if not already running
+    if ! pgrep -f "http-server.*$HTTP_PORT" > /dev/null; then
+        log "Starting local web server on port $HTTP_PORT..."
+        cd "$APP_DIR/dist" || error_exit "dist directory not found"
+        nohup npx http-server -p "$HTTP_PORT" > /tmp/trainboard-server.log 2>&1 &
+        sleep 10
+    fi
+
+    # Wait up to 15s for local web server to respond (retry loop)
+    log "Waiting for local web server to respond on port $HTTP_PORT..."
+    for i in $(seq 1 15); do
+        if curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
+            break
+        fi
+        sleep 1
+    done
+
+    if ! curl -s -f "http://localhost:$HTTP_PORT" > /dev/null; then
+        error_exit "Web server is not responding on port $HTTP_PORT after retries"
+    fi
+
+    log "Capturing screenshot from http://localhost:$HTTP_PORT..."
+
+    # Try Puppeteer capture if available
+    CAPTURE_SCRIPT="$APP_DIR/scripts/rpi-eink/capture-and-log.js"
+    if [ -n "$NODE_CMD" ] && [ -f "$CAPTURE_SCRIPT" ]; then
+        log "Using Puppeteer capture via node"
+        if ! "$NODE_CMD" "$CAPTURE_SCRIPT" "http://localhost:$HTTP_PORT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
+            log "Puppeteer capture failed; check $LOG_FILE for details"
+            tail -n 200 "$LOG_FILE" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
+            error_exit "Puppeteer capture failed"
+        fi
+    else
+        # Final fallback: use Chromium under Xvfb with verbose logging and a timeout
+        CHROMIUM_LOG="/tmp/chromium-screenshot.log"
+        : > "$CHROMIUM_LOG"
+        if ! timeout 30s xvfb-run -a --server-args="-screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x24" \
+            chromium \
+            --headless \
+            --enable-logging=stderr \
+            --v=1 \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --disable-software-rasterizer \
+            --disable-extensions \
+            --disable-setuid-sandbox \
+            --single-process \
+            --window-size=${DISPLAY_WIDTH},${DISPLAY_HEIGHT} \
+            --screenshot="$SCREENSHOT_PATH" \
+            "http://localhost:$HTTP_PORT" \
+            >"$CHROMIUM_LOG" 2>&1; then
+            log "Chromium capture failed; see $CHROMIUM_LOG for details"
+            tail -n 200 "$CHROMIUM_LOG" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
+            error_exit "Failed to capture screenshot"
+        fi
     fi
 fi
 

@@ -257,10 +257,19 @@ You should see test patterns on the display. If not, check:
 
 ### 4.2 Configure Display Refresh
 
-The trainboard uses a two-step process:
+**New in this version**: The trainboard now includes a fast server-side renderer that generates images directly using Node.js Canvas, eliminating the need for Chromium in most cases. This provides:
 
-1. Capture a screenshot of the web app using Chromium in headless mode
-2. Convert and display the image on the e-ink screen
+- **~10x faster rendering**: 2-3 seconds instead of 20-30 seconds
+- **Lower memory usage**: No browser overhead
+- **More reliable**: Fewer dependencies and failure points
+- **Automatic fallback**: Falls back to Chromium if needed
+
+The rendering process now works as follows:
+
+1. **First choice**: Direct rendering with Node.js Canvas (fast, no browser)
+2. **Fallback**: Capture screenshot using Puppeteer with Chromium
+3. **Last resort**: Use Chromium in headless mode with Xvfb
+4. Convert and display the image on the e-ink screen
 
 Create the display configuration directory:
 
