@@ -33,29 +33,15 @@ function registerFonts() {
   const fontsDir = path.join(__dirname, 'fonts');
 
   // Try Noto Sans JP first (easier to download)
-  let regularFont = path.join(fontsDir, 'NotoSansJP-Regular.ttf');
-  let boldFont = path.join(fontsDir, 'NotoSansJP-Bold.ttf');
+  let boldFont = path.join(fontsDir, 'NotoSansJP-ExtraBold.ttf');
   let fontFamily = 'Noto Sans JP';
 
-  // Fall back to CJK version if available
-  if (!fs.existsSync(regularFont)) {
-    regularFont = path.join(fontsDir, 'NotoSansCJKjp-Regular.otf');
-    boldFont = path.join(fontsDir, 'NotoSansCJKjp-Bold.otf');
-    fontFamily = 'Noto Sans CJK JP';
-  }
-
   try {
-    if (fs.existsSync(regularFont)) {
-      registerFont(regularFont, { family: fontFamily });
-      console.log(`[INFO] Registered font: ${fontFamily} Regular`);
-    }
     if (fs.existsSync(boldFont)) {
-      registerFont(boldFont, { family: fontFamily, weight: 'bold' });
-      console.log(`[INFO] Registered font: ${fontFamily} Bold`);
+      registerFont(boldFont, { family: `${fontFamily}`, weight: 'ExtraBold' });
+      console.log(`[INFO] Registered font: ${fontFamily}`);
     }
-
-    // Return true if fonts are registered
-    return fs.existsSync(regularFont) && fs.existsSync(boldFont);
+    return true;
   } catch (e) {
     console.warn('[WARN] Failed to register fonts:', e.message);
     console.warn('[WARN] Run: node scripts/rpi-eink/fonts/setup-fonts.js');
@@ -68,16 +54,7 @@ function registerFonts() {
  */
 function getFontName(useCustomFonts) {
   if (!useCustomFonts) return 'sans-serif';
-
-  // Check which font is available
-  const fontsDir = path.join(__dirname, 'fonts');
-  if (fs.existsSync(path.join(fontsDir, 'NotoSansJP-Regular.ttf'))) {
-    return 'Noto Sans JP';
-  }
-  if (fs.existsSync(path.join(fontsDir, 'NotoSansCJKjp-Regular.otf'))) {
-    return 'Noto Sans CJK JP';
-  }
-  return 'sans-serif';
+  return 'Noto Sans JP';
 }
 
 /**
@@ -388,6 +365,40 @@ function drawBoard(canvas, ctx, data, useCustomFonts = false) {
 
   const fontName = getFontName(useCustomFonts);
   const monoFont = getMonoFontName(useCustomFonts);
+  // Log font selection for debugging
+  const fontsDir = path.join(__dirname, 'fonts');
+  const notoRegular = path.join(fontsDir, 'NotoSansJP-Regular.ttf');
+  const notoBold = path.join(fontsDir, 'NotoSansJP-Bold.ttf');
+  const cjkRegular = path.join(fontsDir, 'NotoSansCJKjp-Regular.otf');
+  const cjkBold = path.join(fontsDir, 'NotoSansCJKjp-Bold.otf');
+
+  console.log(`[FONT] useCustomFonts=${useCustomFonts}`);
+  console.log(`[FONT] fontName="${fontName}", monoFont="${monoFont}"`);
+
+  if (useCustomFonts) {
+    const regularFound = fs.existsSync(notoRegular) || fs.existsSync(cjkRegular);
+    const boldFound = fs.existsSync(notoBold) || fs.existsSync(cjkBold);
+
+    console.log(
+      `[FONT] Regular file: ${
+        fs.existsSync(notoRegular) ? notoRegular : fs.existsSync(cjkRegular) ? cjkRegular : '(none)'
+      }`,
+    );
+    console.log(
+      `[FONT] Bold file: ${
+        fs.existsSync(notoBold) ? notoBold : fs.existsSync(cjkBold) ? cjkBold : '(none)'
+      }`,
+    );
+    console.log(`[FONT] Files present - regular:${regularFound} bold:${boldFound}`);
+
+    if (!regularFound || !boldFound) {
+      console.warn(
+        '[FONT] Custom fonts expected but missing. Rendering will use fallback system fonts.',
+      );
+    }
+  } else {
+    console.log('[FONT] Using system fallback fonts (sans-serif / monospace).');
+  }
 
   // Background
   ctx.fillStyle = '#000000';
@@ -422,7 +433,7 @@ function drawBoard(canvas, ctx, data, useCustomFonts = false) {
   // Draw direction column
   function drawDirection(x, directionName, departures, stationNameCache) {
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = `bold 28px ${fontName}`;
+    ctx.font = `bold 30px ${fontName}`;
     const titleY = contentY + 35;
     const titleText = `${directionName}行き`;
     const titleWidth = ctx.measureText(titleText).width;
@@ -457,14 +468,14 @@ function drawBoard(canvas, ctx, data, useCustomFonts = false) {
 
       // Train type
       const trainType = getTrainTypeName(dep.trainType);
-      ctx.font = `bold 20px ${fontName}`;
+      ctx.font = `bold 32px ${fontName}`;
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(trainType, x + 200, y);
+      ctx.fillText(trainType, x + 150, y);
 
       // Destination
       const dest = getDestinationName(dep.destination, stationNameCache);
-      ctx.font = `20px ${fontName}`;
-      const destX = x + 320;
+      ctx.font = `bold 32px ${fontName}`;
+      const destX = x + 250;
       if (destX + 10 < x + columnWidth - 10) {
         ctx.fillText(dest, destX, y);
       }
