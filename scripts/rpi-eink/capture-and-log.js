@@ -62,7 +62,12 @@ async function main() {
   });
 
   page.on('pageerror', (err) => {
-    console.error('[PAGE ERROR]', err && err.stack ? err.stack : err);
+    const errMsg = err && err.message ? err.message : String(err);
+    const errStack = err && err.stack ? err.stack : '';
+    console.error('[PAGE ERROR]', errMsg);
+    if (errStack && errStack !== errMsg) {
+      console.error(errStack);
+    }
   });
 
   page.on('requestfailed', (req) => {

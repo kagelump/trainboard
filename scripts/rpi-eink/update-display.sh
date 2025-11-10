@@ -81,7 +81,8 @@ if [ -n "$NODE_CMD" ] && [ -f "$CAPTURE_SCRIPT" ]; then
     log "Using Puppeteer capture via node"
     if ! "$NODE_CMD" "$CAPTURE_SCRIPT" "http://localhost:$HTTP_PORT" "$SCREENSHOT_PATH" "$DISPLAY_WIDTH" "$DISPLAY_HEIGHT" >>"$LOG_FILE" 2>&1; then
         log "Puppeteer capture failed; check $LOG_FILE for details"
-        tail -n 200 "$LOG_FILE" | sed 's/^/    /' | while IFS= read -r line; do log "$line"; done
+        # Print last 50 lines directly to stdout (NOT to log file to avoid recursion)
+        tail -n 50 "$LOG_FILE" | sed 's/^/  /'
         error_exit "Puppeteer capture failed"
     fi
 else
