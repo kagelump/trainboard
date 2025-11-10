@@ -38,6 +38,10 @@ async function main() {
     process.exit(2);
   }
 
+  // Navigation timeout for page.goto (ms). Configurable via CAPTURE_TIMEOUT_MS.
+  const NAV_TIMEOUT = parseInt(process.env.CAPTURE_TIMEOUT_MS || '60000', 10);
+  console.log('[INFO] NAV_TIMEOUT (ms):', NAV_TIMEOUT);
+
   const browser = await puppeteer.launch({
     executablePath,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
