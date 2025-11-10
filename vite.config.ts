@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync } from 'fs';
 import { resolve } from 'path';
 
 // Vite config tuned to reduce noisy reloads during editor temporary writes.
@@ -40,6 +40,17 @@ export default defineConfig({
           console.log('Generated 404.html from index.html for GitHub Pages SPA routing');
         } catch (error) {
           console.warn('Failed to generate 404.html:', error);
+        }
+
+        // Copy rpi_setup.sh to dist for GitHub Pages deployment
+        // This allows users to run: curl https://trainboard.hinoka.org/rpi_setup.sh | sudo sh
+        const setupScriptPath = resolve(__dirname, 'rpi_setup.sh');
+        const setupScriptDestPath = resolve(__dirname, 'dist/rpi_setup.sh');
+        try {
+          copyFileSync(setupScriptPath, setupScriptDestPath);
+          console.log('Copied rpi_setup.sh to dist/ for deployment');
+        } catch (error) {
+          console.warn('Failed to copy rpi_setup.sh:', error);
         }
       },
     },

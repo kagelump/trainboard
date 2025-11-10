@@ -2,6 +2,57 @@
 
 This guide provides instructions for setting up the Trainboard application on a Raspberry Pi Zero 2 W with a Waveshare 10.2inch e-Paper HAT (G) display (White/Black/Red/Yellow).
 
+## Quick Start (Automated Setup)
+
+For a fresh Raspberry Pi OS installation, you can use the automated setup script:
+
+```bash
+curl https://trainboard.hinoka.org/rpi_setup.sh | sudo sh
+```
+
+Or if you prefer to review the script first:
+
+```bash
+curl -O https://trainboard.hinoka.org/rpi_setup.sh
+chmod +x rpi_setup.sh
+sudo ./rpi_setup.sh
+```
+
+**Prerequisites for automated setup:**
+
+- Fresh Raspberry Pi OS Lite (64-bit) installation
+- SSH enabled (create empty `ssh` file in boot partition)
+- WiFi configured (create `wpa_supplicant.conf` in boot partition - see section 1.1 below)
+- Connected to the internet
+
+The automated script will:
+
+1. Enable SPI interface (required for e-ink display)
+2. Install all system dependencies (Node.js, Chromium, Python libraries)
+3. Install BCM2835 library for GPIO control
+4. Clone and setup Waveshare e-Paper library
+5. Clone and build the Trainboard application
+6. Configure systemd services for automatic updates
+
+**Environment variables:**
+
+- `TRAINBOARD_USER` - User to install for (default: `pi`)
+- `TRAINBOARD_REPO` - Repository URL to clone (default: `https://github.com/kagelump/trainboard.git`)
+
+Example with custom user:
+
+```bash
+curl https://trainboard.hinoka.org/rpi_setup.sh | sudo TRAINBOARD_USER=myuser sh
+```
+
+After the automated setup completes, skip to [Part 3.2: Configure the Application](#32-configure-the-application) to set your API key and station preferences.
+
+---
+
+## Manual Setup (Detailed Instructions)
+
+If you prefer to understand each step or need to customize the installation, follow the detailed manual instructions below.
+
 ## Hardware Requirements
 
 - Raspberry Pi Zero 2 W

@@ -247,7 +247,14 @@ You can run this trainboard on a Raspberry Pi with an e-ink display for a physic
 - Automatic display refresh and power management
 - Troubleshooting and maintenance
 
-Quick start:
+**One-command automated setup:**
+
+```bash
+# On your Raspberry Pi (fresh install with SSH and WiFi configured)
+curl https://trainboard.hinoka.org/rpi_setup.sh | sudo sh
+```
+
+Or manual installation:
 
 ```bash
 # On your Raspberry Pi
@@ -255,6 +262,8 @@ cd ~/trainboard/scripts/rpi-eink
 chmod +x install.sh
 ./install.sh
 ```
+
+See [RASPBERRY_PI_SETUP.md](RASPBERRY_PI_SETUP.md) for complete documentation.
 
 Notes & next steps
 
