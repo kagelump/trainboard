@@ -356,7 +356,7 @@ function drawBoard(canvas, ctx, data) {
 
   // Draw direction column
   function drawDirection(x, directionName, departures, stationNameCache) {
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 28px sans-serif';
     const titleY = contentY + 35;
     const titleText = `${directionName}行き`;
@@ -386,33 +386,15 @@ function drawBoard(canvas, ctx, data) {
       if (y > height - 20) break; // Don't overflow
 
       // Time
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 32px monospace';
       ctx.fillText(dep.time, x + 20, y);
-
-      // Minutes until
-      const mins = dep.minutesUntil;
-      let minsText = '';
-      let minsColor = '#000000';
-      if (mins === 0) {
-        minsText = '発車';
-        minsColor = '#FF0000';
-      } else if (mins <= 3) {
-        minsText = `${mins}分`;
-        minsColor = '#FFFF00';
-      } else {
-        minsText = `${mins}分`;
-      }
-
-      ctx.font = 'bold 24px sans-serif';
-      ctx.fillStyle = minsColor;
-      ctx.fillText(minsText, x + 140, y);
 
       // Train type
       const trainType = getTrainTypeName(dep.trainType);
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillStyle = '#000000';
-      ctx.fillText(trainType, x + 230, y);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(trainType, x + 200, y);
 
       // Destination
       const dest = getDestinationName(dep.destination, stationNameCache);
