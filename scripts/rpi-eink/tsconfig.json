@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "lib": ["ES2020"],
+    "types": ["node"]
+  },
+  "include": [
+    "./**/*.ts",
+    "../../src/odpt/types.ts",
+    "../../src/odpt/api.ts",
+    "../../src/lib/utils.ts",
+    "../../src/lib/cache.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
