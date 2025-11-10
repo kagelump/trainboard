@@ -57,16 +57,26 @@ async function main() {
       );
       console.log(`[PAGE ${msg.type().toUpperCase()}] ${args.join(' ')}`);
     } catch (e) {
-      console.log(`[PAGE ${msg.type().toUpperCase()}] ${msg.text()}`);
+      // Fallback to msg.text() if evaluation fails
+      try {
+        console.log(`[PAGE ${msg.type().toUpperCase()}] ${msg.text()}`);
+      } catch (e2) {
+        // Ignore if even text() fails
+      }
     }
   });
 
   page.on('pageerror', (err) => {
-    const errMsg = err && err.message ? err.message : String(err);
-    const errStack = err && err.stack ? err.stack : '';
-    console.error('[PAGE ERROR]', errMsg);
-    if (errStack && errStack !== errMsg) {
-      console.error(errStack);
+    try {
+      const errMsg = err && err.message ? err.message : String(err);
+      const errStack = err && err.stack ? err.stack : '';
+      console.error('[PAGE ERROR]', errMsg);
+      if (errStack && errStack !== errMsg) {
+        console.error(errStack);
+      }
+    } catch (e) {
+      // Fallback if ErrorEvent can't be serialized
+      console.error('[PAGE ERROR] (failed to serialize error)');
     }
   });
 
