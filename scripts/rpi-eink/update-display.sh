@@ -27,7 +27,7 @@ COUNTER_FILE="$HOME/.config/trainboard/refresh_counter"
 mkdir -p "$(dirname "$COUNTER_FILE")"
 
 # Full refresh interval (every N updates)
-FULL_REFRESH_INTERVAL=10
+FULL_REFRESH_INTERVAL=4000
 
 # Logging function
 log() {
