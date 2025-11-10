@@ -2,10 +2,10 @@
 /**
  * vite-plugin-eink-preview.js
  * Vite plugin to preview render-to-image output during development
- * 
+ *
  * Add to vite.config.ts:
  * import einkPreview from './scripts/rpi-eink/vite-plugin-eink-preview.js';
- * 
+ *
  * plugins: [einkPreview()]
  */
 
@@ -18,7 +18,7 @@ function einkPreviewPlugin() {
 
   return {
     name: 'vite-plugin-eink-preview',
-    
+
     async configureServer(server) {
       // Lazy load the render function
       const renderModule = await import('./render-to-image.js');

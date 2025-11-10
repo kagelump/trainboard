@@ -2,7 +2,7 @@
 /**
  * dev-server.js
  * Simple development server to preview render-to-image output in browser
- * 
+ *
  * Usage: node scripts/rpi-eink/dev-server.js [port]
  */
 
@@ -103,7 +103,7 @@ const server = http.createServer(async (req, res) => {
 </head>
 <body>
   <h1>🚆 Trainboard E-Ink Preview</h1>
-  
+
   <div class="controls">
     <button onclick="refresh()">Refresh Now</button>
     <div class="auto-refresh">
@@ -128,14 +128,14 @@ const server = http.createServer(async (req, res) => {
       const statusEl = document.getElementById('status');
       const imgEl = document.getElementById('preview');
       const timestampEl = document.getElementById('timestamp');
-      
+
       statusEl.textContent = 'Generating...';
       statusEl.className = 'status loading';
-      
+
       try {
         const response = await fetch('/refresh');
         const result = await response.json();
-        
+
         if (result.success) {
           imgEl.src = '/image?t=' + Date.now();
           statusEl.textContent = 'Updated!';
@@ -175,9 +175,9 @@ const server = http.createServer(async (req, res) => {
     // Serve the generated image
     if (fs.existsSync(OUTPUT_PATH)) {
       const img = fs.readFileSync(OUTPUT_PATH);
-      res.writeHead(200, { 
+      res.writeHead(200, {
         'Content-Type': 'image/png',
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
       });
       res.end(img);
     } else {

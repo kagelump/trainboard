@@ -13,6 +13,7 @@ npm run eink:preview
 Then open http://localhost:3001 in your browser.
 
 **Features:**
+
 - Live preview of the generated PNG
 - Manual refresh button to regenerate image
 - Auto-refresh option (every 30 seconds)
@@ -46,6 +47,7 @@ npm run dev
 3. Visit http://localhost:5173/eink-preview
 
 **Features:**
+
 - Integrated with main development workflow
 - Same port as your main app
 - Refresh button to regenerate
@@ -65,12 +67,14 @@ npx serve scripts/rpi-eink
 ```
 
 **Features:**
+
 - Pure client-side rendering using HTML Canvas
 - No server-side generation needed
 - Download rendered canvas as PNG
 - Toggle dark/light theme
 
-**Good for:** 
+**Good for:**
+
 - Quick visual testing without API calls
 - Testing layout and styling changes
 - Comparing browser canvas vs server-side node-canvas rendering
@@ -82,18 +86,21 @@ npx serve scripts/rpi-eink
 ## Development Workflow
 
 ### For E-Ink Layout Changes:
+
 1. Start preview server: `npm run eink:preview`
 2. Edit `render-to-image.js`
 3. Click "Refresh" in browser
 4. Iterate
 
 ### For Testing with Real Data:
+
 1. Ensure `defaults.json` has your test station configured
 2. Run preview server
 3. Check console logs for API responses
 4. Verify station names are in Japanese
 
 ### For Production Testing:
+
 1. Run the script directly:
    ```bash
    node scripts/rpi-eink/render-to-image.js output.png 960 640
