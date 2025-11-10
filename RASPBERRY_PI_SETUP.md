@@ -7,7 +7,7 @@ This guide provides instructions for setting up the Trainboard application on a 
 For a fresh Raspberry Pi OS installation, you can use the automated setup script:
 
 ```bash
-curl https://trainboard.hinoka.org/rpi_setup.sh | sudo sh
+curl https://trainboard.hinoka.org/rpi_setup.sh | sudo TRAINBOARD_USER=trainboard bash -s --
 ```
 
 Or if you prefer to review the script first:
