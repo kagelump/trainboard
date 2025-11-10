@@ -49,7 +49,7 @@ if ! pgrep -f "http-server.*$HTTP_PORT" > /dev/null; then
     log "Starting local web server on port $HTTP_PORT..."
     cd "$APP_DIR/dist" || error_exit "dist directory not found"
     nohup npx http-server -p "$HTTP_PORT" > /tmp/trainboard-server.log 2>&1 &
-    sleep 3
+    sleep 10
 fi
 
 # Verify web server is responding
@@ -62,7 +62,7 @@ log "Capturing screenshot from http://localhost:$HTTP_PORT..."
 # Capture screenshot using Chromium in headless mode
 # Use xvfb-run to provide a virtual X server
 xvfb-run -a --server-args="-screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x24" \
-    chromium-browser \
+    chromium \
     --headless \
     --disable-gpu \
     --no-sandbox \
@@ -133,16 +133,16 @@ def main():
     if len(sys.argv) < 3:
         print("Usage: display_trainboard.py <image_path> <refresh_mode>")
         sys.exit(1)
-    
+
     image_path = sys.argv[1]
     refresh_mode = sys.argv[2]  # 'full' or 'partial'
-    
+
     logging.basicConfig(level=logging.INFO)
-    
+
     try:
         logging.info("Initializing e-Paper display...")
         epd = epd10in2_G.EPD()
-        
+
         # Initialize the display
         if refresh_mode == 'full':
             logging.info("Performing full initialization...")
@@ -151,15 +151,15 @@ def main():
         else:
             logging.info("Performing partial initialization...")
             epd.init()
-        
+
         # Load and prepare the image
         logging.info(f"Loading image: {image_path}")
         image = Image.open(image_path)
-        
+
         # Resize to display dimensions if needed
         display_width = 960
         display_height = 640
-        
+
         if image.size != (display_width, display_height):
             logging.info(f"Resizing image from {image.size} to ({display_width}, {display_height})")
             # Use Image.LANCZOS for compatibility with older PIL versions
@@ -168,23 +168,23 @@ def main():
             except AttributeError:
                 # Fallback for older PIL versions
                 image = image.resize((display_width, display_height), Image.LANCZOS)
-        
+
         # Convert to mode compatible with the 4-color display
         # The display supports: White, Black, Red, Yellow
         if image.mode != 'RGB':
             logging.info(f"Converting image from {image.mode} to RGB")
             image = image.convert('RGB')
-        
+
         # Display the image
         logging.info("Displaying image on e-Paper...")
         epd.display(epd.getbuffer(image))
-        
+
         # Sleep the display to save power
         logging.info("Putting display to sleep...")
         epd.sleep()
-        
+
         logging.info("Display update complete!")
-        
+
     except IOError as e:
         logging.error(f"IO Error: {e}")
         sys.exit(1)
