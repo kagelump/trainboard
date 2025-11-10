@@ -247,6 +247,8 @@ You can run this trainboard on a Raspberry Pi with an e-ink display for a physic
 - Automatic display refresh and power management
 - Troubleshooting and maintenance
 
+**New in this version**: Fast server-side rendering using Node.js Canvas instead of Chromium. This provides ~10x speed improvement on Raspberry Pi, reducing update times from 20-30 seconds to 2-3 seconds, and uses significantly less memory.
+
 **One-command automated setup:**
 
 ```bash
