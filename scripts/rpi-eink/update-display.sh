@@ -64,6 +64,8 @@ log "Capturing screenshot from http://localhost:$HTTP_PORT..."
 xvfb-run -a --server-args="-screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x24" \
     chromium \
     --headless \
+    --enable-logging=stderr \
+    --v=1 \
     --disable-gpu \
     --no-sandbox \
     --disable-dev-shm-usage \
