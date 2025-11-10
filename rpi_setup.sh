@@ -226,13 +226,19 @@ setup_epaper_library() {
         exit 1
     }
 
-    cd "$EPAPER_DIR/RaspberryPi_JetsonNano/python"
-    pip3 install -r requirements.txt --break-system-packages || {
-        log_error "Failed to install Python dependencies"
+    # The Waveshare e-Paper repository does not reliably include a single
+    # top-level requirements.txt. Rather than attempting to find and install
+    # a repo-specific requirements file (which can cause failures), install a
+    # small, well-known set of Python packages that the e-Paper examples use.
+    log_info "Installing common Python packages required by Waveshare examples"
+    if pip3 install Pillow numpy spidev RPi.GPIO --break-system-packages; then
+        log_info "Installed common Python packages (Pillow, numpy, spidev, RPi.GPIO)"
+    else
+        log_error "Failed to install common Python packages for e-Paper"
         exit 1
-    }
+    fi
 
-    log_info "E-Paper library installed"
+    log_info "E-Paper library setup complete"
 }
 
 # Setup trainboard application
