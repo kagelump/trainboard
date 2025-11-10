@@ -150,10 +150,10 @@ if os.path.exists(libdir):
 
 # Import the appropriate e-Paper driver
 try:
-    from waveshare_epd import epd10in2_G
-except ImportError:
+    from waveshare_epd import epd10in2g
+except ImportError as e:
     logging.error("Failed to import e-Paper library")
-    sys.exit(1)
+    raise e
 
 def main():
     # Get parameters from command line
