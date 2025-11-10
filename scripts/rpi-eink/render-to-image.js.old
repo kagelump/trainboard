@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * render-to-image.ts
+ * render-to-image.js
  * Server-side renderer for trainboard departure board
  * Generates PNG images without using a browser (faster on Raspberry Pi)
  *
@@ -10,101 +10,40 @@
  * Memory: ~50MB vs ~500MB for browser-based rendering
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { createCanvas, registerFont } from 'canvas';
-import type { Canvas as CanvasType, CanvasRenderingContext2D } from 'canvas';
+const fs = require('fs');
+const path = require('path');
+const https = require('https');
+const http = require('http');
 
-// Import existing utilities from src
-import {
-  getJapaneseText,
-  timeToMinutes,
-  formatTimeHHMM,
-  getUpcomingDepartures,
-  collectDestinationUris,
-} from '../../src/lib/utils.js';
-
-import {
-  fetchRailwayByUri,
-  fetchStationTimetable,
-  fetchStationsByUris,
-  calendarURI,
-} from '../../src/odpt/api.js';
-
-import type {
-  OdptRailway,
-  OdptStationTimetable,
-  StationTimetableEntry,
-  OdptStation,
-} from '../../src/odpt/types.js';
-
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-/**
- * Configuration interface
- */
-interface Config {
-  API_KEY?: string | null;
-  API_BASE_URL?: string;
-  DEFAULT_RAILWAY?: string;
-  DEFAULT_STATION_NAME?: string;
+// Canvas library for server-side rendering
+let Canvas;
+try {
+  Canvas = require('canvas');
+} catch (e) {
+  console.error('[ERROR] canvas module not found. Install it with: npm install canvas');
+  process.exit(1);
 }
 
-/**
- * Board data interface
- */
-interface BoardData {
-  width: number;
-  height: number;
-  stationName: string;
-  railwayName: string;
-  currentTime: string;
-  inbound: DirectionData;
-  outbound: DirectionData;
-  stationNameCache: Map<string, string>;
-}
-
-/**
- * Direction data interface
- */
-interface DirectionData {
-  name: string;
-  departures: DepartureInfo[];
-}
-
-/**
- * Departure info interface
- */
-interface DepartureInfo {
-  time: string;
-  minutesUntil: number;
-  destination: string[] | Array<{ 'dc:title'?: string; 'owl:sameAs'?: string }>;
-  trainType: string;
-  trainNumber: string;
-}
+const { createCanvas, registerFont } = Canvas;
 
 /**
  * Register custom fonts for e-ink optimized rendering
  */
-function registerFonts(): boolean {
+function registerFonts() {
   const fontsDir = path.join(__dirname, 'fonts');
 
   // Try Noto Sans JP first (easier to download)
-  const boldFont = path.join(fontsDir, 'NotoSansJP-ExtraBold.ttf');
-  const fontFamily = 'Noto Sans JP';
+  let boldFont = path.join(fontsDir, 'NotoSansJP-ExtraBold.ttf');
+  let fontFamily = 'Noto Sans JP';
 
   try {
     if (fs.existsSync(boldFont)) {
-      registerFont(boldFont, { family: fontFamily, weight: 'ExtraBold' });
+      registerFont(boldFont, { family: `${fontFamily}`, weight: 'ExtraBold' });
       console.log(`[INFO] Registered font: ${fontFamily}`);
     }
     return true;
   } catch (e) {
-    const error = e as Error;
-    console.warn('[WARN] Failed to register fonts:', error.message);
+    console.warn('[WARN] Failed to register fonts:', e.message);
     console.warn('[WARN] Run: node scripts/rpi-eink/fonts/setup-fonts.js');
     return false;
   }
@@ -113,7 +52,7 @@ function registerFonts(): boolean {
 /**
  * Get font name based on whether custom fonts are loaded
  */
-function getFontName(useCustomFonts: boolean): string {
+function getFontName(useCustomFonts) {
   if (!useCustomFonts) return 'sans-serif';
   return 'Noto Sans JP';
 }
@@ -121,7 +60,7 @@ function getFontName(useCustomFonts: boolean): string {
 /**
  * Get monospace font name
  */
-function getMonoFontName(useCustomFonts: boolean): string {
+function getMonoFontName(useCustomFonts) {
   // Even with custom fonts, use monospace for times (better alignment)
   return 'monospace';
 }
@@ -129,76 +68,230 @@ function getMonoFontName(useCustomFonts: boolean): string {
 /**
  * Load configuration from defaults.json
  */
-function loadConfig(): Config {
+function loadConfig() {
   const configPath = path.join(__dirname, '../../defaults.json');
   if (fs.existsSync(configPath)) {
     try {
       const content = fs.readFileSync(configPath, 'utf8');
-      return JSON.parse(content) as Config;
+      return JSON.parse(content);
     } catch (e) {
-      const error = e as Error;
-      console.warn('[WARN] Failed to load defaults.json:', error.message);
+      console.warn('[WARN] Failed to load defaults.json:', e.message);
     }
   }
   return {};
 }
 
 /**
- * Get train type name
+ * Make HTTP/HTTPS request
  */
-function getTrainTypeName(trainTypeUri: string): string {
-  if (!trainTypeUri) return '普通';
-  const parts = trainTypeUri.split('.');
-  const shortName = parts[parts.length - 1] || '';
-
-  // Common mappings
-  const typeMap: Record<string, string> = {
-    Local: '普通',
-    Express: '急行',
-    LimitedExpress: '特急',
-    Rapid: '快速',
-    SemiExpress: '準急',
-    Commuter: '通勤',
-    CommuterLimitedExpress: '通勤特急',
-    CommuterExpress: '通勤急行',
-  };
-
-  return typeMap[shortName] || shortName || '普通';
+function makeRequest(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https:') ? https : http;
+    client
+      .get(url, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              reject(new Error(`Failed to parse JSON: ${e.message}`));
+            }
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+          }
+        });
+      })
+      .on('error', reject);
+  });
 }
 
 /**
- * Build a cache of station URIs to Japanese names
+ * Get Japanese text from ODPT multilingual field
  */
-async function buildStationNameCache(
-  departures: DepartureInfo[],
-  apiKey: string | null,
-  apiBaseUrl: string,
-): Promise<Map<string, string>> {
-  const cache = new Map<string, string>();
+function getJapaneseText(field) {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (field.ja) return field.ja;
+  if (field.en) return field.en;
+  return String(field);
+}
 
-  // Collect all destination URIs - using collectDestinationUris won't work directly
-  // because our DepartureInfo type differs from StationTimetableEntry
-  const allUris = new Set<string>();
+/**
+ * Convert time string to minutes since midnight
+ */
+function timeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+/**
+ * Format current time as HH:MM
+ */
+function formatTimeHHMM(date) {
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/**
+ * Calculate minutes until departure
+ */
+function getMinutesUntil(departureTime) {
+  const now = new Date();
+  const nowMinutes = timeToMinutes(formatTimeHHMM(now));
+  const depMinutes = timeToMinutes(departureTime);
+
+  let diff = depMinutes - nowMinutes;
+  if (diff < 0) diff += 1440; // Next day
+
+  return diff;
+}
+
+/**
+ * Fetch data from ODPT API
+ */
+async function fetchFromAPI(endpoint, apiKey, apiBaseUrl) {
+  let url = `${apiBaseUrl}${endpoint}`;
+
+  // Add API key if provided and not using proxy mode
+  if (apiKey && !apiBaseUrl.includes('proxy')) {
+    const separator = url.includes('?') ? '&' : '?';
+    url += `${separator}acl:consumerKey=${encodeURIComponent(apiKey)}`;
+  }
+
+  console.log(`[API] Fetching: ${endpoint}`);
+  return makeRequest(url);
+}
+
+/**
+ * Fetch railway metadata
+ */
+async function fetchRailway(railwayUri, apiKey, apiBaseUrl) {
+  const railways = await fetchFromAPI(
+    `odpt:Railway?owl:sameAs=${encodeURIComponent(railwayUri)}`,
+    apiKey,
+    apiBaseUrl,
+  );
+  return railways && railways.length > 0 ? railways[0] : null;
+}
+
+/**
+ * Fetch station timetable
+ */
+async function fetchStationTimetable(stationUri, railwayUri, apiKey, apiBaseUrl) {
+  const now = new Date();
+  const day = now.getDay();
+  const isWeekday = day >= 1 && day <= 5;
+  const isSaturday = day === 6;
+
+  let calendarType = isWeekday ? 'Weekday' : isSaturday ? 'Saturday' : 'SundayHoliday';
+
+  const timetables = await fetchFromAPI(
+    `odpt:StationTimetable?odpt:station=${encodeURIComponent(stationUri)}&odpt:railway=${encodeURIComponent(railwayUri)}&odpt:calendar=odpt.Calendar:${calendarType}`,
+    apiKey,
+    apiBaseUrl,
+  );
+
+  return timetables || [];
+}
+
+/**
+ * Get upcoming departures for a direction
+ */
+function getUpcomingDepartures(timetables, directionUri, nowMinutes, limit = 5) {
+  const allDepartures = [];
+
+  for (const tt of timetables) {
+    // Check if this timetable matches the requested direction
+    if (tt['odpt:railDirection'] !== directionUri) {
+      continue;
+    }
+
+    const entries = tt['odpt:stationTimetableObject'] || [];
+    for (const entry of entries) {
+      const depTime = entry['odpt:departureTime'];
+      if (depTime) {
+        const depMinutes = timeToMinutes(depTime);
+        let minutesUntil = depMinutes - nowMinutes;
+        if (minutesUntil < 0) minutesUntil += 1440;
+
+        allDepartures.push({
+          time: depTime,
+          minutesUntil,
+          destination: entry['odpt:destinationStation'] || [],
+          trainType: entry['odpt:trainType'] || '',
+          trainNumber: entry['odpt:trainNumber'] || '',
+        });
+      }
+    }
+  }
+
+  // Sort by minutes until departure and take first N
+  allDepartures.sort((a, b) => a.minutesUntil - b.minutesUntil);
+  return allDepartures.slice(0, limit);
+}
+
+/**
+ * Fetch station metadata by URIs
+ */
+async function fetchStationsByUris(stationUris, apiKey, apiBaseUrl) {
+  if (!stationUris || stationUris.length === 0) return [];
+
+  const stations = [];
+
+  // Fetch stations individually to avoid proxy issues with bulk queries
+  for (const uri of stationUris) {
+    try {
+      const endpoint = `odpt:Station?owl:sameAs=${encodeURIComponent(uri)}`;
+      const result = await fetchFromAPI(endpoint, apiKey, apiBaseUrl);
+      if (result && result.length > 0) {
+        stations.push(...result);
+      }
+    } catch (error) {
+      console.warn(`[WARN] Failed to fetch station ${uri}:`, error.message);
+    }
+  }
+
+  return stations;
+}
+
+/**
+ * Collect all unique destination station URIs from departures
+ */
+function collectDestinationUris(departures) {
+  const uris = new Set();
   for (const dep of departures) {
     const dests = dep.destination;
     if (Array.isArray(dests)) {
       for (const d of dests) {
         if (typeof d === 'string') {
-          allUris.add(d);
+          uris.add(d);
         } else if (d && d['owl:sameAs']) {
-          allUris.add(d['owl:sameAs']);
+          uris.add(d['owl:sameAs']);
         }
       }
     } else if (typeof dests === 'string') {
-      allUris.add(dests);
+      uris.add(dests);
     }
   }
+  return Array.from(uris);
+}
 
-  const uriArray = Array.from(allUris);
-  if (uriArray.length === 0) return cache;
+/**
+ * Build a cache of station URIs to Japanese names
+ */
+async function buildStationNameCache(departures, apiKey, apiBaseUrl) {
+  const cache = new Map();
+
+  // Collect all destination URIs
+  const allUris = collectDestinationUris(departures);
+  if (allUris.length === 0) return cache;
 
   // Fetch station data
-  const stations = await fetchStationsByUris(uriArray, apiKey, apiBaseUrl);
+  const stations = await fetchStationsByUris(allUris, apiKey, apiBaseUrl);
 
   // Populate cache
   for (const station of stations) {
@@ -215,35 +308,50 @@ async function buildStationNameCache(
 /**
  * Get station name from destination array using cache
  */
-function getDestinationName(
-  destinations: string[] | Array<{ 'dc:title'?: string; 'owl:sameAs'?: string }>,
-  stationNameCache: Map<string, string>,
-): string {
+function getDestinationName(destinations, stationNameCache) {
   if (!destinations || destinations.length === 0) return '不明';
   const dest = destinations[destinations.length - 1];
 
   if (typeof dest === 'string') {
     // Look up in cache first
     if (stationNameCache && stationNameCache.has(dest)) {
-      return stationNameCache.get(dest)!;
+      return stationNameCache.get(dest);
     }
     // Fallback: Extract station name from URI like "odpt.Station:Tokyu.Toyoko.Yokohama"
     const parts = dest.split('.');
     return parts[parts.length - 1] || '不明';
   }
 
-  return getJapaneseText(dest['dc:title'] || (dest as any)['odpt:stationTitle']) || '不明';
+  return getJapaneseText(dest['dc:title'] || dest['odpt:stationTitle']) || '不明';
+}
+
+/**
+ * Get train type name
+ */
+function getTrainTypeName(trainTypeUri) {
+  if (!trainTypeUri) return '普通';
+  const parts = trainTypeUri.split('.');
+  const shortName = parts[parts.length - 1] || '';
+
+  // Common mappings
+  const typeMap = {
+    Local: '普通',
+    Express: '急行',
+    LimitedExpress: '特急',
+    Rapid: '快速',
+    SemiExpress: '準急',
+    Commuter: '通勤',
+    CommuterLimitedExpress: '通勤特急',
+    CommuterExpress: '通勤急行',
+  };
+
+  return typeMap[shortName] || shortName || '普通';
 }
 
 /**
  * Draw the departure board to canvas
  */
-function drawBoard(
-  canvas: CanvasType,
-  ctx: CanvasRenderingContext2D,
-  data: BoardData,
-  useCustomFonts = false,
-): void {
+function drawBoard(canvas, ctx, data, useCustomFonts = false) {
   const {
     width,
     height,
@@ -323,12 +431,7 @@ function drawBoard(
   const contentY = headerHeight + 10;
 
   // Draw direction column
-  function drawDirection(
-    x: number,
-    directionName: string,
-    departures: DepartureInfo[],
-    cache: Map<string, string>,
-  ): void {
+  function drawDirection(x, directionName, departures, stationNameCache) {
     ctx.fillStyle = '#FFFFFF';
     ctx.font = `bold 30px ${fontName}`;
     const titleY = contentY + 35;
@@ -370,7 +473,7 @@ function drawBoard(
       ctx.fillText(trainType, x + 180, y);
 
       // Destination
-      const dest = getDestinationName(dep.destination, cache);
+      const dest = getDestinationName(dep.destination, stationNameCache);
       ctx.font = `bold 32px ${fontName}`;
       const destX = x + 260;
       if (destX + 10 < x + columnWidth - 10) {
@@ -392,55 +495,9 @@ function drawBoard(
 }
 
 /**
- * Convert StationTimetableEntry to DepartureInfo
- */
-function convertToDepartureInfo(
-  timetables: OdptStationTimetable[],
-  directionUri: string,
-  nowMinutes: number,
-  limit = 5,
-): DepartureInfo[] {
-  const allDepartures: DepartureInfo[] = [];
-
-  for (const tt of timetables) {
-    // Check if this timetable matches the requested direction
-    if ((tt as any)['odpt:railDirection'] !== directionUri) {
-      continue;
-    }
-
-    const entries = tt['odpt:stationTimetableObject'] || [];
-    for (const entry of entries) {
-      const depTime = entry['odpt:departureTime'];
-      if (depTime) {
-        const depMinutes = timeToMinutes(depTime);
-        let minutesUntil = depMinutes - nowMinutes;
-        if (minutesUntil < 0) minutesUntil += 1440;
-
-        allDepartures.push({
-          time: depTime,
-          minutesUntil,
-          destination: (entry['odpt:destinationStation'] || []) as any,
-          trainType: entry['odpt:trainType'] || '',
-          trainNumber: entry['odpt:trainNumber'] || '',
-        });
-      }
-    }
-  }
-
-  // Sort by minutes until departure and take first N
-  allDepartures.sort((a, b) => a.minutesUntil - b.minutesUntil);
-  return allDepartures.slice(0, limit);
-}
-
-/**
  * Main rendering function
  */
-async function renderToImage(
-  outputPath: string,
-  width: number,
-  height: number,
-  configOverride: Config = {},
-): Promise<void> {
+async function renderToImage(outputPath, width, height, configOverride = {}) {
   console.log(`[RENDER] Starting render to ${outputPath} (${width}x${height})`);
 
   // Register custom fonts if available
@@ -448,7 +505,7 @@ async function renderToImage(
 
   // Load configuration
   const defaultConfig = loadConfig();
-  const config: Config = { ...defaultConfig, ...configOverride };
+  const config = { ...defaultConfig, ...configOverride };
 
   const apiKey = config.API_KEY || process.env.ODPT_API_KEY || null;
   const apiBaseUrl =
@@ -461,7 +518,7 @@ async function renderToImage(
   console.log(`[CONFIG] API Base: ${apiBaseUrl}`);
 
   // Fetch railway data
-  const railway = await fetchRailwayByUri(railwayUri, apiKey, apiBaseUrl);
+  const railway = await fetchRailway(railwayUri, apiKey, apiBaseUrl);
   if (!railway) {
     throw new Error('Failed to fetch railway data');
   }
@@ -472,11 +529,11 @@ async function renderToImage(
 
   // Find station in stationOrder
   const stationOrder = railway['odpt:stationOrder'] || [];
-  let stationUri: string | null = null;
+  let stationUri = null;
   for (const station of stationOrder) {
     const sName = getJapaneseText(station['odpt:stationTitle']);
     if (sName.includes(stationName) || stationName.includes(sName)) {
-      stationUri = station['odpt:station'] || null;
+      stationUri = station['odpt:station'];
       break;
     }
   }
@@ -490,15 +547,15 @@ async function renderToImage(
   console.log(`[STATION] Found: ${stationUri}`);
 
   // Fetch timetables
-  const timetables = await fetchStationTimetable(stationUri, apiKey, apiBaseUrl, railwayUri);
+  const timetables = await fetchStationTimetable(stationUri, railwayUri, apiKey, apiBaseUrl);
 
   // Get current time and departures
   const now = new Date();
   const currentTime = formatTimeHHMM(now);
   const nowMinutes = timeToMinutes(currentTime);
 
-  const inboundDepartures = convertToDepartureInfo(timetables, inboundDirUri || '', nowMinutes);
-  const outboundDepartures = convertToDepartureInfo(timetables, outboundDirUri || '', nowMinutes);
+  const inboundDepartures = getUpcomingDepartures(timetables, inboundDirUri, nowMinutes);
+  const outboundDepartures = getUpcomingDepartures(timetables, outboundDirUri, nowMinutes);
 
   // Build station name cache for destination display
   const allDepartures = [...inboundDepartures, ...outboundDepartures];
@@ -550,19 +607,18 @@ async function renderToImage(
 /**
  * CLI entry point
  */
-async function main(): Promise<void> {
+async function main() {
   const outputPath = process.argv[2] || 'trainboard.png';
   const width = parseInt(process.argv[3] || '960', 10);
   const height = parseInt(process.argv[4] || '640', 10);
   const configFile = process.argv[5];
 
-  let configOverride: Config = {};
+  let configOverride = {};
   if (configFile && fs.existsSync(configFile)) {
     try {
-      configOverride = JSON.parse(fs.readFileSync(configFile, 'utf8')) as Config;
+      configOverride = JSON.parse(fs.readFileSync(configFile, 'utf8'));
     } catch (e) {
-      const error = e as Error;
-      console.warn(`[WARN] Failed to load config file ${configFile}:`, error.message);
+      console.warn(`[WARN] Failed to load config file ${configFile}:`, e.message);
     }
   }
 
@@ -570,18 +626,16 @@ async function main(): Promise<void> {
     await renderToImage(outputPath, width, height, configOverride);
     process.exit(0);
   } catch (error) {
-    const err = error as Error;
-    console.error('[ERROR]', err.message);
-    if (err.stack) {
-      console.error(err.stack);
+    console.error('[ERROR]', error.message);
+    if (error.stack) {
+      console.error(error.stack);
     }
     process.exit(1);
   }
 }
 
-// Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (require.main === module) {
   main();
 }
 
-export { renderToImage };
+module.exports = { renderToImage };
