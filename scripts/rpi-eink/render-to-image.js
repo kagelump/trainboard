@@ -463,19 +463,19 @@ function drawBoard(canvas, ctx, data, useCustomFonts = false) {
 
       // Time
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = `bold 32px ${monoFont}`;
+      ctx.font = `bold 44px ${monoFont}`;
       ctx.fillText(dep.time, x + 20, y);
 
       // Train type
       const trainType = getTrainTypeName(dep.trainType);
       ctx.font = `bold 32px ${fontName}`;
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(trainType, x + 150, y);
+      ctx.fillText(trainType, x + 180, y);
 
       // Destination
       const dest = getDestinationName(dep.destination, stationNameCache);
       ctx.font = `bold 32px ${fontName}`;
-      const destX = x + 250;
+      const destX = x + 260;
       if (destX + 10 < x + columnWidth - 10) {
         ctx.fillText(dest, destX, y);
       }
