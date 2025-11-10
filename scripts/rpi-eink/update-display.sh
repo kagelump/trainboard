@@ -161,6 +161,8 @@ log "Updating e-ink display (mode: $REFRESH_MODE)..."
 
 cd "$DISPLAY_DIR" || error_exit "Failed to change to display directory"
 
+export PYTHONPATH="$DISPLAY_DIR:$PYTHONPATH"
+
 # Create Python script for displaying the image
 cat > /tmp/display_trainboard.py << 'PYTHON_SCRIPT'
 #!/usr/bin/python3
