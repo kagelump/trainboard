@@ -251,7 +251,7 @@ You can run this trainboard on a Raspberry Pi with an e-ink display for a physic
 
 ```bash
 # On your Raspberry Pi (fresh install with SSH and WiFi configured)
-curl https://trainboard.hinoka.org/rpi_setup.sh | sudo sh
+curl https://trainboard.hinoka.org/rpi_setup.sh | sudo bash
 ```
 
 Or manual installation:
