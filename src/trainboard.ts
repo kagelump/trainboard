@@ -272,6 +272,11 @@ async function initializeBoard(): Promise<void> {
 
   // Initial board render
   renderBoard();
+
+  // Set a flag when departures are rendered (for headless screenshot tools)
+  document.addEventListener('departures-list-rendered', () => {
+    (window as any).__DEPARTURES_RENDERED = true;
+  });
 }
 
 // Expose to window for bootstrapping

@@ -8,19 +8,26 @@ set -e
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="${APP_DIR:-$HOME/trainboard}"
-DISPLAY_DIR="${DISPLAY_DIR:-$HOME/e-Paper/RaspberryPi_JetsonNano/python}"
+DISPLAY_DIR="${DISPLAY_DIR:-$HOME/e-Paper/E-paper_Separate_Program/10in2_e-Paper_G/RaspberryPi_JetsonNano/python/lib}"
 SCREENSHOT_PATH="${SCREENSHOT_PATH:-$APP_DIR/screenshot.png}"
 LOG_FILE="${LOG_FILE:-$HOME/log/trainboard-display.log}"
-HTTP_PORT="${HTTP_PORT:-8080}"
+TRAINBOARD_URL="${TRAINBOARD_URL:-https://trainboard.hinoka.org}"
 DISPLAY_WIDTH=960
 DISPLAY_HEIGHT=640
+
+# Default Puppeteer wait settings: wait for a train-row element before capturing.
+# This can be overridden by setting WAIT_FOR_SELECTOR, WAIT_TIMEOUT_MS, or
+# WAIT_AFTER_LOAD_MS in the environment or systemd unit.
+export WAIT_FOR_FUNCTION="${WAIT_FOR_FUNCTION:-window.__DEPARTURES_RENDERED === true}"
+export WAIT_TIMEOUT_MS="${WAIT_TIMEOUT_MS:-20000}"
+export WAIT_AFTER_LOAD_MS="${WAIT_AFTER_LOAD_MS:-5000}"
 
 # Counter file for tracking refreshes
 COUNTER_FILE="$HOME/.config/trainboard/refresh_counter"
 mkdir -p "$(dirname "$COUNTER_FILE")"
 
 # Full refresh interval (every N updates)
-FULL_REFRESH_INTERVAL=10
+FULL_REFRESH_INTERVAL=4000
 
 # Logging function
 log() {
@@ -171,10 +178,10 @@ if os.path.exists(libdir):
 
 # Import the appropriate e-Paper driver
 try:
-    from waveshare_epd import epd10in2_G
-except ImportError:
+    from waveshare_epd import epd10in2g
+except ImportError as e:
     logging.error("Failed to import e-Paper library")
-    sys.exit(1)
+    raise e
 
 def main():
     # Get parameters from command line
@@ -189,7 +196,7 @@ def main():
 
     try:
         logging.info("Initializing e-Paper display...")
-        epd = epd10in2_G.EPD()
+        epd = epd10in2g.EPD()
 
         # Initialize the display
         if refresh_mode == 'full':
@@ -238,7 +245,7 @@ def main():
         sys.exit(1)
     except KeyboardInterrupt:
         logging.info("Interrupted by user")
-        epd10in2_G.epdconfig.module_exit()
+        epd10in2g.epdconfig.module_exit()
         sys.exit(0)
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
@@ -251,7 +258,7 @@ PYTHON_SCRIPT
 chmod +x /tmp/display_trainboard.py
 
 # Run the display update
-sudo python3 /tmp/display_trainboard.py "$SCREENSHOT_PATH" "$REFRESH_MODE" \
+python3 /tmp/display_trainboard.py "$SCREENSHOT_PATH" "$REFRESH_MODE" \
     || error_exit "Failed to update e-ink display"
 
 log "Display update completed successfully!"
