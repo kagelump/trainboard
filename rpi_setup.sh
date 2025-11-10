@@ -353,6 +353,7 @@ main() {
 
     # System configuration
     enable_spi
+    ensure_user_exists
     setup_permissions
 
     # Software installation
