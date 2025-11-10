@@ -25,11 +25,16 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
+# By default we install as the `pi` user to match typical Raspberry Pi images.
+# For improved security and isolation it's recommended to specify a dedicated
+# user (for example: TRAINBOARD_USER=trainboard). The script will create the
+# user if it doesn't already exist.
 TRAINBOARD_USER="${TRAINBOARD_USER:-pi}"
 TRAINBOARD_REPO="${TRAINBOARD_REPO:-https://github.com/kagelump/trainboard.git}"
-USER_HOME=$(eval echo ~$TRAINBOARD_USER)
-APP_DIR="$USER_HOME/trainboard"
-EPAPER_DIR="$USER_HOME/e-Paper"
+# USER_HOME, APP_DIR and EPAPER_DIR are computed after ensuring the user exists
+USER_HOME=''
+APP_DIR=''
+EPAPER_DIR=''
 
 # Logging functions
 log_info() {
@@ -110,10 +115,33 @@ enable_spi() {
 setup_permissions() {
     log_step "Configuring user permissions..."
 
-    # Add user to necessary groups
-    usermod -a -G spi,gpio,video "$TRAINBOARD_USER" || log_warn "Failed to add user to groups"
+    # Add user to necessary groups (may fail on some systems, warn only)
+    if id "$TRAINBOARD_USER" >/dev/null 2>&1; then
+        usermod -a -G spi,gpio,video "$TRAINBOARD_USER" || log_warn "Failed to add user to groups"
+        log_info "User $TRAINBOARD_USER added to spi, gpio, and video groups"
+    else
+        log_warn "User $TRAINBOARD_USER does not exist; skipping group modification"
+    fi
+}
 
-    log_info "User $TRAINBOARD_USER added to spi, gpio, and video groups"
+# Ensure the install user exists. If not, create a dedicated system user.
+ensure_user_exists() {
+    if id "$TRAINBOARD_USER" >/dev/null 2>&1; then
+        log_info "Install user exists: $TRAINBOARD_USER"
+    else
+        log_step "Creating install user: $TRAINBOARD_USER"
+        # Create a regular user with home directory and bash shell
+        useradd -m -s /bin/bash "$TRAINBOARD_USER" || {
+            log_error "Failed to create user $TRAINBOARD_USER"
+            exit 1
+        }
+        log_info "Created user: $TRAINBOARD_USER"
+    fi
+
+    # Recompute home and application paths now that the user exists
+    USER_HOME=$(eval echo ~$TRAINBOARD_USER)
+    APP_DIR="$USER_HOME/trainboard"
+    EPAPER_DIR="$USER_HOME/e-Paper"
 }
 
 # Update system packages
