@@ -7,6 +7,21 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-core');
 
+// Catch unhandled rejections from page events (ErrorEvent objects can cause these)
+process.on('unhandledRejection', (reason, promise) => {
+  // Log but don't crash - page errors shouldn't kill the screenshot process
+  if (
+    reason &&
+    typeof reason === 'object' &&
+    reason.constructor &&
+    reason.constructor.name === 'ErrorEvent'
+  ) {
+    console.error('[PAGE ERROR] (ErrorEvent - unhandled rejection caught)');
+  } else {
+    console.error('[UNHANDLED REJECTION]', reason);
+  }
+});
+
 async function findExecutable() {
   const candidates = [
     process.env.CHROMIUM_BIN,
