@@ -67,17 +67,20 @@ async function main() {
   });
 
   page.on('pageerror', (err) => {
-    try {
-      const errMsg = err && err.message ? err.message : String(err);
-      const errStack = err && err.stack ? err.stack : '';
-      console.error('[PAGE ERROR]', errMsg);
-      if (errStack && errStack !== errMsg) {
-        console.error(errStack);
+    // Wrap in setImmediate to avoid unhandled rejection in event handler
+    setImmediate(() => {
+      try {
+        const errMsg = err && err.message ? err.message : String(err);
+        const errStack = err && err.stack ? err.stack : '';
+        console.error('[PAGE ERROR]', errMsg);
+        if (errStack && errStack !== errMsg) {
+          console.error(errStack);
+        }
+      } catch (e) {
+        // Fallback if ErrorEvent can't be serialized
+        console.error('[PAGE ERROR] (failed to serialize error)');
       }
-    } catch (e) {
-      // Fallback if ErrorEvent can't be serialized
-      console.error('[PAGE ERROR] (failed to serialize error)');
-    }
+    });
   });
 
   page.on('requestfailed', (req) => {
