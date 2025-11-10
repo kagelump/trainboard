@@ -27,6 +27,68 @@ try {
 const { createCanvas, registerFont } = Canvas;
 
 /**
+ * Register custom fonts for e-ink optimized rendering
+ */
+function registerFonts() {
+  const fontsDir = path.join(__dirname, 'fonts');
+
+  // Try Noto Sans JP first (easier to download)
+  let regularFont = path.join(fontsDir, 'NotoSansJP-Regular.ttf');
+  let boldFont = path.join(fontsDir, 'NotoSansJP-Bold.ttf');
+  let fontFamily = 'Noto Sans JP';
+
+  // Fall back to CJK version if available
+  if (!fs.existsSync(regularFont)) {
+    regularFont = path.join(fontsDir, 'NotoSansCJKjp-Regular.otf');
+    boldFont = path.join(fontsDir, 'NotoSansCJKjp-Bold.otf');
+    fontFamily = 'Noto Sans CJK JP';
+  }
+
+  try {
+    if (fs.existsSync(regularFont)) {
+      registerFont(regularFont, { family: fontFamily });
+      console.log(`[INFO] Registered font: ${fontFamily} Regular`);
+    }
+    if (fs.existsSync(boldFont)) {
+      registerFont(boldFont, { family: fontFamily, weight: 'bold' });
+      console.log(`[INFO] Registered font: ${fontFamily} Bold`);
+    }
+
+    // Return true if fonts are registered
+    return fs.existsSync(regularFont) && fs.existsSync(boldFont);
+  } catch (e) {
+    console.warn('[WARN] Failed to register fonts:', e.message);
+    console.warn('[WARN] Run: node scripts/rpi-eink/fonts/setup-fonts.js');
+    return false;
+  }
+}
+
+/**
+ * Get font name based on whether custom fonts are loaded
+ */
+function getFontName(useCustomFonts) {
+  if (!useCustomFonts) return 'sans-serif';
+
+  // Check which font is available
+  const fontsDir = path.join(__dirname, 'fonts');
+  if (fs.existsSync(path.join(fontsDir, 'NotoSansJP-Regular.ttf'))) {
+    return 'Noto Sans JP';
+  }
+  if (fs.existsSync(path.join(fontsDir, 'NotoSansCJKjp-Regular.otf'))) {
+    return 'Noto Sans CJK JP';
+  }
+  return 'sans-serif';
+}
+
+/**
+ * Get monospace font name
+ */
+function getMonoFontName(useCustomFonts) {
+  // Even with custom fonts, use monospace for times (better alignment)
+  return 'monospace';
+}
+
+/**
  * Load configuration from defaults.json
  */
 function loadConfig() {
@@ -312,7 +374,7 @@ function getTrainTypeName(trainTypeUri) {
 /**
  * Draw the departure board to canvas
  */
-function drawBoard(canvas, ctx, data) {
+function drawBoard(canvas, ctx, data, useCustomFonts = false) {
   const {
     width,
     height,
@@ -324,6 +386,9 @@ function drawBoard(canvas, ctx, data) {
     stationNameCache,
   } = data;
 
+  const fontName = getFontName(useCustomFonts);
+  const monoFont = getMonoFontName(useCustomFonts);
+
   // Background
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, width, height);
@@ -331,14 +396,14 @@ function drawBoard(canvas, ctx, data) {
   // Header
   const headerHeight = 80;
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 32px sans-serif';
+  ctx.font = `bold 32px ${fontName}`;
   ctx.fillText(stationName, 20, 45);
 
-  ctx.font = '20px sans-serif';
+  ctx.font = `20px ${fontName}`;
   ctx.fillText(railwayName, 20, 70);
 
   // Current time (top right)
-  ctx.font = 'bold 36px monospace';
+  ctx.font = `bold 36px ${monoFont}`;
   const timeWidth = ctx.measureText(currentTime).width;
   ctx.fillText(currentTime, width - timeWidth - 20, 50);
 
@@ -357,7 +422,7 @@ function drawBoard(canvas, ctx, data) {
   // Draw direction column
   function drawDirection(x, directionName, departures, stationNameCache) {
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 28px sans-serif';
+    ctx.font = `bold 28px ${fontName}`;
     const titleY = contentY + 35;
     const titleText = `${directionName}行き`;
     const titleWidth = ctx.measureText(titleText).width;
@@ -372,7 +437,7 @@ function drawBoard(canvas, ctx, data) {
     let y = titleY + 30;
 
     if (departures.length === 0) {
-      ctx.font = '24px sans-serif';
+      ctx.font = `24px ${fontName}`;
       ctx.fillStyle = '#666666';
       ctx.fillText('データなし', x + 30, y + 30);
       return;
@@ -387,18 +452,18 @@ function drawBoard(canvas, ctx, data) {
 
       // Time
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 32px monospace';
+      ctx.font = `bold 32px ${monoFont}`;
       ctx.fillText(dep.time, x + 20, y);
 
       // Train type
       const trainType = getTrainTypeName(dep.trainType);
-      ctx.font = 'bold 20px sans-serif';
+      ctx.font = `bold 20px ${fontName}`;
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(trainType, x + 200, y);
 
       // Destination
       const dest = getDestinationName(dep.destination, stationNameCache);
-      ctx.font = '20px sans-serif';
+      ctx.font = `20px ${fontName}`;
       const destX = x + 320;
       if (destX + 10 < x + columnWidth - 10) {
         ctx.fillText(dest, destX, y);
@@ -423,6 +488,9 @@ function drawBoard(canvas, ctx, data) {
  */
 async function renderToImage(outputPath, width, height, configOverride = {}) {
   console.log(`[RENDER] Starting render to ${outputPath} (${width}x${height})`);
+
+  // Register custom fonts if available
+  const useCustomFonts = registerFonts();
 
   // Load configuration
   const defaultConfig = loadConfig();
@@ -502,16 +570,21 @@ async function renderToImage(outputPath, width, height, configOverride = {}) {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  drawBoard(canvas, ctx, {
-    width,
-    height,
-    stationName,
-    railwayName,
-    currentTime,
-    inbound: { name: inboundName, departures: inboundDepartures },
-    outbound: { name: outboundName, departures: outboundDepartures },
-    stationNameCache,
-  });
+  drawBoard(
+    canvas,
+    ctx,
+    {
+      width,
+      height,
+      stationName,
+      railwayName,
+      currentTime,
+      inbound: { name: inboundName, departures: inboundDepartures },
+      outbound: { name: outboundName, departures: outboundDepartures },
+      stationNameCache,
+    },
+    useCustomFonts,
+  );
 
   // Save to file
   const buffer = canvas.toBuffer('image/png');
