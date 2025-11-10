@@ -257,40 +257,8 @@ function drawBoard(
 
   const fontName = getFontName(useCustomFonts);
   const monoFont = getMonoFontName(useCustomFonts);
-  // Log font selection for debugging
-  const fontsDir = path.join(__dirname, 'fonts');
-  const notoRegular = path.join(fontsDir, 'NotoSansJP-Regular.ttf');
-  const notoBold = path.join(fontsDir, 'NotoSansJP-Bold.ttf');
-  const cjkRegular = path.join(fontsDir, 'NotoSansCJKjp-Regular.otf');
-  const cjkBold = path.join(fontsDir, 'NotoSansCJKjp-Bold.otf');
-
   console.log(`[FONT] useCustomFonts=${useCustomFonts}`);
   console.log(`[FONT] fontName="${fontName}", monoFont="${monoFont}"`);
-
-  if (useCustomFonts) {
-    const regularFound = fs.existsSync(notoRegular) || fs.existsSync(cjkRegular);
-    const boldFound = fs.existsSync(notoBold) || fs.existsSync(cjkBold);
-
-    console.log(
-      `[FONT] Regular file: ${
-        fs.existsSync(notoRegular) ? notoRegular : fs.existsSync(cjkRegular) ? cjkRegular : '(none)'
-      }`,
-    );
-    console.log(
-      `[FONT] Bold file: ${
-        fs.existsSync(notoBold) ? notoBold : fs.existsSync(cjkBold) ? cjkBold : '(none)'
-      }`,
-    );
-    console.log(`[FONT] Files present - regular:${regularFound} bold:${boldFound}`);
-
-    if (!regularFound || !boldFound) {
-      console.warn(
-        '[FONT] Custom fonts expected but missing. Rendering will use fallback system fonts.',
-      );
-    }
-  } else {
-    console.log('[FONT] Using system fallback fonts (sans-serif / monospace).');
-  }
 
   // Background
   ctx.fillStyle = '#000000';
