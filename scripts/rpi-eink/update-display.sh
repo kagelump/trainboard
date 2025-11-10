@@ -230,7 +230,7 @@ PYTHON_SCRIPT
 chmod +x /tmp/display_trainboard.py
 
 # Run the display update
-sudo python3 /tmp/display_trainboard.py "$SCREENSHOT_PATH" "$REFRESH_MODE" \
+python3 /tmp/display_trainboard.py "$SCREENSHOT_PATH" "$REFRESH_MODE" \
     || error_exit "Failed to update e-ink display"
 
 log "Display update completed successfully!"
