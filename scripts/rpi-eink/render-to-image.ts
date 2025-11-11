@@ -175,8 +175,8 @@ function getTrainTypeName(trainTypeUri: string): string {
     Rapid: '快速',
     SemiExpress: '準急',
     Commuter: '通勤',
-    CommuterLimitedExpress: '通勤特急',
-    CommuterExpress: '通勤急行',
+    CommuterLimitedExpress: '通特',
+    CommuterExpress: '通急',
   };
 
   return typeMap[shortName] || shortName || '普通';
@@ -478,7 +478,7 @@ async function renderToImage(
 
   // Get current time and departures
   const now = new Date();
-  const currentTime = formatTimeHHMM(now);
+  const currentTime = `Last Updated: ${formatTimeHHMM(now)}`;
   const nowMinutes = timeToMinutes(currentTime);
 
   const inboundDepartures = convertToDepartureInfo(timetables, inboundDirUri || '', nowMinutes);
