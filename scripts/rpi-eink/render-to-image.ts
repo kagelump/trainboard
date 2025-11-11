@@ -531,7 +531,7 @@ async function renderToImage(
   // Get current time and departures
   const now = new Date();
   const currentTime = formatTimeHHMM(now);
-  const currentTimeMessage = `Last Updated: ${formatTimeHHMM(now)}`;
+  const currentTimeMessage = `Last Updated: ${currentTime}`;
   const nowMinutes = timeToMinutes(currentTime);
 
   const inboundDepartures = convertToDepartureInfo(timetables, inboundDirUri || '', nowMinutes);
