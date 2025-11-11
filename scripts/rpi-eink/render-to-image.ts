@@ -130,10 +130,20 @@ function getMonoFontName(useCustomFonts: boolean): string {
  * Load configuration from defaults.json
  */
 function loadConfig(): Config {
-  const configPath = path.join(__dirname, '../../defaults.json');
+  const configPath = path.join(__dirname, '../../config.json');
   if (fs.existsSync(configPath)) {
     try {
       const content = fs.readFileSync(configPath, 'utf8');
+      return JSON.parse(content) as Config;
+    } catch (e) {
+      const error = e as Error;
+      console.warn('[WARN] Failed to load config.json:', error.message);
+    }
+  }
+  const configPath2 = path.join(__dirname, '../../defaults.json');
+  if (fs.existsSync(configPath2)) {
+    try {
+      const content = fs.readFileSync(configPath2, 'utf8');
       return JSON.parse(content) as Config;
     } catch (e) {
       const error = e as Error;
