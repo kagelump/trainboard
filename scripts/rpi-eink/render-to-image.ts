@@ -160,26 +160,32 @@ function loadConfig(): Config {
 }
 
 /**
- * Get train type name
+ * Get train type name and colors
  */
-function getTrainTypeName(trainTypeUri: string): string {
-  if (!trainTypeUri) return '普通';
+function getTrainTypeInfo(trainTypeUri: string): {
+  name: string;
+  bgColor: string;
+  textColor: string;
+} {
+  if (!trainTypeUri) return { name: '普通', bgColor: '#FFFFFF', textColor: '#000000' };
   const parts = trainTypeUri.split('.');
   const shortName = parts[parts.length - 1] || '';
 
-  // Common mappings
-  const typeMap: Record<string, string> = {
-    Local: '普通',
-    Express: '急行',
-    LimitedExpress: '特急',
-    Rapid: '快速',
-    SemiExpress: '準急',
-    Commuter: '通勤',
-    CommuterLimitedExpress: '通特',
-    CommuterExpress: '通急',
+  // Common mappings with colors
+  const typeMap: Record<string, { name: string; bgColor: string; textColor: string }> = {
+    Local: { name: '普通', bgColor: '#FFFFFF', textColor: '#000000' },
+    Express: { name: '急行', bgColor: '#FF0000', textColor: '#000000' },
+    LimitedExpress: { name: '特急', bgColor: '#FFFF00', textColor: '#000000' },
+    Rapid: { name: '快速', bgColor: '#FFFF00', textColor: '#000000' },
+    SemiExpress: { name: '準急', bgColor: '#FFFF00', textColor: '#000000' },
+    Commuter: { name: '通勤', bgColor: '#FFFF00', textColor: '#000000' },
+    CommuterLimitedExpress: { name: '通特', bgColor: '#FFFF00', textColor: '#000000' },
+    CommuterExpress: { name: '通急', bgColor: '#FFFF00', textColor: '#000000' },
   };
 
-  return typeMap[shortName] || shortName || '普通';
+  return (
+    typeMap[shortName] || { name: shortName || '普通', bgColor: '#FFFFFF', textColor: '#000000' }
+  );
 }
 
 /**
@@ -347,14 +353,28 @@ function drawBoard(
       ctx.font = `bold 44px ${monoFont}`;
       ctx.fillText(dep.time, x + 20, y);
 
-      // Train type
-      const trainType = getTrainTypeName(dep.trainType);
+      // Train type with colored background
+      const trainTypeInfo = getTrainTypeInfo(dep.trainType);
+      const typeX = x + 180;
+      const typeY = y;
+
+      // Measure text to get background size
       ctx.font = `bold 32px ${fontName}`;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(trainType, x + 180, y);
+      const typeMetrics = ctx.measureText(trainTypeInfo.name);
+      const typeWidth = typeMetrics.width + 12; // Add padding
+      const typeHeight = 36;
+
+      // Draw background rectangle
+      ctx.fillStyle = trainTypeInfo.bgColor;
+      ctx.fillRect(typeX - 6, typeY - typeHeight + 8, typeWidth, typeHeight);
+
+      // Draw text
+      ctx.fillStyle = trainTypeInfo.textColor;
+      ctx.fillText(trainTypeInfo.name, typeX, typeY);
 
       // Destination
       const dest = getDestinationName(dep.destination, cache);
+      ctx.fillStyle = '#FFFFFF'; // Reset to white for destination
       ctx.font = `bold 32px ${fontName}`;
       const destX = x + 260;
       if (destX + 10 < x + columnWidth - 10) {
@@ -478,7 +498,8 @@ async function renderToImage(
 
   // Get current time and departures
   const now = new Date();
-  const currentTime = `Last Updated: ${formatTimeHHMM(now)}`;
+  const currentTime = formatTimeHHMM(now);
+  const currentTimeMessage = `Last Updated: ${formatTimeHHMM(now)}`;
   const nowMinutes = timeToMinutes(currentTime);
 
   const inboundDepartures = convertToDepartureInfo(timetables, inboundDirUri || '', nowMinutes);
@@ -523,7 +544,7 @@ async function renderToImage(
       height,
       stationName,
       railwayName,
-      currentTime,
+      currentTimeMessage,
       inbound: { name: inboundName, departures: inboundDepartures },
       outbound: { name: outboundName, departures: outboundDepartures },
       stationNameCache,
