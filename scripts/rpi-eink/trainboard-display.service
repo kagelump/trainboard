@@ -6,10 +6,9 @@ After=network.target
 Type=oneshot
 User=pi
 Group=pi
-Environment="HOME=/home/pi"
-Environment="APP_DIR=/home/pi/trainboard"
-Environment="DISPLAY_DIR=/home/pi/e-Paper/RaspberryPi_JetsonNano/python"
-ExecStart=/home/pi/trainboard/scripts/rpi-eink/update-display.sh
+Environment="HOME=/home/trainboard"
+Environment="APP_DIR=/home/trainboard/trainboard"
+ExecStart=/home/trainboard/trainboard/scripts/rpi-eink/update-display.sh
 StandardOutput=journal
 StandardError=journal
 
