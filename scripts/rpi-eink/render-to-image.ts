@@ -43,6 +43,12 @@ import type {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load terminus data
+const terminusDataPath = path.join(__dirname, '../../src/odpt/data/terminus.json');
+const terminusData: Record<string, { inbound: string; outbound: string }> = JSON.parse(
+  fs.readFileSync(terminusDataPath, 'utf8'),
+);
+
 /**
  * Configuration interface
  */
@@ -482,17 +488,24 @@ async function renderToImage(
   const allDepartures = [...inboundDepartures, ...outboundDepartures];
   const stationNameCache = await buildStationNameCache(allDepartures, apiKey, apiBaseUrl);
 
-  // Get direction names
+  // Get direction names from terminus data
   let inboundName = '上り';
   let outboundName = '下り';
 
-  if (inboundDirUri) {
-    const parts = inboundDirUri.split('.');
-    inboundName = parts[parts.length - 1] || '上り';
-  }
-  if (outboundDirUri) {
-    const parts = outboundDirUri.split('.');
-    outboundName = parts[parts.length - 1] || '下り';
+  const terminus = terminusData[railwayUri];
+  if (terminus) {
+    inboundName = terminus.inbound;
+    outboundName = terminus.outbound;
+  } else if (inboundDirUri || outboundDirUri) {
+    // Fallback to URI parsing if no terminus data
+    if (inboundDirUri) {
+      const parts = inboundDirUri.split('.');
+      inboundName = parts[parts.length - 1] || '上り';
+    }
+    if (outboundDirUri) {
+      const parts = outboundDirUri.split('.');
+      outboundName = parts[parts.length - 1] || '下り';
+    }
   }
 
   console.log(`[DATA] Inbound: ${inboundDepartures.length} departures`);
