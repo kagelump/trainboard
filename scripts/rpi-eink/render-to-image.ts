@@ -166,25 +166,50 @@ function getTrainTypeInfo(trainTypeUri: string): {
   name: string;
   bgColor: string;
   textColor: string;
+  strokeColor: string;
 } {
-  if (!trainTypeUri) return { name: '普通', bgColor: '#FFFFFF', textColor: '#000000' };
+  if (!trainTypeUri)
+    return { name: '普通', bgColor: '#FFFFFF', textColor: '#000000', strokeColor: '#000000' };
   const parts = trainTypeUri.split('.');
   const shortName = parts[parts.length - 1] || '';
 
   // Common mappings with colors
-  const typeMap: Record<string, { name: string; bgColor: string; textColor: string }> = {
-    Local: { name: '普通', bgColor: '#FFFFFF', textColor: '#000000' },
-    Express: { name: '急行', bgColor: '#FF0000', textColor: '#000000' },
-    LimitedExpress: { name: '特急', bgColor: '#FFFF00', textColor: '#000000' },
-    Rapid: { name: '快速', bgColor: '#FFFF00', textColor: '#000000' },
-    SemiExpress: { name: '準急', bgColor: '#FFFF00', textColor: '#000000' },
-    Commuter: { name: '通勤', bgColor: '#FFFF00', textColor: '#000000' },
-    CommuterLimitedExpress: { name: '通特', bgColor: '#FFFF00', textColor: '#000000' },
-    CommuterExpress: { name: '通急', bgColor: '#FFFF00', textColor: '#000000' },
+  const typeMap: Record<
+    string,
+    { name: string; bgColor: string; textColor: string; strokeColor: string }
+  > = {
+    Local: { name: '普通', bgColor: '#FFFFFF', textColor: '#000000', strokeColor: '#000000' },
+    Express: { name: '急行', bgColor: '#FF0000', textColor: '#ffffffff', strokeColor: '#ffffffff' },
+    LimitedExpress: {
+      name: '特急',
+      bgColor: '#FFFF00',
+      textColor: '#000000',
+      strokeColor: '#FFFFFF',
+    },
+    Rapid: { name: '快速', bgColor: '#FFFF00', textColor: '#000000', strokeColor: '#FFFFFF' },
+    SemiExpress: { name: '準急', bgColor: '#FFFF00', textColor: '#000000', strokeColor: '#FFFFFF' },
+    Commuter: { name: '通勤', bgColor: '#FFFF00', textColor: '#000000', strokeColor: '#FFFFFF' },
+    CommuterLimitedExpress: {
+      name: '通特',
+      bgColor: '#FFFF00',
+      textColor: '#000000',
+      strokeColor: '#FFFFFF',
+    },
+    CommuterExpress: {
+      name: '通急',
+      bgColor: '#FFFF00',
+      textColor: '#000000',
+      strokeColor: '#FFFFFF',
+    },
   };
 
   return (
-    typeMap[shortName] || { name: shortName || '普通', bgColor: '#FFFFFF', textColor: '#000000' }
+    typeMap[shortName] || {
+      name: shortName || '普通',
+      bgColor: '#FFFFFF',
+      textColor: '#000000',
+      strokeColor: '#000000',
+    }
   );
 }
 
@@ -363,10 +388,17 @@ function drawBoard(
       const typeMetrics = ctx.measureText(trainTypeInfo.name);
       const typeWidth = typeMetrics.width + 12; // Add padding
       const typeHeight = 36;
+      const rectX = typeX - 6;
+      const rectY = typeY - typeHeight + 8;
+
+      // Draw white border (stroke)
+      ctx.strokeStyle = trainTypeInfo.strokeColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rectX, rectY, typeWidth, typeHeight);
 
       // Draw background rectangle
       ctx.fillStyle = trainTypeInfo.bgColor;
-      ctx.fillRect(typeX - 6, typeY - typeHeight + 8, typeWidth, typeHeight);
+      ctx.fillRect(rectX, rectY, typeWidth, typeHeight);
 
       // Draw text
       ctx.fillStyle = trainTypeInfo.textColor;
@@ -544,7 +576,7 @@ async function renderToImage(
       height,
       stationName,
       railwayName,
-      currentTimeMessage,
+      currentTime: currentTimeMessage,
       inbound: { name: inboundName, departures: inboundDepartures },
       outbound: { name: outboundName, departures: outboundDepartures },
       stationNameCache,
