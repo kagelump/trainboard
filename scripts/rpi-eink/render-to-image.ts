@@ -443,11 +443,11 @@ function drawBoard(
 
       if (i < departures.length - 1) {
         // Draw separator line below this departure
-        ctx.strokeStyle = '#CCCCCC'; // Light grey
+        ctx.strokeStyle = '#000000';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(x + 10, y + 5);
-        ctx.lineTo(x + columnWidth - 10, y + 5);
+        ctx.moveTo(x + 20, y + 7);
+        ctx.lineTo(x + columnWidth - 20, y + 7);
         ctx.stroke();
       }
     }
