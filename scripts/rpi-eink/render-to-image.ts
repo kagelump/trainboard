@@ -333,6 +333,10 @@ function drawBoard(
   ctx.lineTo(width, headerHeight);
   ctx.stroke();
 
+  // White background for content area (below header)
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, headerHeight, width, height - headerHeight);
+
   // Two-column layout
   const columnWidth = width / 2;
   const contentY = headerHeight + 10;
@@ -344,21 +348,22 @@ function drawBoard(
     departures: DepartureInfo[],
     cache: Map<string, string>,
   ): void {
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = `bold 30px ${fontName}`;
-    const titleY = contentY + 35;
+    ctx.fillStyle = '#000000'; // Black text on white background
+    ctx.font = `bold 48px ${fontName}`;
+    const titleY = contentY + 36;
     const titleText = `${directionName}行き`;
     const titleWidth = ctx.measureText(titleText).width;
     ctx.fillText(titleText, x + (columnWidth - titleWidth) / 2, titleY);
 
-    // Draw underline
+    // Draw underline (black)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x + 20, titleY + 5);
-    ctx.lineTo(x + columnWidth - 20, titleY + 5);
+    ctx.moveTo(x + 20, titleY + 10);
+    ctx.lineTo(x + columnWidth - 20, titleY + 10);
     ctx.stroke();
 
-    let y = titleY + 30;
-
+    let y = titleY + 20;
     if (departures.length === 0) {
       ctx.font = `24px ${fontName}`;
       ctx.fillStyle = '#666666';
@@ -366,51 +371,84 @@ function drawBoard(
       return;
     }
 
-    // Draw each departure
-    for (const dep of departures) {
-      const rowHeight = 50;
+    // Draw each departure (2-row layout: time on left, type+dest stacked on right)
+    for (let i = 0; i < departures.length; i++) {
+      const dep = departures[i];
+      const rowHeight = 90; // Each departure takes 2 rows worth of space
       y += rowHeight;
 
       if (y > height - 20) break; // Don't overflow
 
-      // Time
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = `bold 44px ${monoFont}`;
-      ctx.fillText(dep.time, x + 20, y);
-
-      // Train type with colored background
+      // Train type affect time and train type colors.
       const trainTypeInfo = getTrainTypeInfo(dep.trainType);
-      const typeX = x + 180;
-      const typeY = y;
+
+      // Left side: Time (large, centered vertically in 2-row space)
+      const timeX = x + 20;
+      const timeY = y - 10; // Center vertically in the 2-row block
+
+      // Measure time text to get background size
+      ctx.font = `bold 72px ${monoFont}`; // Much larger time
+      const timeMetrics = ctx.measureText(dep.time);
+      const timeWidth = timeMetrics.width + 12; // Add padding
+      const timeHeight = 64;
+      const timeRectX = timeX - 6;
+      const timeRectY = timeY - timeHeight + 6;
+
+      // Draw time background with train type color
+      ctx.fillStyle = trainTypeInfo.bgColor;
+      ctx.fillRect(timeRectX, timeRectY, timeWidth, timeHeight);
+
+      // Draw time text
+      ctx.fillStyle = trainTypeInfo.textColor;
+      ctx.fillText(dep.time, timeX, timeY);
+
+      // Right side: right-justified within the column
+      const rightEdge = x + columnWidth - 20; // Right margin
+
+      // Top row: Train type with colored background (right-justified)
+      const typeY = y - 45; // Top of the 2-row block
 
       // Measure text to get background size
-      ctx.font = `bold 32px ${fontName}`;
+      ctx.font = `bold 28px ${fontName}`;
       const typeMetrics = ctx.measureText(trainTypeInfo.name);
       const typeWidth = typeMetrics.width + 12; // Add padding
-      const typeHeight = 36;
-      const rectX = typeX - 6;
-      const rectY = typeY - typeHeight + 8;
+      const typeHeight = 32;
+
+      // Position from right edge
+      const rectX = rightEdge - typeWidth;
+      const rectY = typeY - typeHeight + 5;
+      const typeX = rectX + 6; // Text starts after left padding
 
       // Draw white border (stroke)
       ctx.strokeStyle = trainTypeInfo.strokeColor;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 4;
       ctx.strokeRect(rectX, rectY, typeWidth, typeHeight);
 
       // Draw background rectangle
       ctx.fillStyle = trainTypeInfo.bgColor;
       ctx.fillRect(rectX, rectY, typeWidth, typeHeight);
 
-      // Draw text
+      // Draw train type text
       ctx.fillStyle = trainTypeInfo.textColor;
       ctx.fillText(trainTypeInfo.name, typeX, typeY);
 
-      // Destination
+      // Bottom row: Destination (right-justified)
       const dest = getDestinationName(dep.destination, cache);
-      ctx.fillStyle = '#FFFFFF'; // Reset to white for destination
+      const destY = y - 5; // Bottom of the 2-row block
+      ctx.fillStyle = '#000000'; // Black text on white background
       ctx.font = `bold 32px ${fontName}`;
-      const destX = x + 260;
-      if (destX + 10 < x + columnWidth - 10) {
-        ctx.fillText(dest, destX, y);
+      const destWidth = ctx.measureText(dest).width;
+      const destX = rightEdge - destWidth;
+      ctx.fillText(dest, destX, destY);
+
+      if (i < departures.length - 1) {
+        // Draw separator line below this departure
+        ctx.strokeStyle = '#CCCCCC'; // Light grey
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + 5);
+        ctx.lineTo(x + columnWidth - 10, y + 5);
+        ctx.stroke();
       }
     }
   }
@@ -418,7 +456,8 @@ function drawBoard(
   // Draw both directions
   drawDirection(0, inbound.name, inbound.departures, stationNameCache);
 
-  // Vertical divider
+  // Vertical divider (black)
+  ctx.strokeStyle = '#000000';
   ctx.beginPath();
   ctx.moveTo(columnWidth, headerHeight);
   ctx.lineTo(columnWidth, height);
