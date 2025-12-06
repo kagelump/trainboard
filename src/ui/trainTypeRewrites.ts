@@ -31,12 +31,12 @@ export const TRAIN_TYPE_REWRITES: Record<string, TrainTypeRewrite> = trainTypeRe
 export function applyTrainTypeRewrite(uri: string, originalName: string): string {
   const rewrite = TRAIN_TYPE_REWRITES[uri];
   if (!rewrite) return originalName;
-  
+
   // If it's an array of colored segments, join them to get the plain text
   if (Array.isArray(rewrite)) {
-    return rewrite.map(seg => seg.text).join('');
+    return rewrite.map((seg) => seg.text).join('');
   }
-  
+
   return rewrite;
 }
 

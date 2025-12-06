@@ -57,7 +57,7 @@ export class TrainRow extends LitElement {
       color: #fff;
       border: 2px solid #333;
     }
-    
+
     /* Colored text segment within badge */
     .train-type-badge .colored-segment {
       /* Inherit font properties from parent */
@@ -230,7 +230,8 @@ export class TrainRow extends LitElement {
     // Render colored segments if available, otherwise plain text
     const badgeContent = this.coloredSegments
       ? html`${this.coloredSegments.map(
-          (seg) => html`<span class="colored-segment" style="color: ${seg.color}">${seg.text}</span>`
+          (seg) =>
+            html`<span class="colored-segment" style="color: ${seg.color}">${seg.text}</span>`,
         )}`
       : this.trainTypeName;
 
@@ -238,9 +239,7 @@ export class TrainRow extends LitElement {
       <div class="minutes-col" data-departure="${this.departureTime}">${this.minutes()}</div>
       <div class="time-col">${this.departureTime || '--'}</div>
       <div class="train-type-badge-wrapper">
-        <span part="badge" class="train-type-badge ${this.trainTypeClass}"
-          >${badgeContent}</span
-        >
+        <span part="badge" class="train-type-badge ${this.trainTypeClass}">${badgeContent}</span>
       </div>
       <div class="${destinationClass}">${this.destination}</div>
     `;

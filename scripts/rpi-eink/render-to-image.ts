@@ -542,8 +542,11 @@ async function renderToImage(
   }
 
   const railwayName = getJapaneseText(railway['dc:title'] || railway['odpt:railwayTitle']);
-  const inboundDirUri = railway['odpt:ascendingRailDirection'];
-  const outboundDirUri = railway['odpt:descendingRailDirection'];
+  // Note: ODPT's ascending/descending is OPPOSITE of typical inbound/outbound convention
+  // Ascending (上り) goes toward terminus, Descending (下り) goes away from terminus
+  // But for display, we swap them to match user expectations (same as web version)
+  const inboundDirUri = railway['odpt:descendingRailDirection'];
+  const outboundDirUri = railway['odpt:ascendingRailDirection'];
 
   // Find station in stationOrder
   const stationOrder = railway['odpt:stationOrder'] || [];

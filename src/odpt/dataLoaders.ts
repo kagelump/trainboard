@@ -12,7 +12,11 @@ export type { StationConfig } from './types';
 import { getJapaneseText, collectDestinationUris } from '../lib/utils';
 import { SimpleCache } from '../lib/cache';
 import { getTrainTypeCssClass } from '../ui/trainTypeStyles';
-import { applyTrainTypeRewrite, getTrainTypeRewriteConfig, type ColoredTextSegment } from '../ui/trainTypeRewrites';
+import {
+  applyTrainTypeRewrite,
+  getTrainTypeRewriteConfig,
+  type ColoredTextSegment,
+} from '../ui/trainTypeRewrites';
 import { setPageTitle } from '../ui/settings';
 import terminusData from './data/terminus.json';
 
@@ -135,16 +139,16 @@ export async function loadTrainTypes(apiKey: string | null, apiBaseUrl: string):
 
       // Apply any configured rewrites to the train type name
       const displayName = applyTrainTypeRewrite(uri, name);
-      
+
       // Get the raw rewrite config to check if it includes colored segments
       const rewriteConfig = getTrainTypeRewriteConfig(uri);
       const coloredSegments = Array.isArray(rewriteConfig) ? rewriteConfig : undefined;
 
       const cssClass = getTrainTypeCssClass(uri);
-      TRAIN_TYPE_MAP[uri] = { 
-        name: displayName, 
+      TRAIN_TYPE_MAP[uri] = {
+        name: displayName,
         class: cssClass,
-        ...(coloredSegments && { coloredSegments })
+        ...(coloredSegments && { coloredSegments }),
       };
     }
 
