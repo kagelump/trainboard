@@ -74,9 +74,7 @@
       <div class="minutes-col" data-departure="${this.departureTime}">${this.minutes()}</div>
       <div class="time-col">${this.departureTime||"--"}</div>
       <div class="train-type-badge-wrapper">
-        <span part="badge" class="train-type-badge ${this.trainTypeClass}"
-          >${t}</span
-        >
+        <span part="badge" class="train-type-badge ${this.trainTypeClass}">${t}</span>
       </div>
       <div class="${o}">${this.destination}</div>
     `}};$.styles=_t`
@@ -125,7 +123,7 @@
       color: #fff;
       border: 2px solid #333;
     }
-    
+
     /* Colored text segment within badge */
     .train-type-badge .colored-segment {
       /* Inherit font properties from parent */
