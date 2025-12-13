@@ -130,9 +130,9 @@
     "fill": "red"
   },
   "odpt.TrainType:Seibu.F-Liner": {
-    "outline": "yellow",
-    "text": "white",
-    "fill": "black"
+    "outline": "white",
+    "text": "black",
+    "fill": "yellow"
   },
   "odpt.TrainType:Seibu.HaijimaLiner": {
     "outline": "yellow",
@@ -180,9 +180,9 @@
     "fill": "red"
   },
   "odpt.TrainType:Tokyu.F-Liner": {
-    "outline": "yellow",
-    "text": "white",
-    "fill": "black"
+    "outline": "white",
+    "text": "black",
+    "fill": "yellow"
   },
   "odpt.TrainType:Tokyu.LimitedExpress": {
     "outline": "white",
@@ -210,9 +210,9 @@
     "fill": "red"
   },
   "odpt.TrainType:Tobu.F-Liner": {
-    "outline": "yellow",
-    "text": "white",
-    "fill": "black"
+    "outline": "white",
+    "text": "black",
+    "fill": "yellow"
   },
   "odpt.TrainType:Tobu.KawagoeLimitedExpress": {
     "outline": "black",

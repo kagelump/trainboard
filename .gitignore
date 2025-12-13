@@ -44,3 +44,4 @@ __pycache__/
 *$py.class
 *.so
 .Python
+src/**/*.js

@@ -186,6 +186,12 @@ function getTrainTypeInfo(trainTypeUri: string): {
       textColor: '#000000',
       strokeColor: '#FFFFFF',
     },
+    'F-Liner': {
+      name: 'F特急',
+      bgColor: '#FFFF00',
+      textColor: '#000000',
+      strokeColor: '#FFFFFF',
+    },
     Rapid: { name: '快速', bgColor: '#FFFF00', textColor: '#000000', strokeColor: '#FFFFFF' },
     SemiExpress: { name: '準急', bgColor: '#FFFF00', textColor: '#000000', strokeColor: '#FFFFFF' },
     Commuter: { name: '通勤', bgColor: '#FFFF00', textColor: '#000000', strokeColor: '#FFFFFF' },
