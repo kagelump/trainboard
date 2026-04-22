@@ -27,6 +27,7 @@ import {
 
 import {
   fetchRailwayByUri,
+  fetchStationsList,
   fetchStationTimetable,
   fetchStationsByUris,
   calendarURI,
@@ -548,8 +549,18 @@ async function renderToImage(
   const inboundDirUri = railway['odpt:descendingRailDirection'];
   const outboundDirUri = railway['odpt:ascendingRailDirection'];
 
-  // Find station in stationOrder
-  const stationOrder = railway['odpt:stationOrder'] || [];
+  // Find station in stationOrder.
+  // ODPT v4 may return an empty stationOrder, so fall back to Station list by railway.
+  let stationOrder = railway['odpt:stationOrder'] || [];
+  if (stationOrder.length === 0) {
+    const stations = await fetchStationsList(apiKey, apiBaseUrl, railwayUri);
+    stationOrder = stations.map((s) => ({
+      'odpt:station': s['owl:sameAs'] || s['@id'] || '',
+      'odpt:stationTitle': s['dc:title'] || s['odpt:stationTitle'] || '',
+    })) as any[];
+    console.log(`[STATION] stationOrder missing in Railway response, using ${stationOrder.length} stations from Station list`);
+  }
+
   let stationUri: string | null = null;
   for (const station of stationOrder) {
     const sName = getJapaneseText(station['odpt:stationTitle']);
