@@ -22,7 +22,7 @@
 
 // Configuration constants
 const DEFAULT_CACHE_TTL = 3600; // 1 hour
-const DEFAULT_API_BASE_URL = 'https://api-challenge.odpt.org/api/v4/';
+const DEFAULT_API_BASE_URL = 'https://api.odpt.org/api/v4/';
 const MCP_EXAMPLE_URL =
   '/mcp/resources/get?uri=odpt://Station&odpt:railway=odpt.Railway:Tokyu.Toyoko';
 
